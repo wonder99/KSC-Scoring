@@ -6,13 +6,18 @@ See the [Player Guide](user-guide.html) for scoring instructions and a simple ph
 
 ## Run the app
 
-The app loads `team_lists.csv` and `dart_league_schedule.csv` automatically, so serve this folder over HTTP instead of opening `index.html` directly:
+The Node.js server serves the app and provides the score-upload API. To run it locally, configure `DATABASE_URL` with a PostgreSQL connection string and set `UPLOAD_API_KEY` to a secret key. Install dependencies and start the server:
 
-1. Open PowerShell in this project folder.
-2. Run `py -m http.server 8000`.
-3. Open <http://localhost:8000> in your browser.
+```powershell
+npm.cmd install
+$env:DATABASE_URL = "your-postgresql-connection-string"
+$env:UPLOAD_API_KEY = "your-secret-upload-key"
+npm.cmd start
+```
 
-If the `py` command is unavailable, use `python -m http.server 8000`.
+Open <http://localhost:10000>. Enter the same `UPLOAD_API_KEY` value in the app's **League upload key** field when saving results.
+
+For scoring without server uploads, you can still serve the files with a static HTTP server. In that case, the **Save to League** API is unavailable.
 
 ## Start a match
 
@@ -27,11 +32,17 @@ Checkout suggestions follow the recommended outs and alternatives in [Rick Smith
 
 After each game, the winner screen offers CSV download, **Email CSV**, or **Upload Results**. The CSV contains each selected player's accepted points and turn count, plus the winning team, for every completed game in the fixture. Email CSV downloads the file and opens a Gmail draft addressed to `speedfreqall@gmail.com`; sign in if prompted and attach the downloaded CSV before sending. Upload Results downloads the file and opens the team's Dropbox File Request; select the downloaded CSV on Dropbox to complete the upload. Neither service receives the file automatically.
 
-## Share the app
+## Deploy and share the app
 
-The app is static and needs no build step. Upload the site files together using [Netlify Drop](https://app.netlify.com/drop), then share the resulting HTTPS link with players. Include `index.html`, `app.js`, `styles.css`, `team_lists.csv`, and `dart_league_schedule.csv`; include `user-guide.html` if you want to share the guide too.
+To enable **Save to League**, deploy this repository to Render as a **Web Service**, not a Static Site:
 
-Static hosting makes the roster and schedule files publicly accessible. Match progress is saved in the browser on that device and restored after a reload; it is not synchronized between devices or saved to an account. Clearing the browser's site data removes saved progress, so download results before clearing it.
+- **Build Command**: `npm install`
+- **Start Command**: `npm start`
+- **Environment Variables**: `DATABASE_URL` (from a PostgreSQL database) and `UPLOAD_API_KEY` (a secret key)
+
+The upload key entered in the app must exactly match the service's `UPLOAD_API_KEY`. A static-site deployment such as Netlify Drop can host the scoring UI, but it does not run this Node.js API, so server uploads will not work there.
+
+Match progress is saved in the browser on that device and restored after a reload; it is not synchronized between devices or saved to an account. Clearing the browser's site data removes saved progress, so download results before clearing it.
 
 ## CSV formats
 

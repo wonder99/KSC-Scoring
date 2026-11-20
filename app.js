@@ -897,10 +897,8 @@ function renderWinnerModal() {
         ? `Game ${gameNumber} of 7 complete: ${opponentName} doubled out.`
         : `Game ${gameNumber} of 7 complete: ${teamName} beat ${opponentName}.`;
     $('next-game-btn').textContent = gameNumber < 7 ? `Choose lineup for Game ${gameNumber + 1}` : 'Choose another match';
-    $('email-status').textContent = 'Email CSV opens a Gmail draft; Upload Results opens Dropbox. Both download the CSV first, then you must attach or select that file.';
     setServerUploadStatus('');
     $('server-upload-btn').disabled = !state.matchResults.length;
-    $('email-csv-btn').href = createGmailDraftUrl();
     $('winner-modal').classList.remove('hidden');
 }
 
@@ -955,30 +953,6 @@ function createResultsCSV() {
         }
     }
     return rows.map(row => row.map(csvCell).join(',')).join('\r\n');
-}
-
-function downloadResultsCSV() {
-    if (!state.matchResults.length) return;
-    const csv = createResultsCSV();
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    const objectUrl = link.href;
-    link.download = `701-${state.matchDate}-board-${state.board}-results.csv`;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-}
-
-function emailResultsCSV() {
-    if (!state.matchResults.length) return;
-    downloadResultsCSV();
-    $('email-status').textContent = 'The CSV is downloading and a Gmail draft is opening in a new tab. Attach the downloaded CSV before sending.';
-}
-
-function uploadResultsCSV() {
-    if (!state.matchResults.length) return;
-    downloadResultsCSV();
-    $('email-status').textContent = 'The CSV is downloading and Dropbox is opening in a new tab. Select the downloaded CSV on Dropbox to upload it.';
 }
 
 function setServerUploadStatus(message, kind = '') {
@@ -1040,12 +1014,6 @@ async function uploadResultsToServer() {
     } finally {
         button.disabled = false;
     }
-}
-
-function createGmailDraftUrl() {
-    const subject = `701 results - ${state.matchDate} - ${state.teamName} vs ${state.opponent}`;
-    const body = 'The 701 game results CSV is downloaded. Please attach it before sending.';
-    return `https://mail.google.com/mail/?view=cm&fs=1&to=speedfreqall@gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 function startNextGame() {
@@ -1295,8 +1263,5 @@ $('back-to-roster').addEventListener('click', restartEverything);
 $('opponent-out-btn').addEventListener('click', handleOpponentDoubleOut);
 $('winner-undo-btn').addEventListener('click', undoLastTurn);
 $('next-game-btn').addEventListener('click', startNextGame);
-$('email-csv-btn').addEventListener('click', emailResultsCSV);
-$('upload-results-btn').addEventListener('click', uploadResultsCSV);
-$('download-csv-btn').addEventListener('click', downloadResultsCSV);
 $('server-upload-btn').addEventListener('click', uploadResultsToServer);
 loadData();
