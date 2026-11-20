@@ -432,7 +432,6 @@ function renderDartInput() {
     }
     target.innerHTML = `
         <div class="dart-input-section">
-            <div class="dart-input-label">Scoring for <strong>${escapeHTML(state.players[state.currentPlayer].name)}</strong></div>
             ${isSpare ? '<p class="spare-note">Spare automatically scores 25</p>' : ''}
             <div class="total-input-row">
                 <input type="number" id="score-total-input" placeholder="Turn Total" value="${state.turnTotal || ''}" min="0" max="180" inputmode="numeric" aria-label="Turn Total">
@@ -473,6 +472,7 @@ function renderDartInput() {
     $('submit-turn-btn').addEventListener('click', submitTurn);
     $('bust-turn-btn').addEventListener('click', bustTurn);
     $('undo-turn-btn').addEventListener('click', undoLastTurn);
+    $('start-over-btn').addEventListener('click', startTurnOver);
     let multiplier = 1;
     const bullButton = target.querySelector('[data-number="bull"]');
     target.querySelectorAll('[data-multiplier]').forEach(button => {
@@ -498,7 +498,8 @@ function renderDartGridButtons() {
         html += `<button type="button" class="dart-btn dart-number-btn" data-number="${number}">${number}</button>`;
     }
     return html + '<button type="button" class="dart-btn dart-bull-btn" data-number="bull">Bull</button>' +
-        '<button type="button" class="dart-btn dart-miss-btn" data-number="miss">Miss</button>';
+        '<button type="button" class="dart-btn dart-miss-btn" data-number="miss">Miss</button>' +
+        '<button type="button" class="dart-btn dart-start-over-btn" id="start-over-btn">Start Over</button>';
 }
 
 function addDart(number, multiplier) {
@@ -516,6 +517,14 @@ function addDart(number, multiplier) {
     state.turnDarts.push(dart);
     state.turnTotal = state.turnDarts.reduce((sum, item) => sum + item.score, 0);
     $('score-total-input').value = state.turnTotal;
+    updateTurnSummary();
+    renderCheckouts();
+}
+
+function startTurnOver() {
+    state.turnDarts = [];
+    state.turnTotal = 0;
+    $('score-total-input').value = '';
     updateTurnSummary();
     renderCheckouts();
 }

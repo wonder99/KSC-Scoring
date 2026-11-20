@@ -295,13 +295,6 @@ body {
     margin-bottom: 1rem;
 }
 
-.dart-input-label {
-    text-align: center;
-    color: var(--text-secondary);
-    margin-bottom: 0.75rem;
-    font-size: 0.95rem;
-}
-
 .total-input-row {
     display: flex;
     gap: 0.5rem;
@@ -461,6 +454,12 @@ body {
     grid-column: 3;
     border-color: var(--text-muted);
     color: var(--text-secondary);
+}
+.dart-start-over-btn {
+    grid-column: 4;
+    padding-left: 0.1rem;
+    padding-right: 0.1rem;
+    font-size: 0.8rem;
 }
 .dart-bull-btn:disabled {
     opacity: 0.4;
