@@ -586,6 +586,77 @@ body {
     overflow: hidden;
 }
 
+/* ===== HISTORY SCROLL FIX FOR IOS ===== */
+#game-screen {
+    max-width: min(900px, 100vw);
+}
+
+.history-section {
+    margin-top: 1rem;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.history-container {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+}
+
+.history-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: max-content;
+    min-width: 100%;
+    gap: 0.2rem;
+}
+
+.history-player-block {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: max-content;
+    min-width: 100%;
+    gap: 0.25rem;
+    padding: 0.1rem 0.35rem;
+    background: var(--bg-card);
+    border-radius: 12px;
+    overflow: visible;
+}
+
+.history-player-name {
+    flex: 0 0 110px;
+    width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.history-player-turns {
+    display: flex;
+    flex: 0 0 auto;
+    width: max-content;
+    gap: 0.2rem;
+}
+
+@media (max-width: 600px) {
+    .history-player-block {
+        gap: 0.25rem;
+        padding: 0.1rem 0.25rem;
+    }
+
+    .history-player-name {
+        flex: 0 0 70px;
+        width: 70px;
+    }
+}
+
 .history-player-header {
     display: flex;
     justify-content: space-between;
