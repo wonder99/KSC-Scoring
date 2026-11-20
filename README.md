@@ -1,4 +1,4 @@
-# The 701 Club
+# KSC Darts Scoring App
 
 A browser-based 701 darts scorer for one team's shared score. Four selected team members rotate turns; the opposing team's score is not tracked.
 
