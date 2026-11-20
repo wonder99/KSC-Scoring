@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>701 Darts Scorer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <main id="roster-screen" class="screen active">
+        <h1>🎯 701 Darts Scorer</h1>
+        <p class="subtitle">Double-out · One team score · Four players</p>
+        <a class="player-guide-link" href="user-guide.html">Read the player guide</a>
+
+        <section class="setup-card">
+            <p id="load-status" class="visually-hidden" role="status"></p>
+            <label for="match-date">Match day</label>
+            <select id="match-date" disabled>
+                <option value="">Loading schedule…</option>
+            </select>
+            <label for="team-select">Your team</label>
+            <select id="team-select" disabled>
+                <option value="">Choose a match day first</option>
+            </select>
+            <p class="opponent-display">Opponent: <strong id="opponent-name">Select a match day and team</strong><span id="board-display" class="board-display"></span></p>
+            <button id="start-game-btn" class="btn btn-primary" type="button" disabled>Start Game</button>
+        </section>
+    </main>
+
+    <main id="lineup-screen" class="screen">
+        <header class="game-header">
+            <h1>Choose lineup</h1>
+            <span id="lineup-match-display" class="team-name"></span>
+        </header>
+        <section class="setup-card lineup-setup">
+            <p id="game-number-display" class="subtitle"></p>
+            <h2>Choose four players in play order</h2>
+            <p class="lineup-instructions">There are always four players above the divider. Drop an unselected name into the desired spot; the fourth player moves below. Drop a selected name below to swap in the first waiting player. The top-to-bottom order is the play order. Use the buttons if dragging is unavailable.</p>
+            <div class="lineup-roster">
+                <div class="lineup-zone-heading">
+                    <strong>Playing this game</strong>
+                    <span id="selected-count">0 of 4</span>
+                </div>
+                <ol id="selected-lineup" class="lineup-drop-list selected-lineup" aria-label="Selected players in play order"></ol>
+                <div class="lineup-divider"><span>Not playing</span></div>
+                <ul id="available-lineup" class="lineup-drop-list available-lineup" aria-label="Available players"></ul>
+            </div>
+            <p id="selection-status" role="status"></p>
+            <div class="action-buttons">
+                <button id="back-to-match" class="btn btn-small" type="button">Back</button>
+                <button id="start-selected-game-btn" class="btn btn-primary" type="button" disabled>Start Game</button>
+            </div>
+        </section>
+    </main>
+
+    <main id="game-screen" class="screen">
+        <header class="game-header">
+            <h1>🎯 701 Darts Scorer</h1>
+            <span id="game-match-display" class="team-name"></span>
+            <span id="game-number-badge" class="game-number-badge"></span>
+            <button id="back-to-roster" class="btn btn-small" type="button">Change Match</button>
+        </header>
+        <section class="team-score-section">
+            <h2><span id="score-team-name"></span> Score</h2>
+            <div class="team-score-display">
+                <span id="current-team-score" class="score-value">701</span>
+                <span class="score-label">Points Remaining</span>
+            </div>
+        </section>
+        <p class="player-turn-indicator"><strong id="current-player-name"></strong><span class="turn-label">'s turn</span></p>
+        <div id="dart-input-section"></div>
+        <div class="opponent-out-action">
+            <p class="opponent-out-prompt">Did <strong id="opponent-out-team"></strong> win? <button id="opponent-out-btn" class="opponent-out-btn" type="button"></button></p>
+        </div>
+        <section class="history-section">
+            <h2>Score History</h2>
+            <div id="history-container" class="history-container"></div>
+        </section>
+    </main>
+
+    <div id="winner-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <h1 id="winner-heading">🏆 Wins!</h1>
+            <p id="winner-summary">Congratulations on the double-out checkout!</p>
+            <div class="email-actions">
+                <a id="email-csv-btn" class="btn btn-primary">Email CSV</a>
+                <a id="upload-results-btn" class="btn btn-small" href="https://www.dropbox.com/request/6rcksjhlhn7no07s9l4o" target="_blank" rel="noopener noreferrer">Upload Results</a>
+                <button id="download-csv-btn" class="btn btn-small" type="button">Download CSV</button>
+            </div>
+            <p id="email-status" role="status" class="help-text"></p>
+            <button id="next-game-btn" class="btn btn-primary" type="button">Choose next lineup</button>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
