@@ -610,7 +610,13 @@ function renderGame() {
     $('opponent-out-btn').textContent = 'Click here';
     $('opponent-out-btn').setAttribute('aria-label', `Confirm that ${opponentName} won`);
     $('current-team-score').textContent = state.score;
-    $('current-player-name').textContent = state.players[state.currentPlayer].name;
+    const finishedResult = state.winner
+        ? state.matchResults.find(item => item.game === state.activeGameIndex + 1)
+        : null;
+    $('current-player-name').textContent = state.winner
+        ? (finishedResult ? `${displayTeamName(finishedResult.winner)} won.` : '')
+        : state.players[state.currentPlayer].name;
+    document.querySelector('.turn-label').hidden = state.winner;
     document.querySelector('.opponent-out-action').hidden = state.winner;
     renderDartInput();
     renderHistory();
@@ -625,12 +631,7 @@ function renderGame() {
 function renderDartInput() {
     const target = $('dart-input-section');
     if (state.winner) {
-        const result = state.matchResults.find(item => item.game === state.activeGameIndex + 1);
-        const winner = result ? displayTeamName(result.winner) : '';
         target.innerHTML = `
-            <div class="game-finished-state" role="status">
-                <strong>Game finished.</strong>${winner ? ` ${escapeHTML(winner)} won.` : ''}
-            </div>
             <div class="game-finished-actions">
                 <button class="undo-turn-btn" id="finished-game-undo-btn" type="button" disabled>Undo Last</button>
             </div>`;
@@ -897,6 +898,8 @@ function renderWinnerModal() {
         : `Game ${gameNumber} of 7 complete: ${teamName} beat ${opponentName}.`;
     $('next-game-btn').textContent = gameNumber < 7 ? `Choose lineup for Game ${gameNumber + 1}` : 'Choose another match';
     $('email-status').textContent = 'Email CSV opens a Gmail draft; Upload Results opens Dropbox. Both download the CSV first, then you must attach or select that file.';
+    setServerUploadStatus('');
+    $('server-upload-btn').disabled = !state.matchResults.length;
     $('email-csv-btn').href = createGmailDraftUrl();
     $('winner-modal').classList.remove('hidden');
 }
@@ -976,6 +979,55 @@ function uploadResultsCSV() {
     if (!state.matchResults.length) return;
     downloadResultsCSV();
     $('email-status').textContent = 'The CSV is downloading and Dropbox is opening in a new tab. Select the downloaded CSV on Dropbox to upload it.';
+}
+
+function setServerUploadStatus(message, kind = '') {
+    const status = $('server-upload-status');
+    status.textContent = message;
+    status.classList.toggle('error', kind === 'error');
+    status.classList.toggle('success', kind === 'success');
+}
+
+async function uploadResultsToServer() {
+    if (!state.matchResults.length) {
+        setServerUploadStatus('There are no completed games to save.', 'error');
+        return;
+    }
+    const uploadKey = $('server-upload-key').value.trim();
+    if (!uploadKey) {
+        setServerUploadStatus('Enter the league upload key to save these results.', 'error');
+        $('server-upload-key').focus();
+        return;
+    }
+
+    const button = $('server-upload-btn');
+    button.disabled = true;
+    setServerUploadStatus('Saving results to the league server…');
+    try {
+        const response = await fetch('/api/score-uploads', {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${uploadKey}`,
+                'Content-Type': 'text/csv'
+            },
+            body: createResultsCSV()
+        });
+        let result = null;
+        try {
+            result = await response.json();
+        } catch {
+            result = null;
+        }
+        if (!response.ok) {
+            throw new Error(result && result.error ? result.error : `Server returned HTTP ${response.status}.`);
+        }
+        if (!result || result.saved !== true) throw new Error('The server returned an invalid upload response.');
+        setServerUploadStatus(`Saved ${result.rowCount} score rows to the league server.`, 'success');
+    } catch (error) {
+        setServerUploadStatus(`Could not save results: ${error.message}`, 'error');
+    } finally {
+        button.disabled = false;
+    }
 }
 
 function createGmailDraftUrl() {
@@ -1196,6 +1248,18 @@ function resetToSetup() {
     persistSession();
 }
 
+function restartEverything() {
+    const confirmed = window.confirm('Restart everything? All game data, including scores, histories, results, and saved progress, will be cleared.');
+    if (!confirmed) return;
+    clearPersistedSession();
+    initializeGameSlots();
+    $('winner-modal').classList.add('hidden');
+    $('game-screen').classList.remove('active');
+    $('lineup-screen').classList.remove('active');
+    $('roster-screen').classList.add('active');
+    updateGameNavigation();
+}
+
 $('match-date').addEventListener('change', populateTeams);
 $('team-select').addEventListener('change', selectMatch);
 $('game-screen').querySelectorAll('.game-nav-btn').forEach(button => {
@@ -1215,11 +1279,12 @@ $('start-selected-game-btn').addEventListener('click', startSelectedGame);
     list.addEventListener('drop', event => handleLineupDrop(event, zone));
 });
 $('back-to-match').addEventListener('click', resetToSetup);
-$('back-to-roster').addEventListener('click', resetToSetup);
+$('back-to-roster').addEventListener('click', restartEverything);
 $('opponent-out-btn').addEventListener('click', handleOpponentDoubleOut);
 $('winner-undo-btn').addEventListener('click', undoLastTurn);
 $('next-game-btn').addEventListener('click', startNextGame);
 $('email-csv-btn').addEventListener('click', emailResultsCSV);
 $('upload-results-btn').addEventListener('click', uploadResultsCSV);
 $('download-csv-btn').addEventListener('click', downloadResultsCSV);
+$('server-upload-btn').addEventListener('click', uploadResultsToServer);
 loadData();

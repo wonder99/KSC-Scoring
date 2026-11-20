@@ -1,0 +1,16 @@
+{
+  "name": "the-701-club",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser-based 701 darts scorer with CSV result uploads",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
+  }
+}
