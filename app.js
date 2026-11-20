@@ -1013,21 +1013,22 @@ async function uploadResultsToServer() {
             body: createResultsCSV()
         });
         
-        // Check if response is successful first
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Server returned HTTP ${response.status}: ${errorText}`);
-        }
-        
-        // Try to parse JSON response
-        let result;
+        const contentType = response.headers.get('content-type') || 'unknown content type';
+        const responseText = await response.text();
+        let result = null;
         try {
-            result = await response.json();
-        } catch (jsonError) {
-            console.error('Failed to parse JSON response:', jsonError);
-            throw new Error('Server returned invalid response format. Expected JSON.');
+            result = JSON.parse(responseText);
+        } catch {
+            const excerpt = responseText.replace(/\s+/g, ' ').slice(0, 180);
+            throw new Error(
+                `Expected JSON but received ${contentType} (HTTP ${response.status})` +
+                (excerpt ? `: ${excerpt}` : '.')
+            );
         }
-        
+
+        if (!response.ok) {
+            throw new Error(result && result.error ? result.error : `Server returned HTTP ${response.status}.`);
+        }
         if (!result || result.saved !== true) {
             throw new Error('The server returned an invalid upload response.');
         }
