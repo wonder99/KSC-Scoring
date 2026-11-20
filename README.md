@@ -4,6 +4,16 @@ A browser-based 701 darts scorer for one team's shared score. Four selected team
 
 See the [Player Guide](user-guide.html) for scoring instructions and a simple phone-hosting option.
 
+## App version
+
+The landing page version increments automatically before each commit. Enable the repository hook once per clone:
+
+```powershell
+git config --local core.hooksPath .githooks
+```
+
+The hook requires Node.js and stages the updated version label in `index.html`.
+
 ## Run the app
 
 The Node.js server serves the app and provides the score-upload API. To run it locally, configure `DATABASE_URL` with the PostgreSQL **External Database URL** from Render's database dashboard and add the `sslmode=require` query parameter. The internal Render hostname only resolves from Render services, not from your computer. Keep using the internal URL in the Render Web Service's environment settings. Also set `UPLOAD_API_KEY` to the same secret used by the app. Install dependencies and start the server:

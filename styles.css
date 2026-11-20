@@ -61,7 +61,7 @@ body {
     color: var(--green-light);
     font-weight: 700;
 }
-.commit-hash {
+.app-version {
     margin-top: auto;
     padding-top: 1rem;
     color: #8395a7;
@@ -569,17 +569,19 @@ body {
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-x pan-y;
+}
+
+.history-content {
+    display: grid;
+    width: max-content;
+    min-width: 100%;
+    gap: 0.2rem;
 }
 
 .history-player-block {
     background: var(--bg-card);
     border-radius: 12px;
     overflow: hidden;
-}
-
-.history-player-block + .history-player-block {
-    margin-top: 0.2rem;
 }
 
 .history-player-header {

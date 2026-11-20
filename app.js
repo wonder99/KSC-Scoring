@@ -1052,7 +1052,7 @@ function clearPersistedSession() {
 }
 
 function renderHistory() {
-    $('history-container').innerHTML = state.players.map(player => {
+    const rows = state.players.map(player => {
         const turns = state.history.filter(turn => turn.player === player.name);
         const cells = turns.map(turn => `
             <div class="history-column" title="${escapeHTML(player.name)}${turn.darts.length ? ` · ${turn.darts.map(dart => dart.label).join(', ')}` : ''}">
@@ -1063,6 +1063,7 @@ function renderHistory() {
             <div class="history-player-turns">${cells || '<span class="empty-history">—</span>'}</div>
         </div>`;
     }).join('');
+    $('history-container').innerHTML = `<div class="history-content">${rows}</div>`;
 }
 
 function handleOpponentDoubleOut() {
