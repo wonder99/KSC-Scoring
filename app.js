@@ -897,6 +897,8 @@ function renderWinnerModal() {
         ? `Game ${gameNumber} of 7 complete: ${opponentName} doubled out.`
         : `Game ${gameNumber} of 7 complete: ${teamName} beat ${opponentName}.`;
     $('next-game-btn').textContent = gameNumber < 7 ? `Choose lineup for Game ${gameNumber + 1}` : 'Choose another match';
+    $('server-upload-key-prompt').hidden = true;
+    $('server-upload-btn').textContent = 'Submit to League';
     setServerUploadStatus('');
     $('server-upload-btn').disabled = !state.matchResults.length;
     $('winner-modal').classList.remove('hidden');
@@ -928,31 +930,8 @@ function updateGameNavigation() {
     });
 }
 
-function csvCell(value) {
-    return `"${String(value).replace(/"/g, '""')}"`;
-}
-
 function createResultsCSV() {
-    const roundCount = Math.max(0, ...state.matchResults.flatMap(game =>
-        game.players.map(player => (player.roundScores || []).length)
-    ));
-    const rows = [[
-        'match_date', 'board', 'game', 'team', 'opponent', 'winner', 'player',
-        ...Array.from({ length: roundCount }, (_, index) => `round_${index + 1}`),
-        'Checkout'
-    ]];
-    for (const game of state.matchResults) {
-        for (const player of game.players) {
-            const teamWon = game.winner === game.team;
-            const roundScores = teamWon ? (player.roundScores || []) : [];
-            const roundColumns = Array.from({ length: roundCount }, (_, index) => roundScores[index] ?? '');
-            rows.push([
-                game.date, game.board, game.game, game.team, game.opponent, game.winner, player.name,
-                ...roundColumns, teamWon ? player.checkout : ''
-            ]);
-        }
-    }
-    return rows.map(row => row.map(csvCell).join(',')).join('\r\n');
+    return formatMatchResultsCSV(state.matchResults);
 }
 
 function setServerUploadStatus(message, kind = '') {
@@ -964,19 +943,19 @@ function setServerUploadStatus(message, kind = '') {
 
 async function uploadResultsToServer() {
     if (!state.matchResults.length) {
-        setServerUploadStatus('There are no completed games to save.', 'error');
+        setServerUploadStatus('There are no completed games to submit.', 'error');
         return;
     }
     const uploadKey = $('server-upload-key').value.trim();
     if (!uploadKey) {
-        setServerUploadStatus('Enter the league upload key to save these results.', 'error');
+        setServerUploadStatus('Enter the league upload key to submit these results.', 'error');
         $('server-upload-key').focus();
         return;
     }
 
     const button = $('server-upload-btn');
     button.disabled = true;
-    setServerUploadStatus('Saving results to the league server…');
+    setServerUploadStatus('Submitting results to the league server…');
     try {
         const response = await fetch('/api/score-uploads', {
             method: 'POST',
@@ -1007,10 +986,10 @@ async function uploadResultsToServer() {
             throw new Error('The server returned an invalid upload response.');
         }
         
-        setServerUploadStatus(`Saved ${result.rowCount} score rows to the league server.`, 'success');
+        setServerUploadStatus(`Submitted ${result.rowCount} score rows to the league server.`, 'success');
     } catch (error) {
         console.error('Upload error details:', error);
-        setServerUploadStatus(`Could not save results: ${error.message}`, 'error');
+        setServerUploadStatus(`Could not submit results: ${error.message}`, 'error');
     } finally {
         button.disabled = false;
     }
@@ -1263,5 +1242,14 @@ $('back-to-roster').addEventListener('click', restartEverything);
 $('opponent-out-btn').addEventListener('click', handleOpponentDoubleOut);
 $('winner-undo-btn').addEventListener('click', undoLastTurn);
 $('next-game-btn').addEventListener('click', startNextGame);
-$('server-upload-btn').addEventListener('click', uploadResultsToServer);
+$('server-upload-btn').addEventListener('click', () => {
+    const keyPrompt = $('server-upload-key-prompt');
+    if (keyPrompt.hidden) {
+        keyPrompt.hidden = false;
+        $('server-upload-btn').textContent = 'Submit Results';
+        $('server-upload-key').focus();
+        return;
+    }
+    uploadResultsToServer();
+});
 loadData();

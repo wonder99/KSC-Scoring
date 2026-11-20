@@ -6,12 +6,18 @@ const http = require('node:http');
 const path = require('node:path');
 
 const MAX_CSV_BYTES = 1024 * 1024;
+const MAX_JSON_BYTES = 64 * 1024;
+const MAX_EXPORT_UPLOADS = 100;
+const MAX_EXPORT_CSV_BYTES = 10 * 1024 * 1024;
 const PUBLIC_FILES = new Set([
     'app.js',
     'dart_league_schedule.csv',
     'index.html',
+    'results-csv.js',
     'styles.css',
     'team_lists.csv',
+    'uploads.html',
+    'uploads.js',
     'user-guide.html'
 ]);
 const CONTENT_TYPES = {
@@ -81,6 +87,14 @@ function isValidDate(value) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
     const date = new Date(`${value}T00:00:00.000Z`);
     return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+function formatDatabaseDate(value) {
+    if (!(value instanceof Date)) return String(value).slice(0, 10);
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
 function validateScoreCsv(csvText) {
@@ -153,21 +167,171 @@ function isAuthorized(request, expectedKey) {
     return supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
 }
 
-async function readCsvBody(request) {
+async function readRequestBody(request, maxBytes, tooLargeMessage) {
     const chunks = [];
     let size = 0;
     let tooLarge = false;
     for await (const chunk of request) {
         size += chunk.length;
-        if (size > MAX_CSV_BYTES) {
+        if (size > maxBytes) {
             tooLarge = true;
             chunks.length = 0;
         } else if (!tooLarge) {
             chunks.push(chunk);
         }
     }
-    if (tooLarge) throw new RequestError(413, 'The CSV exceeds the 1 MB upload limit.');
+    if (tooLarge) throw new RequestError(413, tooLargeMessage);
     return Buffer.concat(chunks).toString('utf8');
+}
+
+function readCsvBody(request) {
+    return readRequestBody(request, MAX_CSV_BYTES, 'The CSV exceeds the 1 MB upload limit.');
+}
+
+async function readJsonBody(request) {
+    const body = await readRequestBody(request, MAX_JSON_BYTES, 'The request exceeds the 64 KB limit.');
+    try {
+        return JSON.parse(body);
+    } catch {
+        throw new RequestError(400, 'The request body must be valid JSON.');
+    }
+}
+
+function validateUploadSelection(selection) {
+    if (!Array.isArray(selection) || selection.length === 0) {
+        throw new RequestError(400, 'Select at least one upload to export.');
+    }
+    if (selection.length > MAX_EXPORT_UPLOADS) {
+        throw new RequestError(400, `Select no more than ${MAX_EXPORT_UPLOADS} uploads at a time.`);
+    }
+
+    const keys = new Set();
+    return selection.map(item => {
+        if (!item || typeof item !== 'object' ||
+            !isValidDate(item.matchDate) ||
+            typeof item.board !== 'string' || !item.board.trim() ||
+            typeof item.team !== 'string' || !item.team.trim()) {
+            throw new RequestError(400, 'An upload selection contains invalid match details.');
+        }
+        const key = `${item.matchDate}\u0000${item.board}\u0000${item.team}`;
+        if (keys.has(key)) throw new RequestError(400, 'An upload was selected more than once.');
+        keys.add(key);
+        return { matchDate: item.matchDate, board: item.board, team: item.team };
+    });
+}
+
+async function handleUploadList(request, response, { pool, uploadApiKey }) {
+    if (!isAuthorized(request, uploadApiKey)) {
+        request.resume();
+        sendJson(response, 401, { error: 'A valid league upload key is required.' });
+        return;
+    }
+    if (request.method !== 'GET') {
+        request.resume();
+        sendJson(response, 405, { error: 'Method not allowed.' });
+        return;
+    }
+
+    const result = await pool.query(
+        `SELECT match_date, board, team, opponent, row_count, uploaded_at
+         FROM score_csv_uploads
+         ORDER BY match_date DESC, board, team`
+    );
+    sendJson(response, 200, {
+        uploads: result.rows.map(row => ({
+            matchDate: formatDatabaseDate(row.match_date),
+            board: row.board,
+            team: row.team,
+            opponent: row.opponent,
+            rowCount: row.row_count,
+            uploadedAt: row.uploaded_at
+        }))
+    });
+}
+
+async function handleUploadExport(request, response, { pool, uploadApiKey }) {
+    if (!isAuthorized(request, uploadApiKey)) {
+        request.resume();
+        sendJson(response, 401, { error: 'A valid league upload key is required.' });
+        return;
+    }
+    if (request.method !== 'POST') {
+        request.resume();
+        sendJson(response, 405, { error: 'Method not allowed.' });
+        return;
+    }
+    if ((request.headers['content-type'] || '').split(';')[0].trim().toLowerCase() !== 'application/json') {
+        request.resume();
+        sendJson(response, 415, { error: 'Content-Type must be application/json.' });
+        return;
+    }
+
+    const body = await readJsonBody(request);
+    const selection = validateUploadSelection(body && body.uploads);
+    const values = [];
+    const predicates = selection.map((upload, index) => {
+        const offset = index * 3;
+        values.push(upload.matchDate, upload.board, upload.team);
+        return `(match_date = $${offset + 1} AND board = $${offset + 2} AND team = $${offset + 3})`;
+    });
+    const result = await pool.query(
+        `SELECT match_date, board, team, csv_data
+         FROM score_csv_uploads
+         WHERE ${predicates.join(' OR ')}
+         ORDER BY match_date, board, team`,
+        values
+    );
+    if (result.rows.length !== selection.length) {
+        sendJson(response, 404, { error: 'One or more selected uploads could not be found.' });
+        return;
+    }
+
+    const totalCsvBytes = result.rows.reduce((total, row) => total + Buffer.byteLength(row.csv_data), 0);
+    if (totalCsvBytes > MAX_EXPORT_CSV_BYTES) {
+        throw new RequestError(413, 'The selected uploads exceed the 10 MB export limit.');
+    }
+    const parsedUploads = result.rows.map(upload => {
+        const rows = parseCsv(upload.csv_data).filter(row => !row.every(value => !value.trim()));
+        return { header: rows[0], rows: rows.slice(1) };
+    });
+    const roundCount = Math.max(0, ...parsedUploads.flatMap(upload =>
+        upload.header.filter(header => /^round_\d+$/.test(header))
+            .map(header => Number(header.slice('round_'.length)))
+    ));
+    const headers = [
+        'match_date', 'board', 'game', 'team', 'opponent', 'winner', 'player',
+        ...Array.from({ length: roundCount }, (_, index) => `round_${index + 1}`),
+        'Checkout'
+    ];
+
+    const csvRows = [headers];
+    for (const upload of parsedUploads) {
+        const columnIndexes = new Map(upload.header.map((header, index) => [header, index]));
+        for (const row of upload.rows) {
+            csvRows.push(headers.map(header => {
+                const index = columnIndexes.get(header);
+                const value = index === undefined ? '' : row[index] || '';
+                return value;
+            }));
+        }
+    }
+
+    const csv = csvRows
+        .map(row => row.map(serializeCsvCell).join(','))
+        .join('\r\n');
+    const file = Buffer.from(csv, 'utf8');
+    response.writeHead(200, {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Length': file.length,
+        'Content-Disposition': 'attachment; filename="701-score-uploads.csv"',
+        'Cache-Control': 'no-store',
+        'X-Content-Type-Options': 'nosniff'
+    });
+    response.end(file);
+}
+
+function serializeCsvCell(value) {
+    return `"${String(value ?? '').replace(/"/g, '""')}"`;
 }
 
 async function handleUpload(request, response, url, { pool, uploadApiKey }) {
@@ -236,7 +400,7 @@ async function serveStatic(request, response, publicDir, pathname) {
         response.end('Method not allowed.');
         return;
     }
-    const fileName = pathname === '/' ? 'index.html' : pathname.slice(1);
+    const fileName = pathname === '/' ? 'index.html' : pathname === '/uploads' ? 'uploads.html' : pathname.slice(1);
     if (!PUBLIC_FILES.has(fileName)) {
         response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
         response.end('Not found.');
@@ -266,11 +430,16 @@ function createServer({ pool, uploadApiKey, publicDir = __dirname }) {
             return;
         }
         const pathname = decodeURIComponent(url.pathname);
+        const context = { pool, uploadApiKey };
         const handler = pathname === '/api/score-uploads'
-            ? handleUpload(request, response, url, { pool, uploadApiKey })
-            : pathname.startsWith('/api/')
-                ? Promise.resolve(sendJson(response, 404, { error: 'API route not found.' }))
-                : serveStatic(request, response, publicDir, pathname);
+            ? handleUpload(request, response, url, context)
+            : pathname === '/api/score-uploads/list'
+                ? handleUploadList(request, response, context)
+                : pathname === '/api/score-uploads/export'
+                    ? handleUploadExport(request, response, context)
+                    : pathname.startsWith('/api/')
+                        ? Promise.resolve(sendJson(response, 404, { error: 'API route not found.' }))
+                        : serveStatic(request, response, publicDir, pathname);
         handler.catch(error => {
             if (response.headersSent) {
                 response.destroy(error);

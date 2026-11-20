@@ -6,16 +6,18 @@ See the [Player Guide](user-guide.html) for scoring instructions and a simple ph
 
 ## Run the app
 
-The Node.js server serves the app and provides the score-upload API. To run it locally, configure `DATABASE_URL` with a PostgreSQL connection string and set `UPLOAD_API_KEY` to a secret key. Install dependencies and start the server:
+The Node.js server serves the app and provides the score-upload API. To run it locally, configure `DATABASE_URL` with the PostgreSQL **External Database URL** from Render's database dashboard and add the `sslmode=require` query parameter. The internal Render hostname only resolves from Render services, not from your computer. Keep using the internal URL in the Render Web Service's environment settings. Also set `UPLOAD_API_KEY` to the same secret used by the app. Install dependencies and start the server:
 
 ```powershell
 npm.cmd install
-$env:DATABASE_URL = "your-postgresql-connection-string"
+$env:DATABASE_URL = "your-external-postgresql-connection-string?sslmode=require"
 $env:UPLOAD_API_KEY = "your-secret-upload-key"
 npm.cmd start
 ```
 
 Open <http://localhost:10000>. Enter the same `UPLOAD_API_KEY` value in the app's **League upload key** field when saving results.
+
+If the external URL already contains a `?` query string, add `&sslmode=require` instead.
 
 For scoring without server uploads, you can still serve the files with a static HTTP server. In that case, the **Save to League** API is unavailable.
 
@@ -30,7 +32,7 @@ When scoring with the dart grid, enter up to three darts per turn; Miss records 
 
 Checkout suggestions follow the recommended outs and alternatives in [Rick Smith's Doubling Out Charts](https://ricksmith.ca/Darts/dartsouts.htm), including the chart's unavailable three-dart finishes. During a dart-grid turn, the strategy updates for the remaining darts. Turn history appears below the scoring controls as four player rows, with each player's successive scores shown as positive values and added horizontally; scores of 95 or more are highlighted. If the opponent doubles out first, select the opponent-win button and confirm to finish the game as a loss.
 
-After each game, the winner screen offers CSV download, **Email CSV**, or **Upload Results**. The CSV contains each selected player's accepted points and turn count, plus the winning team, for every completed game in the fixture. Email CSV downloads the file and opens a Gmail draft addressed to `speedfreqall@gmail.com`; sign in if prompted and attach the downloaded CSV before sending. Upload Results downloads the file and opens the team's Dropbox File Request; select the downloaded CSV on Dropbox to complete the upload. Neither service receives the file automatically.
+After each game, use **Save to League** on the winner screen to store the fixture's results, including the team's recorded turn scores whether it won or lost. On the Web Service, open `/uploads` to select saved match/team uploads and download them together as CSV.
 
 ## Deploy and share the app
 
@@ -41,6 +43,8 @@ To enable **Save to League**, deploy this repository to Render as a **Web Servic
 - **Environment Variables**: `DATABASE_URL` (from a PostgreSQL database) and `UPLOAD_API_KEY` (a secret key)
 
 The upload key entered in the app must exactly match the service's `UPLOAD_API_KEY`. A static-site deployment such as Netlify Drop can host the scoring UI, but it does not run this Node.js API, so server uploads will not work there.
+
+Open `/uploads` on the Web Service URL to browse saved uploads. Enter the league upload key, select one or more match/team entries, and choose **Download selected as CSV**. The file contains the combined score rows from the selected uploads and can be read directly in VS Code.
 
 Match progress is saved in the browser on that device and restored after a reload; it is not synchronized between devices or saved to an account. Clearing the browser's site data removes saved progress, so download results before clearing it.
 

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uploaded Scores | KSC Darts Scorer</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <main class="uploads-page">
+        <a class="player-guide-link" href="/">Back to scorer</a>
+        <h1>Uploaded scores</h1>
+        <p class="subtitle">Choose the match uploads to include in an Excel workbook.</p>
+
+        <section class="uploads-card" aria-label="Score upload browser">
+            <label for="upload-key">League upload key</label>
+            <div class="uploads-key-row">
+                <input id="upload-key" type="password" autocomplete="off">
+                <button id="load-uploads-btn" class="btn btn-small" type="button">Load uploads</button>
+            </div>
+            <p id="uploads-status" class="help-text" role="status" aria-live="polite"></p>
+
+            <div class="uploads-actions">
+                <label class="select-all-label">
+                    <input id="select-all-uploads" type="checkbox" disabled>
+                    Select all
+                </label>
+                <button id="export-uploads-btn" class="btn btn-primary" type="button" disabled>
+                    Download selected as CSV
+                </button>
+            </div>
+
+            <div id="uploads-list" class="uploads-list">
+                <p class="help-text">Enter the upload key and load the saved scores.</p>
+            </div>
+        </section>
+    </main>
+    <script src="/uploads.js"></script>
+</body>
+</html>
