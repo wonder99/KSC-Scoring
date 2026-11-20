@@ -334,7 +334,7 @@ body {
     border-color: var(--green);
 }
 
-.toggle-grid-btn, .submit-score-btn, .skip-turn-btn {
+.toggle-grid-btn, .submit-score-btn, .skip-turn-btn, .undo-turn-btn {
     padding: 0.75rem 1.2rem;
     border: none;
     border-radius: 8px;
@@ -364,6 +364,14 @@ body {
     border: 1px solid var(--red);
 }
 .skip-turn-btn:hover { background: rgba(231, 76, 60, 0.1); }
+
+.undo-turn-btn {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+.undo-turn-btn:hover:not(:disabled) { background: var(--bg-card-hover); }
+.undo-turn-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .action-buttons {
     display: flex;
@@ -610,13 +618,6 @@ body {
     gap: 0.75rem;
     padding: 0.6rem 1rem;
     border-top: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-.history-turn-number {
-    color: var(--text-muted);
-    font-size: 0.68rem;
-    min-width: 22px;
-    font-weight: 600;
 }
 
 .history-darts {
@@ -886,6 +887,7 @@ body {
 .modal-content #email-status { margin-bottom: 1rem; }
 .modal-content #next-game-btn { width: 100%; }
 .turn-summary { min-height: 1.5rem; margin-top: 0.75rem; text-align: center; color: var(--green-light); }
+.turn-summary.warning { color: var(--red); }
 .empty-history { padding: 1rem; text-align: center; color: var(--text-muted); }
 .history-turn-total { margin-left: auto; font-weight: 700; }
 .history-turn-total.bust { color: var(--red); }
@@ -923,7 +925,6 @@ body {
     border-radius: 5px;
 }
 
-.history-column .history-turn-number { min-width: 0; }
 .history-column .history-turn-total { min-width: 0; }
 .history-player-turns .empty-history { padding: 0.2rem 0; }
 

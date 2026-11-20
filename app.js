@@ -1,6 +1,7 @@
 const STARTING_SCORE = 701;
 const SPARE_PLAYER_NAME = 'Spare';
 const PLAYER_COLORS = ['#3498db', '#e67e22', '#1abc9c', '#9b59b6'];
+const SELECTED_TEAM_COOKIE = 'selectedTeam';
 const state = {
     teams: new Map(),
     schedule: [],
@@ -22,7 +23,8 @@ const state = {
     history: [],
     turnDarts: [],
     turnTotal: 0,
-    winner: false
+    winner: false,
+    lastTurnSnapshot: null
 };
 
 const $ = (id) => document.getElementById(id);
@@ -57,6 +59,24 @@ function canonicalTeamName(name) {
 
 function displayTeamName(name) {
     return name.replace(/\s*\(\d+\)\s*$/, '').trim();
+}
+
+function getCookie(name) {
+    const cookie = document.cookie.split('; ').find(item => item.startsWith(`${name}=`));
+    if (!cookie) return '';
+    try {
+        return decodeURIComponent(cookie.slice(name.length + 1));
+    } catch (error) {
+        return '';
+    }
+}
+
+function saveSelectedTeam(team) {
+    document.cookie = `${SELECTED_TEAM_COOKIE}=${encodeURIComponent(team)}; max-age=31536000; path=/; SameSite=Lax`;
+}
+
+function clearSelectedTeamCookie() {
+    document.cookie = `${SELECTED_TEAM_COOKIE}=; max-age=0; path=/; SameSite=Lax`;
 }
 
 function loadRosters(rows) {
@@ -125,10 +145,10 @@ function populateDates() {
     $('start-game-btn').disabled = true;
     $('opponent-name').textContent = 'Select a match day and team';
     $('board-display').textContent = '';
-    if (defaultDate) populateTeams();
+    if (defaultDate) populateTeams(true);
 }
 
-function populateTeams() {
+function populateTeams(restoreSavedTeam = false) {
     const date = $('match-date').value;
     const teams = [...new Set(state.schedule.filter(match => match.date === date).flatMap(match => match.teams))];
     $('team-select').innerHTML = '<option value="">Choose your team</option>' +
@@ -140,11 +160,19 @@ function populateTeams() {
     $('load-status').textContent = '';
     $('load-status').classList.add('visually-hidden');
     $('load-status').classList.remove('error');
+    if (restoreSavedTeam) {
+        const savedTeam = getCookie(SELECTED_TEAM_COOKIE);
+        if (teams.includes(savedTeam)) {
+            $('team-select').value = savedTeam;
+            selectMatch();
+        }
+    }
 }
 
 function selectMatch() {
     const scheduledTeam = $('team-select').value;
     if (!scheduledTeam) {
+        clearSelectedTeamCookie();
         state.teamName = '';
         state.opponent = '';
         $('opponent-name').textContent = 'Select your team';
@@ -171,6 +199,7 @@ function selectMatch() {
     state.matchDate = match.date;
     state.board = match.board;
     state.teamName = scheduledTeam;
+    saveSelectedTeam(scheduledTeam);
     state.opponent = match.teams.find(team => team !== scheduledTeam) || '';
     state.rosterPlayers = roster ? roster.players : [];
     $('opponent-name').textContent = state.opponent;
@@ -364,6 +393,7 @@ function startSelectedGame() {
     state.turnTotal = 0;
     state.playerPoints = Object.fromEntries(state.players.map(player => [player.name, 0]));
     state.winner = false;
+    state.lastTurnSnapshot = null;
     $('lineup-screen').classList.remove('active');
     $('roster-screen').classList.remove('active');
     $('game-screen').classList.add('active');
@@ -386,6 +416,7 @@ function renderGame() {
     renderDartInput();
     renderHistory();
     renderCheckouts();
+    updateUndoButtons();
 }
 
 function renderDartInput() {
@@ -404,12 +435,13 @@ function renderDartInput() {
             <div class="dart-input-label">Scoring for <strong>${escapeHTML(state.players[state.currentPlayer].name)}</strong></div>
             ${isSpare ? '<p class="spare-note">Spare automatically scores 25</p>' : ''}
             <div class="total-input-row">
-                <input type="number" id="score-total-input" placeholder="Turn Total" value="${isSpare ? 25 : ''}" min="0" max="180" inputmode="numeric" aria-label="Turn Total">
+                <input type="number" id="score-total-input" placeholder="Turn Total" value="${state.turnTotal || ''}" min="0" max="180" inputmode="numeric" aria-label="Turn Total">
                 <button class="toggle-grid-btn" id="toggle-grid-btn" type="button">🎯 Dart Grid</button>
             </div>
             <div class="action-buttons">
                 <button class="submit-score-btn" id="submit-turn-btn" type="button" disabled>Submit Turn (0)</button>
                 <button class="skip-turn-btn" id="bust-turn-btn" type="button">Bust / Skip</button>
+                <button class="undo-turn-btn" id="undo-turn-btn" type="button" disabled>Undo Last</button>
             </div>
             <div class="dart-grid-container" id="dart-grid-container">
                 <div class="dart-grid-wrapper">
@@ -426,6 +458,10 @@ function renderDartInput() {
         </div>`;
     $('score-total-input').addEventListener('input', event => {
         const value = Number(event.target.value);
+        if (value > 180) {
+            rejectTurnTotal('Turn totals cannot exceed 180. The score was cleared.');
+            return;
+        }
         state.turnTotal = Number.isInteger(value) && value >= 0 ? value : 0;
         state.turnDarts = [];
         updateTurnSummary();
@@ -436,6 +472,7 @@ function renderDartInput() {
     $('toggle-grid-btn').addEventListener('click', () => $('dart-grid-container').classList.toggle('open'));
     $('submit-turn-btn').addEventListener('click', submitTurn);
     $('bust-turn-btn').addEventListener('click', bustTurn);
+    $('undo-turn-btn').addEventListener('click', undoLastTurn);
     let multiplier = 1;
     const bullButton = target.querySelector('[data-number="bull"]');
     target.querySelectorAll('[data-multiplier]').forEach(button => {
@@ -484,6 +521,7 @@ function addDart(number, multiplier) {
 }
 
 function updateTurnSummary() {
+    $('turn-summary').classList.remove('warning');
     $('submit-turn-btn').disabled = (state.turnTotal <= 0 && state.turnDarts.length === 0) || state.turnTotal > 180;
     $('submit-turn-btn').textContent = `Submit Turn (${state.turnTotal})`;
     const darts = state.turnDarts.map(dart => escapeHTML(dart.label)).join(' · ');
@@ -494,12 +532,33 @@ function updateTurnSummary() {
         : '';
 }
 
+function rejectTurnTotal(message) {
+    state.turnTotal = 0;
+    state.turnDarts = [];
+    $('score-total-input').value = '';
+    updateTurnSummary();
+    $('turn-summary').textContent = message;
+    $('turn-summary').classList.add('warning');
+}
+
 function submitTurn() {
     if ((state.turnTotal <= 0 && state.turnDarts.length === 0) || state.winner) return;
     const total = state.turnTotal;
+    if (total > 180) {
+        rejectTurnTotal('Turn totals cannot exceed 180. The score was cleared.');
+        return;
+    }
     const remaining = state.score - total;
+    const manualEntry = state.turnDarts.length === 0;
+    if (remaining === 0 && manualEntry && total % 2 !== 0) {
+        rejectTurnTotal('A double-out requires an even score. Enter the score again.');
+        return;
+    }
+    saveTurnSnapshot();
     const lastDart = state.turnDarts[state.turnDarts.length - 1];
-    const checkout = remaining === 0 && lastDart && (/^D\d+$/.test(lastDart.label) || lastDart.label === 'Bull');
+    const assumedDoubleCheckout = remaining === 0 && manualEntry && total % 2 === 0;
+    const dartCheckout = lastDart && (/^D\d+$/.test(lastDart.label) || lastDart.label === 'Bull');
+    const checkout = remaining === 0 && (assumedDoubleCheckout || dartCheckout);
     const bust = remaining < 0 || remaining === 1 || (remaining === 0 && !checkout);
     state.history.push({
         player: state.players[state.currentPlayer].name,
@@ -523,6 +582,8 @@ function submitTurn() {
 }
 
 function bustTurn() {
+    if (state.winner) return;
+    saveTurnSnapshot();
     state.history.push({ player: state.players[state.currentPlayer].name, total: state.turnTotal, darts: [...state.turnDarts], busted: true });
     state.turnDarts = [];
     state.turnTotal = 0;
@@ -530,10 +591,50 @@ function bustTurn() {
     renderGame();
 }
 
+function saveTurnSnapshot() {
+    state.lastTurnSnapshot = {
+        score: state.score,
+        currentPlayer: state.currentPlayer,
+        history: state.history.slice(),
+        turnDarts: state.turnDarts.map(dart => ({ ...dart })),
+        turnTotal: state.turnTotal,
+        playerPoints: { ...state.playerPoints },
+        winner: state.winner,
+        gamesCompleted: state.gamesCompleted,
+        matchResults: state.matchResults.slice()
+    };
+}
+
+function undoLastTurn() {
+    const snapshot = state.lastTurnSnapshot;
+    if (!snapshot) return;
+    state.score = snapshot.score;
+    state.currentPlayer = snapshot.currentPlayer;
+    state.history = snapshot.history;
+    state.turnDarts = snapshot.turnDarts;
+    state.turnTotal = snapshot.turnTotal;
+    state.playerPoints = snapshot.playerPoints;
+    state.winner = snapshot.winner;
+    state.gamesCompleted = snapshot.gamesCompleted;
+    state.matchResults = snapshot.matchResults;
+    state.lastTurnSnapshot = null;
+    $('winner-modal').classList.add('hidden');
+    renderGame();
+    $('score-total-input').focus();
+}
+
+function updateUndoButtons() {
+    const disabled = !state.lastTurnSnapshot;
+    const turnUndoButton = $('undo-turn-btn');
+    if (turnUndoButton) turnUndoButton.disabled = disabled;
+    $('winner-undo-btn').disabled = disabled;
+}
+
 function finishGame(opponentWon = false) {
     if (state.winner) return;
     state.winner = true;
     const gameNumber = state.gamesCompleted + 1;
+    const winningTurn = opponentWon ? null : state.history[state.history.length - 1];
     state.matchResults.push({
         date: state.matchDate,
         board: state.board,
@@ -544,7 +645,9 @@ function finishGame(opponentWon = false) {
         players: state.players.map(player => ({
             name: player.name,
             turns: state.history.filter(turn => turn.player === player.name).length,
-            points: state.playerPoints[player.name]
+            points: state.playerPoints[player.name],
+            roundScores: state.history.filter(turn => turn.player === player.name).map(turn => turn.total),
+            checkout: winningTurn && winningTurn.player === player.name ? winningTurn.total : ''
         }))
     });
     state.gamesCompleted = gameNumber;
@@ -566,10 +669,23 @@ function csvCell(value) {
 }
 
 function createResultsCSV() {
-    const rows = [['match_date', 'board', 'game', 'team', 'opponent', 'winner', 'player', 'turns', 'total_points_scored']];
+    const roundCount = Math.max(0, ...state.matchResults.flatMap(game =>
+        game.players.map(player => (player.roundScores || []).length)
+    ));
+    const rows = [[
+        'match_date', 'board', 'game', 'team', 'opponent', 'winner', 'player',
+        ...Array.from({ length: roundCount }, (_, index) => `round_${index + 1}`),
+        'Checkout'
+    ]];
     for (const game of state.matchResults) {
         for (const player of game.players) {
-            rows.push([game.date, game.board, game.game, game.team, game.opponent, game.winner, player.name, player.turns, player.points]);
+            const teamWon = game.winner === game.team;
+            const roundScores = teamWon ? (player.roundScores || []) : [];
+            const roundColumns = Array.from({ length: roundCount }, (_, index) => roundScores[index] ?? '');
+            rows.push([
+                game.date, game.board, game.game, game.team, game.opponent, game.winner, player.name,
+                ...roundColumns, teamWon ? player.checkout : ''
+            ]);
         }
     }
     return rows.map(row => row.map(csvCell).join(',')).join('\r\n');
@@ -627,9 +743,8 @@ function startNextGame() {
 function renderHistory() {
     $('history-container').innerHTML = state.players.map(player => {
         const turns = state.history.filter(turn => turn.player === player.name);
-        const cells = turns.map((turn, index) => `
-            <div class="history-column" title="${escapeHTML(player.name)} · Turn ${index + 1}${turn.darts.length ? ` · ${turn.darts.map(dart => dart.label).join(', ')}` : ''}">
-                <span class="history-turn-number">#${index + 1}</span>
+        const cells = turns.map(turn => `
+            <div class="history-column" title="${escapeHTML(player.name)}${turn.darts.length ? ` · ${turn.darts.map(dart => dart.label).join(', ')}` : ''}">
                 <span class="history-turn-total ${turn.busted ? 'bust' : ''} ${!turn.busted && turn.total >= 95 ? 'high-score' : ''}">${turn.busted ? 'BUST' : turn.total}</span>
             </div>`).join('');
         return `<div class="history-player-block">
@@ -792,6 +907,7 @@ function renderCheckouts() {
 
 function resetToSetup() {
     state.winner = false;
+    state.lastTurnSnapshot = null;
     state.history = [];
     state.score = STARTING_SCORE;
     state.players = [];
@@ -818,6 +934,7 @@ $('start-selected-game-btn').addEventListener('click', startSelectedGame);
 $('back-to-match').addEventListener('click', resetToSetup);
 $('back-to-roster').addEventListener('click', resetToSetup);
 $('opponent-out-btn').addEventListener('click', handleOpponentDoubleOut);
+$('winner-undo-btn').addEventListener('click', undoLastTurn);
 $('next-game-btn').addEventListener('click', startNextGame);
 $('email-csv-btn').addEventListener('click', emailResultsCSV);
 $('upload-results-btn').addEventListener('click', uploadResultsCSV);
