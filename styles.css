@@ -559,6 +559,14 @@ body {
     gap: 0.2rem;
     min-width: 0;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    /* Ensure proper scrolling on iOS */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .history-player-block {
@@ -1031,63 +1039,8 @@ body {
     border-radius: 5px;
 }
 
-.history-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 0.5rem 0;
-    margin: 0 -0.5rem;
-    /* Ensure proper scrolling on iOS */
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-}
-
-.history-player-block {
-    display: grid;
-    width: max-content;
-    min-width: 100%;
-    grid-template-columns: minmax(82px, 120px) max-content;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.1rem 0.35rem;
-}
-
-.history-player-turns {
-    display: flex;
-    width: max-content;
-    min-width: max-content;
-    gap: 0.2rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 0.2rem 0;
-    /* Ensure flex items can shrink properly */
-    flex-shrink: 0;
-}
-
-.history-column {
-    display: flex;
-    flex: 0 0 3.3rem;
-    min-height: 1.55rem;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.15rem;
-    padding: 0.08rem 0.22rem;
-    background: var(--bg-dark);
-    border-radius: 5px;
-    /* Ensure column items can shrink properly */
-    flex-shrink: 0;
-}
-
 .history-column .history-turn-total { min-width: 0; }
 .history-player-turns .empty-history { padding: 0.2rem 0; }
-
-/* Ensure consistent spacing between player rows */
-.history-player-block + .history-player-block {
-    margin-top: 0.5rem;
-}
 
 .strategy-label {
     margin-right: auto;
