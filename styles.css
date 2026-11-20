@@ -1043,9 +1043,6 @@ body {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-    /* Ensure all history rows scroll as a unit */
-    display: flex;
-    flex-direction: column;
 }
 
 .history-player-block {
@@ -1056,8 +1053,6 @@ body {
     align-items: center;
     gap: 0.25rem;
     padding: 0.1rem 0.35rem;
-    /* Make sure each player block scrolls together */
-    flex-shrink: 0;
 }
 
 .history-player-turns {
@@ -1070,8 +1065,6 @@ body {
     padding: 0.2rem 0;
     /* Ensure flex items can shrink properly */
     flex-shrink: 0;
-    /* Make the turns container behave as a single scrolling unit */
-    min-width: fit-content;
 }
 
 .history-column {

@@ -26,3 +26,17 @@ When any agent other than Local Fast is the main agent:
 4. If the current harness cannot invoke a subagent, say so instead of claiming the task was delegated.
 
 This division optimizes resource usage while maintaining quality.
+
+## Test Methodology
+
+When testing application changes, follow this methodology:
+1. **Syntax Validation**: Run `node --check app.js` to validate JavaScript syntax
+2. **Automated Tests**: Execute existing tests with `node --test tests/*.js` 
+3. **Manual Verification**: Test UI behavior in browser including:
+   - Scoring line displays active player and remaining score correctly
+   - History rows scroll horizontally together with tight spacing intact
+   - Checkout strategy text remains legible
+   - Finished-game dialog shows proper layout (undo, submit buttons)
+   - League key visibility works as expected (hidden until "Submit to League" is clicked)
+   - Uploads page links are properly configured (no link on first page)
+4. **Cross-Platform Testing**: Verify behavior on desktop, mobile, and iOS specifically
