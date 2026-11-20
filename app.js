@@ -24,10 +24,192 @@ const state = {
     turnDarts: [],
     turnTotal: 0,
     winner: false,
-    lastTurnSnapshot: null
+    lastTurnSnapshot: null,
+    games: Array(7).fill(null),
+    activeGameIndex: 0,
+    gameStarted: false,
+    showWinnerDialog: false,
+    currentScreen: 'roster'
 };
 
 const $ = (id) => document.getElementById(id);
+const SESSION_STORAGE_KEY = 'ksc-darts-scorer-session';
+
+function createEmptyGameSlot() {
+    return {
+        started: false,
+        lineupOrder: [],
+        availablePlayers: [],
+        players: [],
+        score: STARTING_SCORE,
+        currentPlayer: 0,
+        history: [],
+        turnDarts: [],
+        turnTotal: 0,
+        playerPoints: {},
+        winner: false,
+        lastTurnSnapshot: null,
+        result: null
+    };
+}
+
+function initializeGameSlots() {
+    state.games = Array.from({ length: 7 }, createEmptyGameSlot);
+    state.activeGameIndex = 0;
+    state.gamesCompleted = 0;
+    state.matchResults = [];
+    state.lineupOrder = [];
+    state.availablePlayers = [];
+    state.players = [];
+    state.gameStarted = false;
+    state.score = STARTING_SCORE;
+    state.currentPlayer = 0;
+    state.history = [];
+    state.turnDarts = [];
+    state.turnTotal = 0;
+    state.playerPoints = {};
+    state.winner = false;
+    state.showWinnerDialog = false;
+    state.lastTurnSnapshot = null;
+    state.currentScreen = 'roster';
+}
+
+function setPersistenceStatus(message) {
+    document.querySelectorAll('.persistence-status').forEach(status => {
+        status.textContent = message;
+        status.classList.toggle('error', Boolean(message));
+    });
+}
+
+function saveActiveGame() {
+    if (!state.matchKey || state.games.length !== 7) return;
+    state.games[state.activeGameIndex] = {
+        started: state.gameStarted,
+        lineupOrder: [...state.lineupOrder],
+        availablePlayers: [...state.availablePlayers],
+        players: state.players.map(player => ({ ...player })),
+        score: state.score,
+        currentPlayer: state.currentPlayer,
+        history: state.history.map(turn => ({ ...turn, darts: turn.darts.map(dart => ({ ...dart })) })),
+        turnDarts: state.turnDarts.map(dart => ({ ...dart })),
+        turnTotal: state.turnTotal,
+        playerPoints: { ...state.playerPoints },
+        winner: state.winner,
+        lastTurnSnapshot: state.lastTurnSnapshot,
+        result: state.matchResults.find(result => result.game === state.activeGameIndex + 1) || null
+    };
+}
+
+function persistSession() {
+    if (!state.matchKey) return;
+    try {
+        saveActiveGame();
+        localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
+            version: 1,
+            matchDate: state.matchDate,
+            board: state.board,
+            teamName: state.teamName,
+            opponent: state.opponent,
+            matchKey: state.matchKey,
+            activeGameIndex: state.activeGameIndex,
+            currentScreen: state.currentScreen,
+            games: state.games
+        }));
+        setPersistenceStatus('');
+    } catch (error) {
+        setPersistenceStatus(`Could not save this match in this browser: ${error.message}`);
+    }
+}
+
+function loadActiveGame() {
+    const game = state.games[state.activeGameIndex];
+    state.gameStarted = game.started;
+    state.lineupOrder = [...game.lineupOrder];
+    state.availablePlayers = [...game.availablePlayers];
+    state.players = game.players.map(player => ({ ...player }));
+    state.score = game.score;
+    state.currentPlayer = game.currentPlayer;
+    state.history = game.history.map(turn => ({ ...turn, darts: turn.darts.map(dart => ({ ...dart })) }));
+    state.turnDarts = game.turnDarts.map(dart => ({ ...dart }));
+    state.turnTotal = game.turnTotal;
+    state.playerPoints = { ...game.playerPoints };
+    state.winner = game.winner;
+    state.lastTurnSnapshot = game.lastTurnSnapshot;
+}
+
+function restorePersistedSession() {
+    let serialized;
+    try {
+        serialized = localStorage.getItem(SESSION_STORAGE_KEY);
+    } catch (error) {
+        setPersistenceStatus(`Could not read the saved match from this browser: ${error.message}`);
+        populateDates(false);
+        return true;
+    }
+    if (!serialized) return false;
+
+    try {
+        const saved = JSON.parse(serialized);
+        if (saved.version !== 1 || !Array.isArray(saved.games) || saved.games.length !== 7 ||
+            !Number.isInteger(saved.activeGameIndex) || saved.activeGameIndex < 0 || saved.activeGameIndex > 6) {
+            throw new Error('The saved match data is invalid.');
+        }
+        const scheduledMatch = state.schedule.find(match =>
+            match.date === saved.matchDate && match.teams.includes(saved.teamName)
+        );
+        if (!scheduledMatch) throw new Error('The saved team and match date are no longer in the schedule.');
+
+        const savedGames = saved.games.map((game, index) => {
+            if (!game || typeof game.started !== 'boolean' || !Array.isArray(game.lineupOrder) ||
+                !Array.isArray(game.availablePlayers) || !Array.isArray(game.players) ||
+                !Array.isArray(game.history) || !Array.isArray(game.turnDarts) ||
+                !Number.isInteger(game.score) || game.score < 0 || game.score > STARTING_SCORE ||
+                !Number.isInteger(game.turnTotal) || game.turnTotal < 0 || game.turnTotal > 180 ||
+                !Number.isInteger(game.currentPlayer) || typeof game.winner !== 'boolean' ||
+                !game.playerPoints || typeof game.playerPoints !== 'object' ||
+                (game.started && (game.players.length !== 4 || game.currentPlayer > 3))) {
+                throw new Error(`Saved data for Game ${index + 1} is invalid.`);
+            }
+            return { ...createEmptyGameSlot(), ...game };
+        });
+
+        populateDates(false);
+        $('match-date').value = saved.matchDate;
+        populateTeams(false);
+        if (![...$('team-select').options].some(option => option.value === saved.teamName)) {
+            throw new Error('The saved team is not available for that match date.');
+        }
+        $('team-select').value = saved.teamName;
+        selectMatch(false);
+        state.games = savedGames;
+        state.activeGameIndex = saved.activeGameIndex;
+        state.matchResults = savedGames
+            .map(game => game.result)
+            .filter(Boolean)
+            .sort((left, right) => left.game - right.game);
+        state.gamesCompleted = state.matchResults.length;
+        state.currentScreen = ['roster', 'lineup', 'game'].includes(saved.currentScreen)
+            ? saved.currentScreen
+            : 'roster';
+        loadActiveGame();
+
+        if (state.gameStarted) {
+            showGameScreen();
+        } else if (state.currentScreen === 'lineup') {
+            showLineupScreen();
+        } else {
+            state.currentScreen = 'roster';
+            $('roster-screen').classList.add('active');
+            updateGameNavigation();
+            persistSession();
+        }
+        return true;
+    } catch (error) {
+        setPersistenceStatus(`Could not restore the saved match: ${error.message}`);
+        if (!$('match-date').options.length || $('match-date').options.length === 1) populateDates(false);
+        return true;
+    }
+}
 
 function parseCSV(text) {
     return text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(line => line.trim()).map(line => {
@@ -122,7 +304,7 @@ async function loadData() {
         if (!scheduleResponse.ok) throw new Error(`dart_league_schedule.csv returned HTTP ${scheduleResponse.status}`);
         loadRosters(parseCSV(await rosterResponse.text()));
         loadSchedule(parseCSV(await scheduleResponse.text()));
-        populateDates();
+        if (!restorePersistedSession()) populateDates();
         $('match-date').disabled = false;
         $('load-status').classList.remove('error');
     } catch (error) {
@@ -130,7 +312,7 @@ async function loadData() {
     }
 }
 
-function populateDates() {
+function populateDates(restoreSavedTeam = true) {
     const dates = [...new Set(state.schedule.map(match => match.date))].sort();
     $('match-date').innerHTML = '<option value="">Choose match day</option>' +
         dates.map(date => `<option value="${escapeHTML(date)}">${escapeHTML(date)}</option>`).join('');
@@ -145,7 +327,7 @@ function populateDates() {
     $('start-game-btn').disabled = true;
     $('opponent-name').textContent = 'Select a match day and team';
     $('board-display').textContent = '';
-    if (defaultDate) populateTeams(true);
+    if (defaultDate) populateTeams(restoreSavedTeam);
 }
 
 function populateTeams(restoreSavedTeam = false) {
@@ -169,7 +351,7 @@ function populateTeams(restoreSavedTeam = false) {
     }
 }
 
-function selectMatch() {
+function selectMatch(persist = true) {
     const scheduledTeam = $('team-select').value;
     if (!scheduledTeam) {
         clearSelectedTeamCookie();
@@ -193,7 +375,7 @@ function selectMatch() {
     const matchKey = `${match.date}|${match.board}|${scheduledTeam}`;
     if (state.matchKey !== matchKey) {
         state.matchKey = matchKey;
-        state.gamesCompleted = 0;
+        initializeGameSlots();
         state.matchResults = [];
     }
     state.matchDate = match.date;
@@ -214,22 +396,40 @@ function selectMatch() {
         $('load-status').classList.add('visually-hidden');
         $('load-status').classList.remove('error');
     }
+    if (persist) persistSession();
 }
 
 function showLineupScreen() {
     if (!state.teamName || state.rosterPlayers.length < 4) return;
+    if (state.gameStarted) {
+        showGameScreen();
+        return;
+    }
     const players = state.rosterPlayers.some(player => player.toLowerCase() === SPARE_PLAYER_NAME.toLowerCase())
         ? state.rosterPlayers
         : [...state.rosterPlayers, SPARE_PLAYER_NAME];
-    state.lineupOrder = players.slice(0, 4);
-    state.availablePlayers = players.slice(4);
+    if (state.lineupOrder.length !== 4) {
+        state.lineupOrder = players.slice(0, 4);
+        state.availablePlayers = players.slice(4);
+    }
+    state.currentScreen = 'lineup';
     $('lineup-match-display').textContent = `${state.teamName} vs ${state.opponent}`;
-    $('game-number-display').textContent = `Game ${state.gamesCompleted + 1} of 7 · Board ${state.board}`;
+    $('game-number-display').textContent = `Board ${state.board}`;
     $('roster-screen').classList.remove('active');
     $('game-screen').classList.remove('active');
     $('lineup-screen').classList.add('active');
     renderLineup();
     updateLineupStatus();
+    updateGameNavigation();
+    persistSession();
+}
+
+function showGameScreen() {
+    state.currentScreen = 'game';
+    $('roster-screen').classList.remove('active');
+    $('lineup-screen').classList.remove('active');
+    $('game-screen').classList.add('active');
+    renderGame();
 }
 
 function renderLineup() {
@@ -238,6 +438,7 @@ function renderLineup() {
     selected.replaceChildren(...state.lineupOrder.map((player, index) => createLineupItem(player, 'selected', index)));
     available.replaceChildren(...state.availablePlayers.map((player, index) => createLineupItem(player, 'available', index)));
     $('selected-count').textContent = `${state.lineupOrder.length} of 4`;
+    persistSession();
 }
 
 function createLineupItem(player, zone, index) {
@@ -368,8 +569,8 @@ function moveLineupPlayer(player, targetZone, beforePlayer = '') {
 
 function updateLineupStatus() {
     const selectedCount = state.lineupOrder.length;
-    $('start-selected-game-btn').disabled = selectedCount !== 4;
-    $('start-selected-game-btn').textContent = `Start Game ${state.gamesCompleted + 1} of 7`;
+    $('start-selected-game-btn').disabled = selectedCount !== 4 || state.gameStarted;
+    $('start-selected-game-btn').textContent = `Start Game ${state.activeGameIndex + 1} of 7`;
     $('selection-status').textContent = 'Exactly four players stay above the divider. The order from top to bottom is the play order.';
 }
 
@@ -384,7 +585,7 @@ function startGame() {
 }
 
 function startSelectedGame() {
-    if (state.lineupOrder.length !== 4 || state.gamesCompleted >= 7) return;
+    if (state.lineupOrder.length !== 4 || state.gameStarted || state.activeGameIndex >= 7) return;
     state.players = state.lineupOrder.map((name, index) => ({ name, color: PLAYER_COLORS[index] }));
     state.score = STARTING_SCORE;
     state.currentPlayer = 0;
@@ -393,12 +594,11 @@ function startSelectedGame() {
     state.turnTotal = 0;
     state.playerPoints = Object.fromEntries(state.players.map(player => [player.name, 0]));
     state.winner = false;
+    state.showWinnerDialog = false;
     state.lastTurnSnapshot = null;
-    $('lineup-screen').classList.remove('active');
-    $('roster-screen').classList.remove('active');
-    $('game-screen').classList.add('active');
+    state.gameStarted = true;
     $('winner-modal').classList.add('hidden');
-    renderGame();
+    showGameScreen();
 }
 
 function renderGame() {
@@ -409,20 +609,32 @@ function renderGame() {
     $('opponent-out-team').textContent = opponentName;
     $('opponent-out-btn').textContent = 'Click here';
     $('opponent-out-btn').setAttribute('aria-label', `Confirm that ${opponentName} won`);
-    const displayedGame = state.winner ? state.gamesCompleted : state.gamesCompleted + 1;
-    $('game-number-badge').textContent = `Game ${displayedGame} of 7`;
     $('current-team-score').textContent = state.score;
     $('current-player-name').textContent = state.players[state.currentPlayer].name;
+    document.querySelector('.opponent-out-action').hidden = state.winner;
     renderDartInput();
     renderHistory();
     renderCheckouts();
     updateUndoButtons();
+    updateGameNavigation();
+    if (state.winner && state.showWinnerDialog) renderWinnerModal();
+    else $('winner-modal').classList.add('hidden');
+    persistSession();
 }
 
 function renderDartInput() {
     const target = $('dart-input-section');
     if (state.winner) {
-        target.innerHTML = '';
+        const result = state.matchResults.find(item => item.game === state.activeGameIndex + 1);
+        const winner = result ? displayTeamName(result.winner) : '';
+        target.innerHTML = `
+            <div class="game-finished-state" role="status">
+                <strong>Game finished.</strong>${winner ? ` ${escapeHTML(winner)} won.` : ''}
+            </div>
+            <div class="game-finished-actions">
+                <button class="undo-turn-btn" id="finished-game-undo-btn" type="button" disabled>Undo Last</button>
+            </div>`;
+        $('finished-game-undo-btn').addEventListener('click', undoLastTurn);
         return;
     }
     const isSpare = state.players[state.currentPlayer].name.toLowerCase() === SPARE_PLAYER_NAME.toLowerCase();
@@ -539,6 +751,7 @@ function updateTurnSummary() {
         : state.turnDarts.length
             ? `${darts} — Turn Total: 0 · ${displayTeamName(state.teamName)} remaining: ${state.score}`
         : '';
+    persistSession();
 }
 
 function rejectTurnTotal(message) {
@@ -624,6 +837,7 @@ function undoLastTurn() {
     state.turnTotal = snapshot.turnTotal;
     state.playerPoints = snapshot.playerPoints;
     state.winner = snapshot.winner;
+    state.showWinnerDialog = false;
     state.gamesCompleted = snapshot.gamesCompleted;
     state.matchResults = snapshot.matchResults;
     state.lastTurnSnapshot = null;
@@ -636,15 +850,18 @@ function updateUndoButtons() {
     const disabled = !state.lastTurnSnapshot;
     const turnUndoButton = $('undo-turn-btn');
     if (turnUndoButton) turnUndoButton.disabled = disabled;
+    const finishedGameUndoButton = $('finished-game-undo-btn');
+    if (finishedGameUndoButton) finishedGameUndoButton.disabled = disabled;
     $('winner-undo-btn').disabled = disabled;
 }
 
 function finishGame(opponentWon = false) {
     if (state.winner) return;
     state.winner = true;
-    const gameNumber = state.gamesCompleted + 1;
+    state.showWinnerDialog = true;
+    const gameNumber = state.activeGameIndex + 1;
     const winningTurn = opponentWon ? null : state.history[state.history.length - 1];
-    state.matchResults.push({
+    const result = {
         date: state.matchDate,
         board: state.board,
         game: gameNumber,
@@ -658,8 +875,19 @@ function finishGame(opponentWon = false) {
             roundScores: state.history.filter(turn => turn.player === player.name).map(turn => turn.total),
             checkout: winningTurn && winningTurn.player === player.name ? winningTurn.total : ''
         }))
-    });
-    state.gamesCompleted = gameNumber;
+    };
+    state.matchResults = state.matchResults
+        .filter(existing => existing.game !== gameNumber)
+        .concat(result)
+        .sort((left, right) => left.game - right.game);
+    state.gamesCompleted = state.matchResults.length;
+    renderWinnerModal();
+}
+
+function renderWinnerModal() {
+    const gameNumber = state.activeGameIndex + 1;
+    const result = state.matchResults.find(item => item.game === gameNumber);
+    const opponentWon = result && result.winner === state.opponent;
     const teamName = displayTeamName(state.teamName);
     const opponentName = displayTeamName(state.opponent);
     const winner = opponentWon ? opponentName : teamName;
@@ -671,6 +899,32 @@ function finishGame(opponentWon = false) {
     $('email-status').textContent = 'Email CSV opens a Gmail draft; Upload Results opens Dropbox. Both download the CSV first, then you must attach or select that file.';
     $('email-csv-btn').href = createGmailDraftUrl();
     $('winner-modal').classList.remove('hidden');
+}
+
+function navigateToGame(gameIndex) {
+    if (gameIndex < 0 || gameIndex >= 7 || gameIndex === state.activeGameIndex) return;
+    saveActiveGame();
+    state.activeGameIndex = gameIndex;
+    state.showWinnerDialog = false;
+    if (!state.games[gameIndex]) state.games[gameIndex] = createEmptyGameSlot();
+    loadActiveGame();
+    $('winner-modal').classList.add('hidden');
+    if (state.gameStarted) showGameScreen();
+    else showLineupScreen();
+}
+
+function navigateGameBy(delta) {
+    navigateToGame(state.activeGameIndex + delta);
+}
+
+function updateGameNavigation() {
+    document.querySelectorAll('.game-nav-label').forEach(label => {
+        label.textContent = `Game ${state.activeGameIndex + 1} of 7`;
+    });
+    document.querySelectorAll('.game-nav-btn').forEach(button => {
+        const target = state.activeGameIndex + Number(button.dataset.gameDelta);
+        button.disabled = target < 0 || target >= 7;
+    });
 }
 
 function csvCell(value) {
@@ -732,21 +986,37 @@ function createGmailDraftUrl() {
 
 function startNextGame() {
     $('winner-modal').classList.add('hidden');
-    if (state.gamesCompleted < 7) {
-        showLineupScreen();
+    state.showWinnerDialog = false;
+    if (state.activeGameIndex < 6) {
+        navigateToGame(state.activeGameIndex + 1);
         return;
     }
+    clearPersistedSession();
     state.matchKey = null;
-    state.gamesCompleted = 0;
+    state.matchDate = '';
+    state.board = '';
     state.matchResults = [];
     state.teamName = '';
     state.opponent = '';
+    state.rosterPlayers = [];
+    state.currentScreen = 'roster';
+    initializeGameSlots();
     $('match-date').value = '';
     populateTeams();
     $('opponent-name').textContent = 'Select a match day and team';
     $('game-screen').classList.remove('active');
     $('lineup-screen').classList.remove('active');
     $('roster-screen').classList.add('active');
+    updateGameNavigation();
+}
+
+function clearPersistedSession() {
+    try {
+        localStorage.removeItem(SESSION_STORAGE_KEY);
+        setPersistenceStatus('');
+    } catch (error) {
+        setPersistenceStatus(`Could not clear the saved match from this browser: ${error.message}`);
+    }
 }
 
 function renderHistory() {
@@ -915,21 +1185,25 @@ function renderCheckouts() {
 }
 
 function resetToSetup() {
-    state.winner = false;
-    state.lastTurnSnapshot = null;
-    state.history = [];
-    state.score = STARTING_SCORE;
-    state.players = [];
-    state.turnDarts = [];
-    state.turnTotal = 0;
+    saveActiveGame();
+    state.currentScreen = 'roster';
+    state.showWinnerDialog = false;
     $('winner-modal').classList.add('hidden');
     $('game-screen').classList.remove('active');
     $('lineup-screen').classList.remove('active');
     $('roster-screen').classList.add('active');
+    updateGameNavigation();
+    persistSession();
 }
 
 $('match-date').addEventListener('change', populateTeams);
 $('team-select').addEventListener('change', selectMatch);
+$('game-screen').querySelectorAll('.game-nav-btn').forEach(button => {
+    button.addEventListener('click', () => navigateGameBy(Number(button.dataset.gameDelta)));
+});
+$('lineup-screen').querySelectorAll('.game-nav-btn').forEach(button => {
+    button.addEventListener('click', () => navigateGameBy(Number(button.dataset.gameDelta)));
+});
 $('start-game-btn').addEventListener('click', startGame);
 $('start-selected-game-btn').addEventListener('click', startSelectedGame);
 [

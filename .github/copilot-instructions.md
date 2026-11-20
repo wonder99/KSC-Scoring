@@ -19,9 +19,10 @@ Keep for complex tasks:
 
 ## Task Routing
 
-When processing a request, evaluate if it's suitable for delegation:
-1. If the task is simple and self-contained → delegate to @local-fast
-2. If the task requires complex analysis or multi-file context → handle directly with Copilot Fusion
-3. When in doubt, err on the side of using Copilot Fusion for thoroughness
+When any agent other than Local Fast is the main agent:
+1. For a simple, self-contained task, actually invoke the Local Fast custom agent as a subagent using Copilot's native delegation mechanism. A text mention of `@local-fast` is not a delegation.
+2. Keep complex analysis, multi-file changes, and final integration in Fusion Architect.
+3. If the active agent is already Local Fast, handle the request directly rather than delegating recursively.
+4. If the current harness cannot invoke a subagent, say so instead of claiming the task was delegated.
 
 This division optimizes resource usage while maintaining quality.

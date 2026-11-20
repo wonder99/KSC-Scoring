@@ -880,13 +880,54 @@ body {
 }
 .order-button:disabled { opacity: 0.35; cursor: default; }
 .team-name { color: var(--text-secondary); text-align: center; }
-.game-number-badge { align-self: center; color: var(--gold); }
+.game-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+.game-header h1 { margin: 0; }
+.game-switcher {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    color: var(--gold);
+    white-space: nowrap;
+}
+.game-nav-btn {
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+}
+.game-nav-btn:disabled { opacity: 0.35; cursor: default; }
+.game-nav-label { min-width: 6.4rem; text-align: center; font-weight: 700; }
+.persistence-status { min-height: 0; margin: 0 auto; text-align: center; font-size: 0.8rem; }
+.persistence-status.error { min-height: 1.2em; color: var(--red); }
 .email-actions { display: flex; justify-content: center; gap: 0.75rem; margin: 1rem 0; flex-wrap: wrap; }
 .email-actions a { display: inline-flex; align-items: center; text-decoration: none; }
 .modal-content #email-status { margin-bottom: 1rem; }
 .modal-content #next-game-btn { width: 100%; }
 .turn-summary { min-height: 1.5rem; margin-top: 0.75rem; text-align: center; color: var(--green-light); }
 .turn-summary.warning { color: var(--red); }
+.game-finished-state {
+    margin: 0.75rem auto;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--green-light);
+    border-radius: 8px;
+    background: rgba(46, 204, 113, 0.1);
+    color: var(--green-light);
+    text-align: center;
+}
+.game-finished-actions { display: flex; justify-content: center; }
 .empty-history { padding: 1rem; text-align: center; color: var(--text-muted); }
 .history-turn-total { margin-left: auto; font-weight: 700; }
 .history-turn-total.bust { color: var(--red); }

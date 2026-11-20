@@ -13,6 +13,7 @@
         <a class="player-guide-link" href="user-guide.html">Read the player guide</a>
 
         <section class="setup-card">
+            <p class="persistence-status" role="status" aria-live="polite"></p>
             <p id="load-status" class="visually-hidden" role="status"></p>
             <label for="match-date">Match day</label>
             <select id="match-date" disabled>
@@ -31,8 +32,14 @@
         <header class="game-header">
             <h1>Choose lineup</h1>
             <span id="lineup-match-display" class="team-name"></span>
+            <div class="game-switcher" aria-label="Switch game">
+                <button class="game-nav-btn" data-game-delta="-1" type="button" aria-label="Previous game">‹</button>
+                <span class="game-nav-label">Game 1 of 7</span>
+                <button class="game-nav-btn" data-game-delta="1" type="button" aria-label="Next game">›</button>
+            </div>
         </header>
         <section class="setup-card lineup-setup">
+            <p class="persistence-status" role="status" aria-live="polite"></p>
             <p id="game-number-display" class="subtitle"></p>
             <h2>Choose four players in play order</h2>
             <p class="lineup-instructions">There are always four players above the divider. Drop an unselected name into the desired spot; the fourth player moves below. Drop a selected name below to swap in the first waiting player. The top-to-bottom order is the play order. Use the buttons if dragging is unavailable.</p>
@@ -57,9 +64,14 @@
         <header class="game-header">
             <h1>🎯 KSC Darts Scorer</h1>
             <span id="game-match-display" class="team-name"></span>
-            <span id="game-number-badge" class="game-number-badge"></span>
-            <button id="back-to-roster" class="btn btn-small" type="button">Change Match</button>
+            <div class="game-switcher" aria-label="Switch game">
+                <button class="game-nav-btn" data-game-delta="-1" type="button" aria-label="Previous game">‹</button>
+                <span class="game-nav-label">Game 1 of 7</span>
+                <button class="game-nav-btn" data-game-delta="1" type="button" aria-label="Next game">›</button>
+            </div>
+            <button id="back-to-roster" class="btn btn-small" type="button">Restart Everything</button>
         </header>
+        <p class="persistence-status" role="status" aria-live="polite"></p>
         <section class="team-score-section">
             <h2><span id="score-team-name"></span> Score</h2>
             <div class="team-score-display">

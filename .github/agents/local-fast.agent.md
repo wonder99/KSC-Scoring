@@ -1,4 +1,6 @@
 ---
+name: Local Fast
+description: Handle quick coding edits, boilerplate, code explanations, and focused single-file tasks with the local Ollama model.
 model: qwen3-coder:latest (Ollama)
 fallbackModel: qwen3-coder:latest
 user-invocable: true

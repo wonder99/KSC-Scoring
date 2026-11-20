@@ -19,7 +19,7 @@ If the `py` command is unavailable, use `python -m http.server 8000`.
 1. The match day defaults to today when it is scheduled, or otherwise the most recent past scheduled day. Choose another day if needed.
 2. Choose your team from that day's scheduled teams; the opponent and board are filled in from the schedule.
 3. Select **Start Game**. The first four roster names start in the **Playing this game** area above the divider, and exactly four names always stay there. Drag an unselected name into the desired spot; the fourth selected player moves below the divider. The top-to-bottom order is the play order. Drag a selected name down onto its intended row; the names in between shift up. Use **Add** to replace the fourth player, **Replace** to swap a selected player with the first unselected player, and the arrows to reorder on touch screens. An optional `Spare` player appears below the divider; a spare's turn is prefilled with 25 points, which must still be submitted.
-4. Select **Start Game** to begin the first of seven games for the selected fixture. Each game starts at 701 with a shared team score. After a game is won, choose the next lineup.
+4. Select **Start Game** to begin the first of seven games for the selected fixture. Each game starts at 701 with a shared team score. Use the arrows at the top to switch between games; each game's lineup and scoring state are kept separately. After a game is won, choose the next lineup.
 
 When scoring with the dart grid, enter up to three darts per turn; Miss records a zero-point dart. The total-only field is also available. A winning checkout must be recorded with the dart grid so the app can verify the final dart was a double or bull. Scores that go below zero, leave one, or reach zero without a double-out bust and do not reduce the team's score.
 
@@ -31,7 +31,7 @@ After each game, the winner screen offers CSV download, **Email CSV**, or **Uplo
 
 The app is static and needs no build step. Upload the site files together using [Netlify Drop](https://app.netlify.com/drop), then share the resulting HTTPS link with players. Include `index.html`, `app.js`, `styles.css`, `team_lists.csv`, and `dart_league_schedule.csv`; include `user-guide.html` if you want to share the guide too.
 
-Static hosting makes the roster and schedule files publicly accessible. Scores are not synchronized between devices or saved to an account; use one device as the scorekeeper, and download results before refreshing or closing the page.
+Static hosting makes the roster and schedule files publicly accessible. Match progress is saved in the browser on that device and restored after a reload; it is not synchronized between devices or saved to an account. Clearing the browser's site data removes saved progress, so download results before clearing it.
 
 ## CSV formats
 
