@@ -1012,18 +1012,26 @@ async function uploadResultsToServer() {
             },
             body: createResultsCSV()
         });
-        let result = null;
+        
+        // Check if response is successful first
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Server returned HTTP ${response.status}: ${errorText}`);
+        }
+        
+        // Try to parse JSON response
+        let result;
         try {
             result = await response.json();
-        } catch (e) {
-            // If JSON parsing fails, the server might not be returning valid JSON
-            console.error('Failed to parse JSON response:', e);
-            throw new Error('Server returned invalid response format.');
+        } catch (jsonError) {
+            console.error('Failed to parse JSON response:', jsonError);
+            throw new Error('Server returned invalid response format. Expected JSON.');
         }
-        if (!response.ok) {
-            throw new Error(result && result.error ? result.error : `Server returned HTTP ${response.status}.`);
+        
+        if (!result || result.saved !== true) {
+            throw new Error('The server returned an invalid upload response.');
         }
-        if (!result || result.saved !== true) throw new Error('The server returned an invalid upload response.');
+        
         setServerUploadStatus(`Saved ${result.rowCount} score rows to the league server.`, 'success');
     } catch (error) {
         console.error('Upload error details:', error);
