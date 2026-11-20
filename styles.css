@@ -61,6 +61,13 @@ body {
     color: var(--green-light);
     font-weight: 700;
 }
+.commit-hash {
+    margin-top: auto;
+    padding-top: 1rem;
+    color: #8395a7;
+    font-size: 0.75rem;
+    text-align: center;
+}
 
 .import-section, .quick-setup {
     background: var(--bg-card);
@@ -555,24 +562,24 @@ body {
 }
 
 .history-container {
-    display: grid;
-    gap: 0.2rem;
+    display: block;
+    width: 100%;
+    max-width: 100%;
     min-width: 0;
     overflow-x: auto;
+    overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
-    /* Ensure proper scrolling on iOS */
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+    touch-action: pan-x pan-y;
 }
 
 .history-player-block {
     background: var(--bg-card);
     border-radius: 12px;
     overflow: hidden;
+}
+
+.history-player-block + .history-player-block {
+    margin-top: 0.2rem;
 }
 
 .history-player-header {
