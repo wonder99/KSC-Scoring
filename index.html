@@ -74,7 +74,7 @@
         </header>
         <p class="persistence-status" role="status" aria-live="polite"></p>
         <section class="team-score-section">
-            <h2><span id="score-team-name"></span> Score</h2>
+            <h2><span id="score-team-name"></span> Score <span id="team-record"></span></h2>
             <p class="player-turn-indicator"><strong id="current-player-name"></strong><span class="turn-label"> at </span><span id="current-team-score" class="score-value">701</span></p>
         </section>
         <div id="dart-input-section"></div>
@@ -91,17 +91,19 @@
         <div class="modal-content">
             <h1 id="winner-heading">🏆 Wins!</h1>
             <p id="winner-summary">Congratulations on the double-out checkout!</p>
-            <div class="server-upload">
-                <p class="help-text">Normally, submit results after all 7 games are complete.</p>
-                <button id="server-upload-btn" class="btn btn-small" type="button">Submit to League</button>
-                <div id="server-upload-key-prompt" hidden>
-                    <label for="server-upload-key">League upload key</label>
-                    <input id="server-upload-key" type="password" autocomplete="off" aria-label="League upload key">
+            <div id="winner-actions" class="winner-actions">
+                <button id="next-game-btn" class="btn btn-primary" type="button">Choose next lineup</button>
+                <button id="winner-undo-btn" class="btn btn-small undo-turn-btn" type="button" disabled>Undo Last</button>
+                <div id="server-upload" class="server-upload">
+                    <div id="server-upload-key-prompt" hidden>
+                        <label for="server-upload-key">League upload key</label>
+                        <input id="server-upload-key" type="password" autocomplete="off" aria-label="League upload key">
+                    </div>
+                    <button id="server-upload-btn" class="btn btn-small" type="button">Submit to League</button>
+                    <p class="help-text">Normally, submit results after all 7 games are complete.</p>
+                    <p id="server-upload-status" class="help-text" role="status" aria-live="polite"></p>
                 </div>
             </div>
-            <p id="server-upload-status" class="help-text" role="status" aria-live="polite"></p>
-            <button id="winner-undo-btn" class="btn btn-small undo-turn-btn" type="button" disabled>Undo Last</button>
-            <button id="next-game-btn" class="btn btn-primary" type="button">Choose next lineup</button>
         </div>
     </div>
     <script src="results-csv.js"></script>

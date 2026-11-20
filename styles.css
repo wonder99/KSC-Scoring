@@ -190,11 +190,11 @@ body {
     font-weight: 600;
 }
 .player-turn-indicator strong,
-.player-turn-indicator .turn-label,
 .player-turn-indicator .score-value {
     font-size: 2.5em;
     font-weight: 700;
 }
+.player-turn-indicator .turn-label { font-size: 1.4em; }
 
 /* ===== PLAYERS GRID ===== */
 .players-grid {
@@ -685,8 +685,8 @@ body {
     #roster-screen h1 { font-size: 2rem; }
     .player-score { font-size: 2.8rem; }
     .player-turn-indicator strong,
-    .player-turn-indicator .turn-label,
     .player-turn-indicator .score-value { font-size: 2.2em; }
+    .player-turn-indicator .turn-label { font-size: 1.25em; }
     .dart-grid { grid-template-columns: repeat(4, 1fr); gap: 0.3rem; }
     .dart-bull-btn { grid-column: 2; }
     .dart-miss-btn { grid-column: 3; }
@@ -909,6 +909,36 @@ body {
 .persistence-status { min-height: 0; margin: 0 auto; text-align: center; font-size: 0.8rem; }
 .persistence-status.error { min-height: 1.2em; color: var(--red); }
 .modal-content #next-game-btn { width: 100%; }
+.winner-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.server-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    width: 100%;
+}
+.server-upload .help-text { margin: 0; }
+.server-upload #server-upload-btn { align-self: center; }
+#server-upload-key-prompt { width: 100%; text-align: left; }
+#server-upload-key-prompt label { display: block; margin-bottom: 0.35rem; }
+#server-upload-key-prompt input {
+    width: 100%;
+    padding: 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    font: inherit;
+}
+.winner-actions.final-game #server-upload-btn {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    font-size: 1.15rem;
+}
 .turn-summary { min-height: 1.5rem; margin-top: 0.75rem; text-align: center; color: var(--green-light); }
 .turn-summary:empty { display: none; }
 .turn-summary.warning { color: var(--red); }
@@ -940,9 +970,14 @@ body {
     gap: 0.75rem;
     flex-wrap: wrap;
 }
+.uploads-key-row {
+    flex-direction: column;
+    align-items: flex-start;
+}
 .uploads-key-row input {
-    flex: 1 1 16rem;
+    flex: none;
     min-width: 0;
+    width: 100%;
     padding: 0.75rem;
     border: 1px solid var(--border);
     border-radius: 8px;

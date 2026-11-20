@@ -606,6 +606,13 @@ function renderGame() {
     const opponentName = displayTeamName(state.opponent);
     $('game-match-display').textContent = `${teamName} vs ${opponentName}`;
     $('score-team-name').textContent = teamName;
+    const wins = state.matchResults.filter(result =>
+        result.team === state.teamName && result.winner === state.teamName
+    ).length;
+    const losses = state.matchResults.filter(result =>
+        result.team === state.teamName && result.winner === state.opponent
+    ).length;
+    $('team-record').textContent = `(${wins}-${losses})`;
     $('opponent-out-team').textContent = opponentName;
     $('opponent-out-btn').textContent = 'Click here';
     $('opponent-out-btn').setAttribute('aria-label', `Confirm that ${opponentName} won`);
@@ -897,10 +904,24 @@ function renderWinnerModal() {
         ? `Game ${gameNumber} of 7 complete: ${opponentName} doubled out.`
         : `Game ${gameNumber} of 7 complete: ${teamName} beat ${opponentName}.`;
     $('next-game-btn').textContent = gameNumber < 7 ? `Choose lineup for Game ${gameNumber + 1}` : 'Choose another match';
+    const allGamesComplete = state.matchResults.length === 7;
+    const winnerActions = $('winner-actions');
+    const serverUpload = $('server-upload');
+    const serverUploadButton = $('server-upload-btn');
+    const nextGameButton = $('next-game-btn');
+    const undoButton = $('winner-undo-btn');
+    winnerActions.classList.toggle('final-game', allGamesComplete);
+    serverUploadButton.classList.toggle('btn-primary', allGamesComplete);
+    serverUploadButton.classList.toggle('btn-small', !allGamesComplete);
+    if (allGamesComplete) {
+        winnerActions.append(serverUpload, nextGameButton, undoButton);
+    } else {
+        winnerActions.append(nextGameButton, undoButton, serverUpload);
+    }
     $('server-upload-key-prompt').hidden = true;
-    $('server-upload-btn').textContent = 'Submit to League';
+    serverUploadButton.textContent = 'Submit to League';
     setServerUploadStatus('');
-    $('server-upload-btn').disabled = !state.matchResults.length;
+    serverUploadButton.disabled = !state.matchResults.length;
     $('winner-modal').classList.remove('hidden');
 }
 
