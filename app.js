@@ -1015,8 +1015,10 @@ async function uploadResultsToServer() {
         let result = null;
         try {
             result = await response.json();
-        } catch {
-            result = null;
+        } catch (e) {
+            // If JSON parsing fails, the server might not be returning valid JSON
+            console.error('Failed to parse JSON response:', e);
+            throw new Error('Server returned invalid response format.');
         }
         if (!response.ok) {
             throw new Error(result && result.error ? result.error : `Server returned HTTP ${response.status}.`);
@@ -1024,6 +1026,7 @@ async function uploadResultsToServer() {
         if (!result || result.saved !== true) throw new Error('The server returned an invalid upload response.');
         setServerUploadStatus(`Saved ${result.rowCount} score rows to the league server.`, 'success');
     } catch (error) {
+        console.error('Upload error details:', error);
         setServerUploadStatus(`Could not save results: ${error.message}`, 'error');
     } finally {
         button.disabled = false;
