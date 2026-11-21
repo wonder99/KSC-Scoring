@@ -34,6 +34,7 @@
                 <button class="tab" type="button" data-tab="players">Players</button>
                 <button class="tab" type="button" data-tab="fixtures">Schedule</button>
                 <button class="tab" type="button" data-tab="submissions">Submissions</button>
+                <button class="tab" type="button" data-tab="backups">Backups</button>
             </nav>
 
             <section class="admin-panel active" data-panel="seasons">
@@ -59,7 +60,8 @@
 
             <section class="admin-panel" data-panel="players">
                 <h2>Players</h2>
-                <form id="player-form" class="inline-form">
+                <button id="show-player-form" type="button">Add Player</button>
+                <form id="player-form" class="inline-form hidden">
                     <label>First name<input name="firstName" required></label>
                     <label>Last name<input name="lastName"></label>
                     <label>Gender
@@ -70,7 +72,10 @@
                     </label>
                     <label>Season<select name="seasonId" id="player-season"></select></label>
                     <label>Team<select name="teamId" id="player-team"></select></label>
-                    <button type="submit">Add player</button>
+                    <div class="form-actions">
+                        <button type="submit">Add Player</button>
+                        <button type="button" id="cancel-player-add">Cancel</button>
+                    </div>
                 </form>
                 <form id="player-edit-form" class="inline-form hidden">
                     <input type="hidden" name="playerId">
@@ -92,14 +97,18 @@
 
             <section class="admin-panel" data-panel="fixtures">
                 <h2>Schedule</h2>
-                <form id="fixture-form" class="inline-form">
+                <button id="show-fixture-form" type="button">Add Match</button>
+                <form id="fixture-form" class="inline-form hidden">
                     <label>Season<select name="seasonId" id="fixture-season" required></select></label>
                     <label>Week<input name="weekNumber" type="number" min="1"></label>
                     <label>Date<input name="matchDate" type="date" required></label>
                     <label>Board<input name="boardNumber"></label>
                     <label>Home team<select name="homeTeamId" id="fixture-home" required></select></label>
                     <label>Away team<select name="awayTeamId" id="fixture-away" required></select></label>
-                    <button type="submit">Add match</button>
+                    <div class="form-actions">
+                        <button type="submit">Add Match</button>
+                        <button type="button" id="cancel-fixture-add">Cancel</button>
+                    </div>
                 </form>
                 <div id="fixture-list" class="data-list"></div>
             </section>
@@ -124,6 +133,27 @@
                     </div>
                 </form>
                 <div id="submission-list" class="data-list"></div>
+            </section>
+
+            <section class="admin-panel" data-panel="backups">
+                <h2>Database Backups</h2>
+                <p class="admin-helper">Create a backup before major changes. Restore is destructive and requires exact confirmation.</p>
+                <div class="backup-actions">
+                    <button id="create-backup" type="button">Create Backup</button>
+                    <p id="backup-status" role="status" aria-live="polite"></p>
+                </div>
+                <div id="backup-list" class="data-list"></div>
+                <form id="backup-restore-form" class="inline-form">
+                    <label>Backup
+                        <select id="backup-restore-file" name="backupFile" required>
+                            <option value="">Choose a backup</option>
+                        </select>
+                    </label>
+                    <label>Type RESTORE
+                        <input name="confirmation" autocomplete="off" required>
+                    </label>
+                    <button type="submit" class="danger-button">Restore Selected Backup</button>
+                </form>
             </section>
         </section>
     </main>

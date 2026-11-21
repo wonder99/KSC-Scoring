@@ -106,8 +106,8 @@ async function loadPlayers() {
             <div class="player-actions">
                 <button type="button" data-edit-player="${player.id}">Edit</button>
                 <button type="button" data-merge-player="${player.id}">Merge</button>
-                <button type="button" data-remove-player="${seasonId}:${player.team_id}:${player.id}">Remove</button>
-                <button type="button" data-delete-player="${player.id}">Delete</button>
+                <button type="button" data-remove-player="${seasonId}:${player.team_id}:${player.id}" title="Remove from this season roster">Remove from roster</button>
+                <button type="button" data-delete-player="${player.id}" class="danger-button" title="Delete the player record and linked roster data">Delete player</button>
             </div>
         </article>`).join('');
 }
@@ -125,7 +125,7 @@ async function loadFixtures() {
             data-home-team="${fixture.home_team_id}"
             data-away-team="${fixture.away_team_id}">
             <strong>Wk${escapeHtml(fixture.week_number ?? '-')}</strong>
-            <span>${escapeHtml(fixture.match_date)} · B${escapeHtml(fixture.board_number ?? '-')}</span>
+            <span>${escapeHtml(fixture.match_date)} · Board ${escapeHtml(fixture.board_number ?? '-')}</span>
             <span class="match-teams">${escapeHtml(fixture.home_team)} vs ${escapeHtml(fixture.away_team)}</span>
             <div>
                 <button type="button" data-edit-fixture="${fixture.id}">Edit</button>
@@ -153,6 +153,25 @@ async function loadSubmissions() {
                 }
             </div>
         </article>`).join('');
+}
+
+async function loadBackups() {
+    const payload = await adminFetch('/api/admin/backups');
+    document.getElementById('backup-list').innerHTML = payload.backups.length
+        ? payload.backups.map(backup => `
+            <article class="data-card backup-card">
+                <strong>${escapeHtml(backup.filename)}</strong>
+                <span>${new Date(backup.createdAt).toLocaleString()}</span>
+                <span>${Math.max(1, Math.round(backup.size / 1024))} KB</span>
+                <button type="button" data-download-backup="${escapeHtml(backup.filename)}">Download</button>
+            </article>`).join('')
+        : '<p class="empty">No backups have been created.</p>';
+    const select = document.getElementById('backup-restore-file');
+    select.innerHTML =
+        '<option value="">Choose a backup</option>' +
+        payload.backups.map(backup =>
+            `<option value="${escapeHtml(backup.filename)}">${escapeHtml(backup.filename)}</option>`
+        ).join('');
 }
 
 async function openSubmissionReview(submissionId) {
@@ -207,6 +226,7 @@ async function refreshAll() {
     await loadPlayers();
     await loadFixtures();
     await loadSubmissions();
+    await loadBackups();
 }
 
 document.getElementById('unlock-admin').addEventListener('click', unlock);
@@ -271,8 +291,22 @@ document.getElementById('player-form').addEventListener('submit', async event =>
             })
         });
         event.currentTarget.reset();
+        event.currentTarget.classList.add('hidden');
         await loadPlayers();
     } catch (error) { alert(error.message); }
+});
+
+document.getElementById('show-player-form').addEventListener('click', () => {
+    document.getElementById('player-edit-form').classList.add('hidden');
+    const form = document.getElementById('player-form');
+    form.classList.remove('hidden');
+    form.querySelector('[name="firstName"]').focus();
+});
+
+document.getElementById('cancel-player-add').addEventListener('click', () => {
+    const form = document.getElementById('player-form');
+    form.reset();
+    form.classList.add('hidden');
 });
 
 document.getElementById('player-edit-form').addEventListener('submit', async event => {
@@ -397,11 +431,91 @@ document.getElementById('fixture-form').addEventListener('submit', async event =
             })
         });
         event.currentTarget.reset();
+        event.currentTarget.classList.add('hidden');
         await loadFixtures();
     } catch (error) { alert(error.message); }
 });
 
+document.getElementById('show-fixture-form').addEventListener('click', () => {
+    const form = document.getElementById('fixture-form');
+    form.classList.remove('hidden');
+    form.querySelector('[name="weekNumber"]').focus();
+});
+
+document.getElementById('cancel-fixture-add').addEventListener('click', () => {
+    const form = document.getElementById('fixture-form');
+    form.reset();
+    form.classList.add('hidden');
+});
+
+document.getElementById('create-backup').addEventListener('click', async () => {
+    const status = document.getElementById('backup-status');
+    status.textContent = 'Creating backup...';
+    try {
+        const result = await adminFetch('/api/admin/backups/create', { method: 'POST' });
+        status.textContent = `Created ${result.backup.filename}`;
+        await loadBackups();
+    } catch (error) {
+        status.textContent = error.message;
+    }
+});
+
+document.getElementById('backup-restore-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const filename = String(form.get('backupFile') || '');
+    const confirmation = String(form.get('confirmation') || '');
+    if (!filename) {
+        alert('Choose a backup to restore.');
+        return;
+    }
+    if (confirmation !== 'RESTORE') {
+        alert('Type RESTORE exactly to confirm.');
+        return;
+    }
+    if (!confirm(`Restore the database from ${filename}? This replaces existing database objects.`)) {
+        return;
+    }
+    const status = document.getElementById('backup-status');
+    status.textContent = 'Restoring backup...';
+    try {
+        await adminFetch('/api/admin/backups/restore', {
+            method: 'POST',
+            body: JSON.stringify({ filename, confirmation })
+        });
+        status.textContent = `Restored ${filename}`;
+        event.currentTarget.reset();
+        await refreshAll();
+    } catch (error) {
+        status.textContent = error.message;
+    }
+});
+
 document.addEventListener('click', async event => {
+    const downloadBackup = event.target.closest('[data-download-backup]');
+    if (downloadBackup) {
+        const filename = downloadBackup.dataset.downloadBackup;
+        try {
+            const response = await fetch(
+                `/api/admin/backups/download?file=${encodeURIComponent(filename)}`,
+                { headers: { Authorization: `Bearer ${adminKey}` } }
+            );
+            if (!response.ok) {
+                const payload = await response.json();
+                throw new Error(payload.error || 'Backup download failed.');
+            }
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        } catch (error) { alert(error.message); }
+        return;
+    }
     const mergePlayer = event.target.closest('[data-merge-player]');
     if (mergePlayer) {
         const duplicateId = Number(mergePlayer.dataset.mergePlayer);

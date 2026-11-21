@@ -26,6 +26,32 @@ input, select, button { min-height: 38px; border: 1px solid var(--border); borde
 input, select { width: 100%; padding: 8px 10px; }
 button { padding: 8px 12px; cursor: pointer; }
 .hidden { display: none !important; }
+#show-player-form {
+    margin: 0 0 10px;
+}
+#show-fixture-form {
+    margin: 0 0 10px;
+}
+.backup-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.backup-card {
+    grid-template-columns: minmax(220px, 1fr) minmax(160px, 1fr) 90px auto;
+    gap: 6px 10px;
+    padding: 6px 8px;
+    min-height: 44px;
+}
+.backup-card button {
+    min-height: 32px;
+    padding: 5px 9px;
+}
+.admin-helper {
+    color: var(--muted);
+    margin: 0 0 12px;
+}
 .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 16px; }
 .tab.active { border-color: var(--accent); background: #183425; }
 .admin-panel { display: none; }
@@ -71,7 +97,7 @@ button { padding: 8px 12px; cursor: pointer; }
     padding: 5px 9px;
 }
 .player-card {
-    grid-template-columns: minmax(150px, 1fr) minmax(180px, 1fr) 34px auto;
+    grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) 34px minmax(240px, auto);
     gap: 6px 10px;
     padding: 6px 8px;
     min-height: 44px;
@@ -87,7 +113,17 @@ button { padding: 8px 12px; cursor: pointer; }
 .player-actions {
     display: flex;
     justify-content: flex-end;
+    flex-wrap: wrap;
     gap: 4px;
+}
+.player-card .player-actions button {
+    min-height: 30px;
+    padding: 4px 7px;
+    white-space: nowrap;
+}
+.player-card .danger-button {
+    border-color: #a83228;
+    color: #ffc3bd;
 }
 .submission-review {
     display: grid;
@@ -159,7 +195,11 @@ button { padding: 8px 12px; cursor: pointer; }
         grid-template-columns: minmax(150px, 1fr) 80px auto;
     }
     .player-card {
-        grid-template-columns: minmax(150px, 1fr) 34px minmax(120px, 1fr) auto;
+        grid-template-columns: minmax(120px, 1fr) minmax(120px, 1fr) 34px;
+    }
+    .player-card .player-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
     }
     .match-card .match-teams {
         grid-column: 1 / -1;

@@ -110,9 +110,9 @@
             <ul>
                 <li><strong>Add:</strong> enter first name, optional last name, gender, season, and team.</li>
                 <li><strong>Edit:</strong> use the edit form to correct first name, last name, or gender. The existing player ID is preserved, so linked baselines and turn history remain with the person.</li>
-                <li><strong>Remove:</strong> remove the player from the selected season roster without deleting the player's database record.</li>
+                <li><strong>Remove from roster:</strong> remove the player from the selected season only. The player record and historical database links remain available.</li>
                 <li><strong>Merge:</strong> enter the canonical player ID to keep. All roster, baseline, turn, lineup, and finish references for the duplicate move to that record.</li>
-                <li><strong>Delete:</strong> delete the whole player record. Use Remove or Merge instead when historical stats or submissions exist.</li>
+                <li><strong>Delete player:</strong> delete the whole player record. Use Remove from roster or Merge instead when historical stats or submissions exist.</li>
             </ul>
         </section>
 
@@ -150,6 +150,8 @@
 
         <section>
             <h2>Backups and restore</h2>
+            <p>The <strong>Backups</strong> tab can create a custom-format PostgreSQL backup and download it to the administrator's computer. Restore the database only after choosing a listed backup and typing <code>RESTORE</code> exactly.</p>
+            <p>Web backup and restore require <code>pg_dump</code> and <code>pg_restore</code> to be installed in the Node server environment and available on <code>PATH</code>.</p>
             <p>Create a backup from a server terminal with <code>npm.cmd run backup</code>. Backups are custom-format PostgreSQL dumps stored in <code>backups/</code>.</p>
             <p>Before restoring, stop the app and confirm that <code>DATABASE_URL</code> points to the intended target database. Restore with:</p>
             <p><code>npm.cmd run restore -- --confirm=RESTORE --file=backups\league-file.dump</code></p>

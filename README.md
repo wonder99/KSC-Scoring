@@ -75,6 +75,10 @@ Existing `score_csv_uploads` records can be reconciled after migrations with `np
 
 ## Database backups
 
+Authenticated administrators can create, download, and restore backups from `/admin` in the **Backups** tab. Restore requires typing `RESTORE` exactly and confirmation in the browser.
+
+Web backup creation and restore require `pg_dump` and `pg_restore` to be installed inside the running Node server environment. The local Windows machine and hosted container must both have PostgreSQL client tools on `PATH`.
+
 Create a custom-format PostgreSQL backup:
 
 ```powershell

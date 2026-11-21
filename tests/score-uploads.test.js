@@ -259,6 +259,17 @@ test('serves public standings for the active season', async () => {
                 assert.match(await response.text(), /League Reports/);
             });
         });
+
+        test('report styles keep the first player column sticky', () => {
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const styles = fs.readFileSync(
+                path.join(__dirname, '../reports/styles.css'),
+                'utf8'
+            );
+            assert.match(styles, /th:first-child,\s*td:first-child\s*\{[\s\S]*position:\s*sticky/);
+            assert.match(styles, /left:\s*0/);
+        });
     });
 });
 
@@ -332,6 +343,48 @@ test('serves the admin dashboard at /admin', async () => {
     });
 });
 
+test('lists database backups through the authenticated admin API', async () => {
+    await withServer({ query: async () => ({ rows: [] }) }, async baseUrl => {
+        const unauthorized = await fetch(`${baseUrl}/api/admin/backups`);
+        assert.equal(unauthorized.status, 401);
+
+        const response = await fetch(`${baseUrl}/api/admin/backups`, {
+            headers: { Authorization: 'Bearer test-admin-key' }
+        });
+        assert.equal(response.status, 200);
+        assert.ok(Array.isArray((await response.json()).backups));
+    });
+});
+
+test('backup creation requires PostgreSQL backup tools', async () => {
+    await withServer({ query: async () => ({ rows: [] }) }, async baseUrl => {
+        const response = await fetch(`${baseUrl}/api/admin/backups/create`, {
+            method: 'POST',
+            headers: { Authorization: 'Bearer test-admin-key' }
+        });
+        assert.equal(response.status, 501);
+        assert.match((await response.json()).error, /Database backup is unavailable/);
+    });
+});
+
+test('rejects database restore without exact confirmation', async () => {
+    await withServer({ query: async () => ({ rows: [] }) }, async baseUrl => {
+        const response = await fetch(`${baseUrl}/api/admin/backups/restore`, {
+            method: 'POST',
+            headers: {
+                Authorization: 'Bearer test-admin-key',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                filename: 'league-test.dump',
+                confirmation: 'restore'
+            })
+        });
+        assert.equal(response.status, 400);
+        assert.match((await response.json()).error, /RESTORE/);
+    });
+});
+
 test('serves player and admin guides', async () => {
     await withServer({ query: async () => ({ rows: [] }) }, async baseUrl => {
         const playerGuide = await fetch(`${baseUrl}/user-guide.html`);
@@ -352,6 +405,24 @@ test('admin season rendering does not reference a fixture variable', () => {
         'utf8'
     );
     assert.doesNotMatch(script, /fixture\.season_id.*season-list|season-list.*fixture\.season_id/i);
+});
+
+test('admin exposes web backup controls', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const html = fs.readFileSync(
+        path.join(__dirname, '../admin/index.html'),
+        'utf8'
+    );
+    const script = fs.readFileSync(
+        path.join(__dirname, '../admin/admin.js'),
+        'utf8'
+    );
+    assert.match(html, /data-tab="backups">Backups/);
+    assert.match(html, /id="create-backup"/);
+    assert.match(html, /id="backup-restore-form"/);
+    assert.match(script, /\/api\/admin\/backups\/create/);
+    assert.match(script, /\/api\/admin\/backups\/restore/);
 });
 
 test('submission review uses a form instead of per-turn prompts', () => {
@@ -384,7 +455,7 @@ test('admin uses Schedule and Match terminology for the schedule UI', () => {
     );
     assert.match(html, />Schedule<\//);
     assert.match(html, /<h2>Schedule<\/h2>/);
-    assert.match(html, /Add match/);
+    assert.match(html, /Add Match/);
     assert.match(script, /match-card/);
     assert.doesNotMatch(script, />Fixtures<|Delete this fixture/);
 });
@@ -413,6 +484,40 @@ test('admin teams and players use compact no-limit presentation', () => {
     assert.match(styles, /\.player-card/);
 });
 
+test('player add form is hidden until Add Player is pressed', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const html = fs.readFileSync(
+        path.join(__dirname, '../admin/index.html'),
+        'utf8'
+    );
+    const script = fs.readFileSync(
+        path.join(__dirname, '../admin/admin.js'),
+        'utf8'
+    );
+    assert.match(html, /<button id="show-player-form"[^>]*>Add Player<\/button>/);
+    assert.match(html, /<form id="player-form" class="inline-form hidden">/);
+    assert.match(script, /show-player-form.*classList\.remove/s);
+    assert.match(script, /cancel-player-add.*classList\.add/s);
+});
+
+test('match add form is hidden until Add Match is pressed', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const html = fs.readFileSync(
+        path.join(__dirname, '../admin/index.html'),
+        'utf8'
+    );
+    const script = fs.readFileSync(
+        path.join(__dirname, '../admin/admin.js'),
+        'utf8'
+    );
+    assert.match(html, /<button id="show-fixture-form"[^>]*>Add Match<\/button>/);
+    assert.match(html, /<form id="fixture-form" class="inline-form hidden">/);
+    assert.match(script, /show-fixture-form.*classList\.remove/s);
+    assert.match(script, /cancel-fixture-add.*classList\.add/s);
+});
+
 test('admin player cards show team before player name', () => {
     const fs = require('node:fs');
     const path = require('node:path');
@@ -424,6 +529,18 @@ test('admin player cards show team before player name', () => {
     const nameColumn = script.indexOf('<span class="player-name">${escapeHtml([player.first_name, player.last_name]');
     assert.ok(teamColumn >= 0);
     assert.ok(nameColumn > teamColumn);
+});
+
+test('schedule board label and player remove-delete distinction are explicit', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const script = fs.readFileSync(
+        path.join(__dirname, '../admin/admin.js'),
+        'utf8'
+    );
+    assert.match(script, /Board \${escapeHtml\(fixture\.board_number/);
+    assert.match(script, /Remove from roster/);
+    assert.match(script, /Delete player/);
 });
 
 test('admin schedule labels weeks as Wk', () => {

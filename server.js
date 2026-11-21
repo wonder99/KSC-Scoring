@@ -997,6 +997,104 @@ async function handleAdminFixtures(request, response, url, context) {
     sendJson(response, 200, { fixture: result.rows[0] });
 }
 
+async function handleAdminBackups(request, response, url, context) {
+    if (!isAdminAuthorized(request, context.adminApiKey)) {
+        throw new RequestError(401, 'A valid admin key is required.');
+    }
+
+    const backupDir = path.join(__dirname, 'backups');
+    const { isValidBackupFilename, listDatabaseBackups, createDatabaseBackup } =
+        require('./db/backup');
+
+    if (url.pathname === '/api/admin/backups' && request.method === 'GET') {
+        const backups = await listDatabaseBackups(backupDir);
+        sendJson(response, 200, { backups });
+        return;
+    }
+
+    if (url.pathname === '/api/admin/backups/create' && request.method === 'POST') {
+        try {
+            const backupFile = createDatabaseBackup({ backupDir });
+            const stat = await fs.stat(backupFile);
+            sendJson(response, 201, {
+                backup: {
+                    filename: path.basename(backupFile),
+                    size: stat.size,
+                    createdAt: stat.mtime.toISOString()
+                }
+            });
+        } catch (error) {
+            throw new RequestError(
+                501,
+                `Database backup is unavailable: ${error.message}`
+            );
+        }
+        return;
+    }
+
+    if (url.pathname === '/api/admin/backups/download' && request.method === 'GET') {
+        const filename = url.searchParams.get('file') || '';
+        if (!isValidBackupFilename(filename)) {
+            throw new RequestError(400, 'A valid backup filename is required.');
+        }
+        const backupFile = path.join(backupDir, filename);
+        let stat;
+        try {
+            stat = await fs.stat(backupFile);
+        } catch {
+            throw new RequestError(404, 'Backup file not found.');
+        }
+        if (!stat.isFile()) throw new RequestError(404, 'Backup file not found.');
+        const content = await fs.readFile(backupFile);
+        response.writeHead(200, {
+            'Content-Type': 'application/octet-stream',
+            'Content-Length': content.length,
+            'Content-Disposition': `attachment; filename="${filename}"`,
+            'Cache-Control': 'no-store',
+            'X-Content-Type-Options': 'nosniff'
+        });
+        response.end(request.method === 'HEAD' ? undefined : content);
+        return;
+    }
+
+    if (url.pathname === '/api/admin/backups/restore' && request.method === 'POST') {
+        if ((request.headers['content-type'] || '').split(';')[0].trim().toLowerCase() !== 'application/json') {
+            throw new RequestError(415, 'Content-Type must be application/json.');
+        }
+        const body = await readJsonBody(request);
+        const filename = typeof body.filename === 'string' ? body.filename.trim() : '';
+        if (!isValidBackupFilename(filename)) {
+            throw new RequestError(400, 'A valid backup filename is required.');
+        }
+        if (body.confirmation !== 'RESTORE') {
+            throw new RequestError(400, 'Type RESTORE to confirm database restore.');
+        }
+        const backupFile = path.join(backupDir, filename);
+        try {
+            await fs.stat(backupFile);
+        } catch {
+            throw new RequestError(404, 'Backup file not found.');
+        }
+        const { restoreDatabaseBackup } = require('./db/restore');
+        try {
+            restoreDatabaseBackup({
+                databaseUrl: process.env.DATABASE_URL,
+                backupFile,
+                confirmed: true
+            });
+        } catch (error) {
+            throw new RequestError(
+                501,
+                `Database restore is unavailable: ${error.message}`
+            );
+        }
+        sendJson(response, 200, { restored: true, filename });
+        return;
+    }
+
+    throw new RequestError(404, 'Backup API route not found.');
+}
+
 async function handleAdminSubmissions(request, response, url, context) {
     if (!isAdminAuthorized(request, context.adminApiKey)) {
         throw new RequestError(401, 'A valid admin key is required.');
@@ -1641,6 +1739,11 @@ function createServer({ pool, uploadApiKey, adminApiKey = process.env.ADMIN_API_
         } else if (pathname === '/api/admin/fixtures' ||
                    /^\/api\/admin\/fixtures\/\d+\/?$/.test(pathname)) {
             handler = handleAdminFixtures(request, response, url, context);
+        } else if (pathname === '/api/admin/backups' ||
+                   pathname === '/api/admin/backups/create' ||
+                   pathname === '/api/admin/backups/download' ||
+                   pathname === '/api/admin/backups/restore') {
+            handler = handleAdminBackups(request, response, url, context);
         } else if (pathname === '/api/admin/submissions') {
             handler = handleAdminSubmissions(request, response, url, context);
         } else if (/^\/api\/admin\/submissions\/\d+\/?$/.test(pathname)) {

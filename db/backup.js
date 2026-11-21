@@ -38,6 +38,31 @@ function createDatabaseBackup({
     return backupFile;
 }
 
+function isValidBackupFilename(filename) {
+    return typeof filename === 'string'
+        && path.basename(filename) === filename
+        && /^league-[^/\\\\]+\.dump$/.test(filename);
+}
+
+async function listDatabaseBackups(backupDir = path.join(__dirname, '..', 'backups')) {
+    if (!fs.existsSync(backupDir)) return [];
+    const entries = await fs.promises.readdir(backupDir, { withFileTypes: true });
+    const backups = [];
+    for (const entry of entries) {
+        if (!entry.isFile() || !isValidBackupFilename(entry.name)) continue;
+        const filePath = path.join(backupDir, entry.name);
+        const stat = await fs.promises.stat(filePath);
+        backups.push({
+            filename: entry.name,
+            size: stat.size,
+            createdAt: stat.mtime.toISOString()
+        });
+    }
+    return backups.sort((left, right) =>
+        right.createdAt.localeCompare(left.createdAt)
+    );
+}
+
 if (require.main === module) {
     try {
         const backupFile = createDatabaseBackup();
@@ -48,4 +73,9 @@ if (require.main === module) {
     }
 }
 
-module.exports = { buildBackupFilename, createDatabaseBackup };
+module.exports = {
+    buildBackupFilename,
+    createDatabaseBackup,
+    isValidBackupFilename,
+    listDatabaseBackups
+};
