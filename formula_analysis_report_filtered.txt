@@ -1,0 +1,526 @@
+========================================================================================================================
+FORMULA CONSISTENCY ANALYSIS REPORT
+File: C:\Users\Paul\Downloads\MASTER-DARTS-Stats file. - 2026-2027 Kari.xlsx
+Date: 2026-11-20
+========================================================================================================================
+
+========================================================================================================================
+HIGH CONFIDENCE COPY-PASTE ERRORS
+Formula at a given position is consistent across most weeks but differs in a few.
+Found 102 positions with HIGH confidence errors.
+========================================================================================================================
+
+NOTE: Errors with dissenting cells in Mens/Lady Overall/Outs/Avg/95 sheets have been EXCLUDED.
+
+========================================================================================================================
+EXCLUDED ERRORS (dissenting cells reference Mens/Lady Overall/Outs/Avg/95 sheets)
+========================================================================================================================
+
+  [Error #1] Position A19
+  [Error #2] Position A20
+  [Error #3] Position A22
+  [Error #4] Position A29
+  [Error #5] Position A30
+  [Error #6] Position A32
+  [Error #7] Position A39
+  [Error #8] Position A40
+  [Error #9] Position A41
+  [Error #10] Position A51
+  [Error #16] Position B42
+  [Error #17] Position B49
+  [Error #18] Position B50
+  [Error #19] Position C19
+  [Error #20] Position C29
+  [Error #21] Position C39
+  [Error #22] Position C42
+  [Error #23] Position C50
+  [Error #24] Position D19
+  [Error #25] Position D29
+  [Error #26] Position D39
+  [Error #27] Position D42
+  [Error #28] Position D50
+  [Error #29] Position D9
+  [Error #30] Position E13
+  [Error #31] Position E14
+  [Error #32] Position E15
+  [Error #33] Position E16
+  [Error #34] Position E17
+  [Error #35] Position E18
+  [Error #36] Position E19
+  [Error #37] Position E23
+  [Error #38] Position E24
+  [Error #39] Position E25
+  [Error #40] Position E26
+  [Error #41] Position E27
+  [Error #42] Position E28
+  [Error #43] Position E29
+  [Error #44] Position E3
+  [Error #45] Position E33
+  [Error #46] Position E34
+  [Error #47] Position E35
+  [Error #48] Position E36
+  [Error #49] Position E37
+  [Error #50] Position E38
+  [Error #51] Position E39
+  [Error #52] Position E42
+  [Error #53] Position E43
+  [Error #54] Position E46
+  [Error #55] Position E48
+  [Error #56] Position E50
+  [Error #57] Position E6
+  [Error #58] Position E7
+  [Error #59] Position E8
+  [Error #60] Position E9
+  [Error #61] Position F19
+  [Error #62] Position F29
+  [Error #63] Position F39
+  [Error #64] Position F42
+  [Error #65] Position F50
+  [Error #66] Position F9
+  [Error #67] Position G19
+  [Error #68] Position G29
+  [Error #69] Position G39
+  [Error #70] Position G42
+  [Error #71] Position G50
+  [Error #72] Position G9
+  [Error #73] Position H19
+  [Error #74] Position H29
+  [Error #75] Position H39
+  [Error #76] Position H42
+  [Error #77] Position H50
+  [Error #78] Position H9
+  [Error #79] Position I19
+  [Error #80] Position I29
+  [Error #81] Position I39
+  [Error #82] Position I42
+  [Error #83] Position I50
+  [Error #84] Position I9
+--- Error #11 ---
+  Position:          AD44
+  Total weeks:       22
+  Dominant formula:  =IF(AD6="",0,1)+IF(AD7="",0,1)+IF(AD8="",0,1)+IF(AD9="",0,1)+IF(AD10="",0,1)+IF(...
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =IF(AD6="",0,1)+IF(AD7="",0,1)+IF(AD8="",0,1)+IF(AD9="",0,1)+IF(AD10="",0,1)+IF(... <-- MAJORITY
+      1x  =IF(AD6="",0,1)+IF(AD7="",0,1)+IF(AD8="",0,1)+IF(AD9="",0,1)+IF(AD10="",0,1)+IF(...
+  Dissenting cells:
+    W6:  =IF(AD6="",0,1)+IF(AD7="",0,1)+IF(AD8="",0,1)+IF(AD9="",0,1)+IF(AD10="",0,1)+IF(...
+
+--- Error #12 ---
+  Position:          AD47
+  Total weeks:       22
+  Dominant formula:  =IF(AD6>=95,1,0)+IF(AD7>=95,1,0)+IF(AD8>=95,1,0)+IF(AD9>=95,1,0)+IF(AD10>=95,1,0...
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =IF(AD6>=95,1,0)+IF(AD7>=95,1,0)+IF(AD8>=95,1,0)+IF(AD9>=95,1,0)+IF(AD10>=95,1,0... <-- MAJORITY
+      1x  =IF(AD6>=95,1,0)+IF(AD7>=95,1,0)+IF(AD8>=95,1,0)+IF(AD9>=95,1,0)+IF(AD10>=95,1,0...
+  Dissenting cells:
+    W6:  =IF(AD6>=95,1,0)+IF(AD7>=95,1,0)+IF(AD8>=95,1,0)+IF(AD9>=95,1,0)+IF(AD10>=95,1,0...
+
+--- Error #13 ---
+  Position:          AD49
+  Total weeks:       22
+  Dominant formula:  =IF(AD6=171,1,0)+IF(AD7=171,1,0)+IF(AD8=171,1,0)+IF(AD9=171,1,0)+IF(AD10=171,1,0...
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =IF(AD6=171,1,0)+IF(AD7=171,1,0)+IF(AD8=171,1,0)+IF(AD9=171,1,0)+IF(AD10=171,1,0... <-- MAJORITY
+      1x  =IF(AD6=171,1,0)+IF(AD7=171,1,0)+IF(AD8=171,1,0)+IF(AD9=171,1,0)+IF(AD10=171,1,0...
+  Dissenting cells:
+    W6:  =IF(AD6=171,1,0)+IF(AD7=171,1,0)+IF(AD8=171,1,0)+IF(AD9=171,1,0)+IF(AD10=171,1,0...
+
+--- Error #14 ---
+  Position:          AD50
+  Total weeks:       22
+  Dominant formula:  =IF(AD6=180,1,0)+IF(AD7=180,1,0)+IF(AD8=180,1,0)+IF(AD9=180,1,0)+IF(AD10=180,1,0...
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =IF(AD6=180,1,0)+IF(AD7=180,1,0)+IF(AD8=180,1,0)+IF(AD9=180,1,0)+IF(AD10=180,1,0... <-- MAJORITY
+      1x  =IF(AD6=180,1,0)+IF(AD7=180,1,0)+IF(AD8=180,1,0)+IF(AD9=180,1,0)+IF(AD10=180,1,0...
+  Dissenting cells:
+    W6:  =IF(AD6=180,1,0)+IF(AD7=180,1,0)+IF(AD8=180,1,0)+IF(AD9=180,1,0)+IF(AD10=180,1,0...
+
+--- Error #15 ---
+  Position:          AF42
+  Total weeks:       22
+  Dominant formula:  =SUM(AF6:AF41)
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =SUM(AF6:AF41) <-- MAJORITY
+      1x  =SUM(AF7:AF41)
+  Dissenting cells:
+    W5:  =SUM(AF7:AF41)
+
+--- Error #85 ---
+  Position:          M42
+  Total weeks:       22
+  Dominant formula:  =SUM(M6:M41)
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =SUM(M6:M41) <-- MAJORITY
+      1x  =SUM(M5:M41)
+  Dissenting cells:
+    W2:  =SUM(M5:M41)
+
+--- Error #86 ---
+  Position:          N183
+  Total weeks:       12
+  Dominant formula:  =B3+B13+B23+B33+B43+B53+B63+B73+B83+B93+B103+B113+B123+B133+B143+B153+B163+B173+...
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =B3+B13+B23+B33+B43+B53+B63+B73+B83+B93+B103+B113+B123+B133+B143+B153+B163+B173+... <-- MAJORITY
+      1x  =B3+B13+B23+B33+B43+B53+B63+B73+B83+B93+B103+B113+B123+B133+B143+B153+B163+B173+...
+  Dissenting cells:
+    T12:  =B3+B13+B23+B33+B43+B53+B63+B73+B83+B93+B103+B113+B123+B133+B143+B153+B163+B173+...
+
+--- Error #87 ---
+  Position:          O183
+  Total weeks:       12
+  Dominant formula:  =C3+C13+C23+C33+C43+C53+C63+C73+C83+C93+C103+C113+C123+C133+C143+C153+C163+C173+...
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =C3+C13+C23+C33+C43+C53+C63+C73+C83+C93+C103+C113+C123+C133+C143+C153+C163+C173+... <-- MAJORITY
+      1x  =C3+C13+C23+C33+C43+C53+C63+C73+C83+C93+C103+C113+C123+C133+C143+C153+C163+C173+...
+  Dissenting cells:
+    T12:  =C3+C13+C23+C33+C43+C53+C63+C73+C83+C93+C103+C113+C123+C133+C143+C153+C163+C173+...
+
+--- Error #88 ---
+  Position:          O189
+  Total weeks:       12
+  Dominant formula:  =SUM(O183:O188)
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =SUM(O183:O188) <-- MAJORITY
+      1x  =SUM(O182:O188)
+  Dissenting cells:
+    T6:  =SUM(O182:O188)
+
+--- Error #89 ---
+  Position:          P183
+  Total weeks:       12
+  Dominant formula:  =D3+D13+D23+D33+D43+D53+D63+D73+D83+D93+D103+D113+D123+D133+D143+D153+D163+D173+...
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =D3+D13+D23+D33+D43+D53+D63+D73+D83+D93+D103+D113+D123+D133+D143+D153+D163+D173+... <-- MAJORITY
+      1x  =D3+D13+D23+D33+D43+D53+D63+D73+D83+D93+D103+D113+D123+D133+D143+D153+D163+D173+...
+  Dissenting cells:
+    T12:  =D3+D13+D23+D33+D43+D53+D63+D73+D83+D93+D103+D113+D123+D133+D143+D153+D163+D173+...
+
+--- Error #90 ---
+  Position:          P189
+  Total weeks:       12
+  Dominant formula:  =SUM(P183:P188)
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =SUM(P183:P188) <-- MAJORITY
+      1x  =SUM(P182:P188)
+  Dissenting cells:
+    T6:  =SUM(P182:P188)
+
+--- Error #91 ---
+  Position:          R183
+  Total weeks:       12
+  Dominant formula:  =F3+F13+F23+F33+F43+F53+F63+F73+F83+F93+F103+F113+F123+F133+F143+F153+F163+F173+...
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =F3+F13+F23+F33+F43+F53+F63+F73+F83+F93+F103+F113+F123+F133+F143+F153+F163+F173+... <-- MAJORITY
+      1x  =F3+F13+F23+F33+F43+F53+F63+F73+F83+F93+F103+F113+F123+F133+F143+F153+F163+F173+...
+  Dissenting cells:
+    T12:  =F3+F13+F23+F33+F43+F53+F63+F73+F83+F93+F103+F113+F123+F133+F143+F153+F163+F173+...
+
+--- Error #92 ---
+  Position:          R189
+  Total weeks:       12
+  Dominant formula:  =SUM(R183:R188)
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =SUM(R183:R188) <-- MAJORITY
+      1x  =SUM(R182:R188)
+  Dissenting cells:
+    T6:  =SUM(R182:R188)
+
+--- Error #93 ---
+  Position:          S183
+  Total weeks:       12
+  Dominant formula:  =G3+G13+G23+G33+G43+G53+G63+G73+G83+G93+G103+G113+G123+G133+G143+G153+G163+G173+...
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =G3+G13+G23+G33+G43+G53+G63+G73+G83+G93+G103+G113+G123+G133+G143+G153+G163+G173+... <-- MAJORITY
+      1x  =G3+G13+G23+G33+G43+G53+G63+G73+G83+G93+G103+G113+G123+G133+G143+G153+G163+G173+...
+  Dissenting cells:
+    T12:  =G3+G13+G23+G33+G43+G53+G63+G73+G83+G93+G103+G113+G123+G133+G143+G153+G163+G173+...
+
+--- Error #94 ---
+  Position:          S189
+  Total weeks:       12
+  Dominant formula:  =SUM(S183:S188)
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =SUM(S183:S188) <-- MAJORITY
+      1x  =SUM(S182:S188)
+  Dissenting cells:
+    T6:  =SUM(S182:S188)
+
+--- Error #95 ---
+  Position:          T1
+  Total weeks:       21
+  Dominant formula:  ='T9'!M1
+  Dominant count:    20 weeks
+  Formula distribution:
+     20x  ='T9'!M1 <-- MAJORITY
+      1x  ='W1 - Team Master'!T1
+  Dissenting cells:
+    W2:  ='W1 - Team Master'!T1
+
+--- Error #96 ---
+  Position:          T183
+  Total weeks:       12
+  Dominant formula:  =H3+H13+H23+H33+H43+H53+H63+H73+H83+H93+H103+H113+H123+H133+H143+H153+H163+H173+...
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =H3+H13+H23+H33+H43+H53+H63+H73+H83+H93+H103+H113+H123+H133+H143+H153+H163+H173+... <-- MAJORITY
+      1x  =H3+H13+H23+H33+H43+H53+H63+H73+H83+H93+H103+H113+H123+H133+H143+H153+H163+H173+...
+  Dissenting cells:
+    T12:  =H3+H13+H23+H33+H43+H53+H63+H73+H83+H93+H103+H113+H123+H133+H143+H153+H163+H173+...
+
+--- Error #97 ---
+  Position:          U183
+  Total weeks:       12
+  Dominant formula:  =I3+I13+I23+I33+I43+I53+I63+I73+I83+I93+I103+I113+I123+I133+I143+I153+I163+I173+...
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =I3+I13+I23+I33+I43+I53+I63+I73+I83+I93+I103+I113+I123+I133+I143+I153+I163+I173+... <-- MAJORITY
+      1x  =I3+I13+I23+I33+I43+I53+I63+I73+I83+I93+I103+I113+I123+I133+I143+I153+I163+I173+...
+  Dissenting cells:
+    T12:  =I3+I13+I23+I33+I43+I53+I63+I73+I83+I93+I103+I113+I123+I133+I143+I153+I163+I173+...
+
+--- Error #98 ---
+  Position:          U47
+  Total weeks:       22
+  Dominant formula:  =IF(U6>=95,1,0)+IF(U7>=95,1,0)+IF(U8>=95,1,0)+IF(U9>=95,1,0)+IF(U10>=95,1,0)+IF(...
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =IF(U6>=95,1,0)+IF(U7>=95,1,0)+IF(U8>=95,1,0)+IF(U9>=95,1,0)+IF(U10>=95,1,0)+IF(... <-- MAJORITY
+      1x  =IF(U6>=95,1,0)+IF(U7>=95,1,0)+IF(U8>=95,1,0)+IF(U9>=95,1,0)+IF(U10>=95,1,0)+IF(...
+  Dissenting cells:
+    W11:  =IF(U6>=95,1,0)+IF(U7>=95,1,0)+IF(U8>=95,1,0)+IF(U9>=95,1,0)+IF(U10>=95,1,0)+IF(...
+
+--- Error #99 ---
+  Position:          U49
+  Total weeks:       22
+  Dominant formula:  =IF(U6=171,1,0)+IF(U7=171,1,0)+IF(U8=171,1,0)+IF(U9=171,1,0)+IF(U10=171,1,0)+IF(...
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =IF(U6=171,1,0)+IF(U7=171,1,0)+IF(U8=171,1,0)+IF(U9=171,1,0)+IF(U10=171,1,0)+IF(... <-- MAJORITY
+      1x  =IF(U6=171,1,0)+IF(U7=171,1,0)+IF(U8=171,1,0)+IF(U9=171,1,0)+IF(U10=171,1,0)+IF(...
+  Dissenting cells:
+    W11:  =IF(U6=171,1,0)+IF(U7=171,1,0)+IF(U8=171,1,0)+IF(U9=171,1,0)+IF(U10=171,1,0)+IF(...
+
+--- Error #100 ---
+  Position:          U50
+  Total weeks:       22
+  Dominant formula:  =IF(U6=180,1,0)+IF(U7=180,1,0)+IF(U8=180,1,0)+IF(U9=180,1,0)+IF(U10=180,1,0)+IF(...
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =IF(U6=180,1,0)+IF(U7=180,1,0)+IF(U8=180,1,0)+IF(U9=180,1,0)+IF(U10=180,1,0)+IF(... <-- MAJORITY
+      1x  =IF(U6=180,1,0)+IF(U7=180,1,0)+IF(U8=180,1,0)+IF(U9=180,1,0)+IF(U10=180,1,0)+IF(...
+  Dissenting cells:
+    W11:  =IF(U6=180,1,0)+IF(U7=180,1,0)+IF(U8=180,1,0)+IF(U9=180,1,0)+IF(U10=180,1,0)+IF(...
+
+--- Error #101 ---
+  Position:          V183
+  Total weeks:       12
+  Dominant formula:  =J3+J13+J23+J33+J43+J53+J63+J73+J83+J93+J103+J113+J123+J133+J143+J153+J163+J173+...
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =J3+J13+J23+J33+J43+J53+J63+J73+J83+J93+J103+J113+J123+J133+J143+J153+J163+J173+... <-- MAJORITY
+      1x  =J3+J13+J23+J33+J43+J53+J63+J73+J83+J93+J103+J113+J123+J133+J143+J153+J163+J173+...
+  Dissenting cells:
+    T12:  =J3+J13+J23+J33+J43+J53+J63+J73+J83+J93+J103+J113+J123+J133+J143+J153+J163+J173+...
+
+--- Error #102 ---
+  Position:          V189
+  Total weeks:       12
+  Dominant formula:  =SUM(V183:V188)
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =SUM(V183:V188) <-- MAJORITY
+      1x  =SUM(V182:V188)
+  Dissenting cells:
+    T6:  =SUM(V182:V188)
+
+========================================================================================================================
+MEDIUM CONFIDENCE COPY-PASTE ERRORS
+Formula at a given position has 3+ distinct groups of similar size (no clear majority).
+Found 0 positions with MEDIUM confidence errors.
+========================================================================================================================
+
+  (none found)
+
+========================================================================================================================
+
+OFF-BY-ONE RANGE ERRORS
+Cells at the same position reference ranges that differ by exactly one cell.
+Found 7 positions with off-by-one errors.
+========================================================================================================================
+
+--- Error #1 ---
+  Position: AF42
+    W22: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W21: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W20: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W19: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W18: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W17: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W16: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W15: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W14: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W13: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W12: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W11: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W10: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W9: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W8: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W7: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W6: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W5: AF7:AF41 (span=34)  vs  W4: AF6:AF41 (span=35)  => differs by 1 cell
+    W5: AF7:AF41 (span=34)  vs  W3: AF6:AF41 (span=35)  => differs by 1 cell
+    W5: AF7:AF41 (span=34)  vs  W2: AF6:AF41 (span=35)  => differs by 1 cell
+    W5: AF7:AF41 (span=34)  vs  W1 - Team Master: AF6:AF41 (span=35)  => differs by 1 cell
+
+--- Error #2 ---
+  Position: M42
+    W22: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W21: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W20: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W19: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W18: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W17: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W16: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W15: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W14: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W13: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W12: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W11: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W10: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W9: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W8: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W7: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W6: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W5: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W4: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W3: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W2: M5:M41 (span=36)  vs  W1 - Team Master: M6:M41 (span=35)  => differs by 1 cell
+
+--- Error #3 ---
+  Position: O189
+    T1: O183:O188 (span=5)  vs  T6: O182:O188 (span=6)  => differs by 1 cell
+    T2: O183:O188 (span=5)  vs  T6: O182:O188 (span=6)  => differs by 1 cell
+    T3: O183:O188 (span=5)  vs  T6: O182:O188 (span=6)  => differs by 1 cell
+    T4: O183:O188 (span=5)  vs  T6: O182:O188 (span=6)  => differs by 1 cell
+    T5: O183:O188 (span=5)  vs  T6: O182:O188 (span=6)  => differs by 1 cell
+    T6: O182:O188 (span=6)  vs  T7: O183:O188 (span=5)  => differs by 1 cell
+    T6: O182:O188 (span=6)  vs  T8: O183:O188 (span=5)  => differs by 1 cell
+    T6: O182:O188 (span=6)  vs  T9: O183:O188 (span=5)  => differs by 1 cell
+    T6: O182:O188 (span=6)  vs  T10: O183:O188 (span=5)  => differs by 1 cell
+    T6: O182:O188 (span=6)  vs  T11: O183:O188 (span=5)  => differs by 1 cell
+    T6: O182:O188 (span=6)  vs  T12: O183:O188 (span=5)  => differs by 1 cell
+
+--- Error #4 ---
+  Position: P189
+    T1: P183:P188 (span=5)  vs  T6: P182:P188 (span=6)  => differs by 1 cell
+    T2: P183:P188 (span=5)  vs  T6: P182:P188 (span=6)  => differs by 1 cell
+    T3: P183:P188 (span=5)  vs  T6: P182:P188 (span=6)  => differs by 1 cell
+    T4: P183:P188 (span=5)  vs  T6: P182:P188 (span=6)  => differs by 1 cell
+    T5: P183:P188 (span=5)  vs  T6: P182:P188 (span=6)  => differs by 1 cell
+    T6: P182:P188 (span=6)  vs  T7: P183:P188 (span=5)  => differs by 1 cell
+    T6: P182:P188 (span=6)  vs  T8: P183:P188 (span=5)  => differs by 1 cell
+    T6: P182:P188 (span=6)  vs  T9: P183:P188 (span=5)  => differs by 1 cell
+    T6: P182:P188 (span=6)  vs  T10: P183:P188 (span=5)  => differs by 1 cell
+    T6: P182:P188 (span=6)  vs  T11: P183:P188 (span=5)  => differs by 1 cell
+    T6: P182:P188 (span=6)  vs  T12: P183:P188 (span=5)  => differs by 1 cell
+
+--- Error #5 ---
+  Position: R189
+    T1: R183:R188 (span=5)  vs  T6: R182:R188 (span=6)  => differs by 1 cell
+    T2: R183:R188 (span=5)  vs  T6: R182:R188 (span=6)  => differs by 1 cell
+    T3: R183:R188 (span=5)  vs  T6: R182:R188 (span=6)  => differs by 1 cell
+    T4: R183:R188 (span=5)  vs  T6: R182:R188 (span=6)  => differs by 1 cell
+    T5: R183:R188 (span=5)  vs  T6: R182:R188 (span=6)  => differs by 1 cell
+    T6: R182:R188 (span=6)  vs  T7: R183:R188 (span=5)  => differs by 1 cell
+    T6: R182:R188 (span=6)  vs  T8: R183:R188 (span=5)  => differs by 1 cell
+    T6: R182:R188 (span=6)  vs  T9: R183:R188 (span=5)  => differs by 1 cell
+    T6: R182:R188 (span=6)  vs  T10: R183:R188 (span=5)  => differs by 1 cell
+    T6: R182:R188 (span=6)  vs  T11: R183:R188 (span=5)  => differs by 1 cell
+    T6: R182:R188 (span=6)  vs  T12: R183:R188 (span=5)  => differs by 1 cell
+
+--- Error #6 ---
+  Position: S189
+    T1: S183:S188 (span=5)  vs  T6: S182:S188 (span=6)  => differs by 1 cell
+    T2: S183:S188 (span=5)  vs  T6: S182:S188 (span=6)  => differs by 1 cell
+    T3: S183:S188 (span=5)  vs  T6: S182:S188 (span=6)  => differs by 1 cell
+    T4: S183:S188 (span=5)  vs  T6: S182:S188 (span=6)  => differs by 1 cell
+    T5: S183:S188 (span=5)  vs  T6: S182:S188 (span=6)  => differs by 1 cell
+    T6: S182:S188 (span=6)  vs  T7: S183:S188 (span=5)  => differs by 1 cell
+    T6: S182:S188 (span=6)  vs  T8: S183:S188 (span=5)  => differs by 1 cell
+    T6: S182:S188 (span=6)  vs  T9: S183:S188 (span=5)  => differs by 1 cell
+    T6: S182:S188 (span=6)  vs  T10: S183:S188 (span=5)  => differs by 1 cell
+    T6: S182:S188 (span=6)  vs  T11: S183:S188 (span=5)  => differs by 1 cell
+    T6: S182:S188 (span=6)  vs  T12: S183:S188 (span=5)  => differs by 1 cell
+
+--- Error #7 ---
+  Position: V189
+    T1: V183:V188 (span=5)  vs  T6: V182:V188 (span=6)  => differs by 1 cell
+    T2: V183:V188 (span=5)  vs  T6: V182:V188 (span=6)  => differs by 1 cell
+    T3: V183:V188 (span=5)  vs  T6: V182:V188 (span=6)  => differs by 1 cell
+    T4: V183:V188 (span=5)  vs  T6: V182:V188 (span=6)  => differs by 1 cell
+    T5: V183:V188 (span=5)  vs  T6: V182:V188 (span=6)  => differs by 1 cell
+    T6: V182:V188 (span=6)  vs  T7: V183:V188 (span=5)  => differs by 1 cell
+    T6: V182:V188 (span=6)  vs  T8: V183:V188 (span=5)  => differs by 1 cell
+    T6: V182:V188 (span=6)  vs  T9: V183:V188 (span=5)  => differs by 1 cell
+    T6: V182:V188 (span=6)  vs  T10: V183:V188 (span=5)  => differs by 1 cell
+    T6: V182:V188 (span=6)  vs  T11: V183:V188 (span=5)  => differs by 1 cell
+    T6: V182:V188 (span=6)  vs  T12: V183:V188 (span=5)  => differs by 1 cell
+
+========================================================================================================================
+CROSS-SHEET REFERENCE INCONSISTENCIES
+Team/other sheet references that appear in some weekly sheets but not others.
+Found 1 inconsistent cross-sheet references.
+========================================================================================================================
+
+--- Inconsistency #1: T1 ---
+  Present in       1 of 21 weeks
+  Present in:      W2
+  Absent from:     W10, W11, W12, W13, W14, W15, W16, W17, W18, W19, W20, W21, W22, W3, W4, W5, W6, W7, W8, W9
+
+========================================================================================================================
+FULL CROSS-SHEET REFERENCE MAP
+Which team/other sheets each weekly sheet references.
+========================================================================================================================
+
+Sheet   'T1'     'T10'     'T11'     'T12'      'T2'      'T3'      'T4'      'T5'      'T6'      'T7'      'T8'      'T9'       T1       T10       T11       T12       T13       T14       T15       T16       T17       T18       T19       T20       T21       T22       T23       T24       T25       T26       T27       T28       T29       T30       T31       T32       T33       T34       T35       T36       T37       T38       T39        T4       T40       T41       T42       T44        T5        T6        T7        T8        T9    
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+W10YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W11YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W12YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W13YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W14YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W15YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W16YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W17YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W18YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W19YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W2 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W20YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W21YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W22YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W3 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W4 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W5 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W6 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W7 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W8 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W9 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+
+========================================================================================================================
+END OF REPORT
+========================================================================================================================

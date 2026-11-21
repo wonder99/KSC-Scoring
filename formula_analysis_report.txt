@@ -1,0 +1,1515 @@
+========================================================================================================================
+FORMULA CONSISTENCY ANALYSIS REPORT
+File: C:\Users\Paul\Downloads\MASTER-DARTS-Stats file. - 2026-2027 Kari.xlsx
+Date: 2026-11-20
+========================================================================================================================
+
+========================================================================================================================
+HIGH CONFIDENCE COPY-PASTE ERRORS
+Formula at a given position is consistent across most weeks but differs in a few.
+Found 102 positions with HIGH confidence errors.
+========================================================================================================================
+
+--- Error #1 ---
+  Position:          A19
+  Total weeks:       27
+  Dominant formula:  =A18+1
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =A18+1 <-- MAJORITY
+      2x  ='W1 - Team Master'!BR5
+      1x  ='Mens 95'!A5
+      1x  ='W1 - Team Master'!P5
+      1x  ='W1 - Team Master'!BP5
+  Dissenting cells:
+    Leaders:  ='Mens 95'!A5
+    Mens Overall:  ='W1 - Team Master'!BR5
+    Mens Outs:  ='W1 - Team Master'!P5
+    Mens Avg:  ='W1 - Team Master'!BR5
+    Mens 95:  ='W1 - Team Master'!BP5
+
+--- Error #2 ---
+  Position:          A20
+  Total weeks:       27
+  Dominant formula:  =A19+1
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =A19+1 <-- MAJORITY
+      2x  ='W1 - Team Master'!AG5
+      1x  ='Mens 95'!A6
+      1x  ='W1 - Team Master'!BF5
+      1x  ='W1 - Team Master'!BQ5
+  Dissenting cells:
+    Leaders:  ='Mens 95'!A6
+    Mens Overall:  ='W1 - Team Master'!AG5
+    Mens Outs:  ='W1 - Team Master'!BF5
+    Mens Avg:  ='W1 - Team Master'!AG5
+    Mens 95:  ='W1 - Team Master'!BQ5
+
+--- Error #3 ---
+  Position:          A22
+  Total weeks:       27
+  Dominant formula:  =A21+1
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =A21+1 <-- MAJORITY
+      2x  ='W1 - Team Master'!BI5
+      1x  ='Mens 95'!A8
+      1x  ='W1 - Team Master'!K5
+      1x  ='W1 - Team Master'!S5
+  Dissenting cells:
+    Leaders:  ='Mens 95'!A8
+    Mens Overall:  ='W1 - Team Master'!BI5
+    Mens Outs:  ='W1 - Team Master'!K5
+    Mens Avg:  ='W1 - Team Master'!BI5
+    Mens 95:  ='W1 - Team Master'!S5
+
+--- Error #4 ---
+  Position:          A29
+  Total weeks:       27
+  Dominant formula:  =A28+1
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =A28+1 <-- MAJORITY
+      2x  ='W1 - Team Master'!AJ5
+      1x  ='Mens Outs'!A3
+      1x  ='W1 - Team Master'!AQ5
+      1x  ='W1 - Team Master'!N5
+  Dissenting cells:
+    Leaders:  ='Mens Outs'!A3
+    Mens Overall:  ='W1 - Team Master'!AJ5
+    Mens Outs:  ='W1 - Team Master'!AQ5
+    Mens Avg:  ='W1 - Team Master'!AJ5
+    Mens 95:  ='W1 - Team Master'!N5
+
+--- Error #5 ---
+  Position:          A30
+  Total weeks:       27
+  Dominant formula:  =A29+1
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =A29+1 <-- MAJORITY
+      2x  ='W1 - Team Master'!AO5
+      1x  ='Mens Outs'!A4
+      1x  ='W1 - Team Master'!X5
+      1x  ='W1 - Team Master'!AQ5
+  Dissenting cells:
+    Leaders:  ='Mens Outs'!A4
+    Mens Overall:  ='W1 - Team Master'!AO5
+    Mens Outs:  ='W1 - Team Master'!X5
+    Mens Avg:  ='W1 - Team Master'!AO5
+    Mens 95:  ='W1 - Team Master'!AQ5
+
+--- Error #6 ---
+  Position:          A32
+  Total weeks:       27
+  Dominant formula:  =A31+1
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =A31+1 <-- MAJORITY
+      1x  ='Mens Outs'!A6
+      1x  ='W1 - Team Master'!BK5
+      1x  ='W1 - Team Master'!I5
+      1x  ='W1 - Team Master'!AM5
+      1x  ='W1 - Team Master'!P5
+  Dissenting cells:
+    Leaders:  ='Mens Outs'!A6
+    Mens Overall:  ='W1 - Team Master'!BK5
+    Mens Outs:  ='W1 - Team Master'!I5
+    Mens Avg:  ='W1 - Team Master'!AM5
+    Mens 95:  ='W1 - Team Master'!P5
+
+--- Error #7 ---
+  Position:          A39
+  Total weeks:       26
+  Dominant formula:  =A38+1
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =A38+1 <-- MAJORITY
+      2x  ='W1 - Team Master'!BB5
+      1x  ='W1 - Team Master'!BC5
+      1x  ='W1 - Team Master'!BE5
+  Dissenting cells:
+    Mens Overall:  ='W1 - Team Master'!BC5
+    Mens Outs:  ='W1 - Team Master'!BE5
+    Mens Avg:  ='W1 - Team Master'!BB5
+    Mens 95:  ='W1 - Team Master'!BB5
+
+--- Error #8 ---
+  Position:          A40
+  Total weeks:       26
+  Dominant formula:  =A39+1
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =A39+1 <-- MAJORITY
+      1x  ='W1 - Team Master'!BB5
+      1x  ='W1 - Team Master'!BQ5
+      1x  ='W1 - Team Master'!AV5
+      1x  ='W1 - Team Master'!AY5
+  Dissenting cells:
+    Mens Overall:  ='W1 - Team Master'!BB5
+    Mens Outs:  ='W1 - Team Master'!BQ5
+    Mens Avg:  ='W1 - Team Master'!AV5
+    Mens 95:  ='W1 - Team Master'!AY5
+
+--- Error #9 ---
+  Position:          A41
+  Total weeks:       16
+  Dominant formula:  ='W5'!A1
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  ='W5'!A1 <-- MAJORITY
+      1x  ='W1 - Team Master'!AV5
+      1x  ='W1 - Team Master'!Z5
+      1x  ='W1 - Team Master'!AY5
+      1x  ='W1 - Team Master'!BC5
+  Dissenting cells:
+    Mens Overall:  ='W1 - Team Master'!AV5
+    Mens Outs:  ='W1 - Team Master'!Z5
+    Mens Avg:  ='W1 - Team Master'!AY5
+    Mens 95:  ='W1 - Team Master'!BC5
+
+--- Error #10 ---
+  Position:          A51
+  Total weeks:       16
+  Dominant formula:  ='W6'!A1
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  ='W6'!A1 <-- MAJORITY
+      1x  ='W1 - Team Master'!AI5
+      1x  ='W1 - Team Master'!BD5
+      1x  ='W1 - Team Master'!AB5
+      1x  ='W1 - Team Master'!AJ5
+  Dissenting cells:
+    Mens Overall:  ='W1 - Team Master'!AI5
+    Mens Outs:  ='W1 - Team Master'!BD5
+    Mens Avg:  ='W1 - Team Master'!AB5
+    Mens 95:  ='W1 - Team Master'!AJ5
+
+--- Error #11 ---
+  Position:          AD44
+  Total weeks:       22
+  Dominant formula:  =IF(AD6="",0,1)+IF(AD7="",0,1)+IF(AD8="",0,1)+IF(AD9="",0,1)+IF(AD10="",0,1)+IF(...
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =IF(AD6="",0,1)+IF(AD7="",0,1)+IF(AD8="",0,1)+IF(AD9="",0,1)+IF(AD10="",0,1)+IF(... <-- MAJORITY
+      1x  =IF(AD6="",0,1)+IF(AD7="",0,1)+IF(AD8="",0,1)+IF(AD9="",0,1)+IF(AD10="",0,1)+IF(...
+  Dissenting cells:
+    W6:  =IF(AD6="",0,1)+IF(AD7="",0,1)+IF(AD8="",0,1)+IF(AD9="",0,1)+IF(AD10="",0,1)+IF(...
+
+--- Error #12 ---
+  Position:          AD47
+  Total weeks:       22
+  Dominant formula:  =IF(AD6>=95,1,0)+IF(AD7>=95,1,0)+IF(AD8>=95,1,0)+IF(AD9>=95,1,0)+IF(AD10>=95,1,0...
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =IF(AD6>=95,1,0)+IF(AD7>=95,1,0)+IF(AD8>=95,1,0)+IF(AD9>=95,1,0)+IF(AD10>=95,1,0... <-- MAJORITY
+      1x  =IF(AD6>=95,1,0)+IF(AD7>=95,1,0)+IF(AD8>=95,1,0)+IF(AD9>=95,1,0)+IF(AD10>=95,1,0...
+  Dissenting cells:
+    W6:  =IF(AD6>=95,1,0)+IF(AD7>=95,1,0)+IF(AD8>=95,1,0)+IF(AD9>=95,1,0)+IF(AD10>=95,1,0...
+
+--- Error #13 ---
+  Position:          AD49
+  Total weeks:       22
+  Dominant formula:  =IF(AD6=171,1,0)+IF(AD7=171,1,0)+IF(AD8=171,1,0)+IF(AD9=171,1,0)+IF(AD10=171,1,0...
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =IF(AD6=171,1,0)+IF(AD7=171,1,0)+IF(AD8=171,1,0)+IF(AD9=171,1,0)+IF(AD10=171,1,0... <-- MAJORITY
+      1x  =IF(AD6=171,1,0)+IF(AD7=171,1,0)+IF(AD8=171,1,0)+IF(AD9=171,1,0)+IF(AD10=171,1,0...
+  Dissenting cells:
+    W6:  =IF(AD6=171,1,0)+IF(AD7=171,1,0)+IF(AD8=171,1,0)+IF(AD9=171,1,0)+IF(AD10=171,1,0...
+
+--- Error #14 ---
+  Position:          AD50
+  Total weeks:       22
+  Dominant formula:  =IF(AD6=180,1,0)+IF(AD7=180,1,0)+IF(AD8=180,1,0)+IF(AD9=180,1,0)+IF(AD10=180,1,0...
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =IF(AD6=180,1,0)+IF(AD7=180,1,0)+IF(AD8=180,1,0)+IF(AD9=180,1,0)+IF(AD10=180,1,0... <-- MAJORITY
+      1x  =IF(AD6=180,1,0)+IF(AD7=180,1,0)+IF(AD8=180,1,0)+IF(AD9=180,1,0)+IF(AD10=180,1,0...
+  Dissenting cells:
+    W6:  =IF(AD6=180,1,0)+IF(AD7=180,1,0)+IF(AD8=180,1,0)+IF(AD9=180,1,0)+IF(AD10=180,1,0...
+
+--- Error #15 ---
+  Position:          AF42
+  Total weeks:       22
+  Dominant formula:  =SUM(AF6:AF41)
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =SUM(AF6:AF41) <-- MAJORITY
+      1x  =SUM(AF7:AF41)
+  Dissenting cells:
+    W5:  =SUM(AF7:AF41)
+
+--- Error #16 ---
+  Position:          B42
+  Total weeks:       26
+  Dominant formula:  =SUM(B6:B41)
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =SUM(B6:B41) <-- MAJORITY
+      1x  ='W1 - Team Master'!AX1
+      1x  ='W1 - Team Master'!AF1
+      1x  ='W1 - Team Master'!T1
+      1x  ='W1 - Team Master'!BJ1
+  Dissenting cells:
+    Mens Overall:  ='W1 - Team Master'!AX1
+    Mens Outs:  ='W1 - Team Master'!AF1
+    Mens Avg:  ='W1 - Team Master'!T1
+    Mens 95:  ='W1 - Team Master'!BJ1
+
+--- Error #17 ---
+  Position:          B49
+  Total weeks:       27
+  Dominant formula:  =IF(B6=171,1,0)+IF(B7=171,1,0)+IF(B8=171,1,0)+IF(B9=171,1,0)+IF(B10=171,1,0)+IF(...
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =IF(B6=171,1,0)+IF(B7=171,1,0)+IF(B8=171,1,0)+IF(B9=171,1,0)+IF(B10=171,1,0)+IF(... <-- MAJORITY
+      2x  ='W1 - Team Master'!BD1
+      1x  =SUM(B43:B48)
+      1x  ='W1 - Team Master'!AX1
+      1x  ='W1 - Team Master'!Z1
+  Dissenting cells:
+    T1:  =SUM(B43:B48)
+    Mens Overall:  ='W1 - Team Master'!BD1
+    Mens Outs:  ='W1 - Team Master'!AX1
+    Mens Avg:  ='W1 - Team Master'!BD1
+    Mens 95:  ='W1 - Team Master'!Z1
+
+--- Error #18 ---
+  Position:          B50
+  Total weeks:       26
+  Dominant formula:  =IF(B6=180,1,0)+IF(B7=180,1,0)+IF(B8=180,1,0)+IF(B9=180,1,0)+IF(B10=180,1,0)+IF(...
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =IF(B6=180,1,0)+IF(B7=180,1,0)+IF(B8=180,1,0)+IF(B9=180,1,0)+IF(B10=180,1,0)+IF(... <-- MAJORITY
+      2x  ='W1 - Team Master'!BD1
+      1x  ='W1 - Team Master'!N1
+      1x  ='W1 - Team Master'!AF1
+  Dissenting cells:
+    Mens Overall:  ='W1 - Team Master'!BD1
+    Mens Outs:  ='W1 - Team Master'!N1
+    Mens Avg:  ='W1 - Team Master'!AF1
+    Mens 95:  ='W1 - Team Master'!BD1
+
+--- Error #19 ---
+  Position:          C19
+  Total weeks:       17
+  Dominant formula:  =SUM(C13:C18)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(C13:C18) <-- MAJORITY
+      1x  ='Mens 95'!C5
+      1x  ='T12'!N185
+      1x  ='T5'!S185
+      1x  ='T12'!Q185
+      1x  ='T12'!R183
+  Dissenting cells:
+    Leaders:  ='Mens 95'!C5
+    Mens Overall:  ='T12'!N185
+    Mens Outs:  ='T5'!S185
+    Mens Avg:  ='T12'!Q185
+    Mens 95:  ='T12'!R183
+
+--- Error #20 ---
+  Position:          C29
+  Total weeks:       17
+  Dominant formula:  =SUM(C23:C28)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(C23:C28) <-- MAJORITY
+      1x  ='Mens Outs'!C3
+      1x  ='T7'!N187
+      1x  ='T10'!S188
+      1x  ='T7'!Q187
+      1x  ='T5'!R183
+  Dissenting cells:
+    Leaders:  ='Mens Outs'!C3
+    Mens Overall:  ='T7'!N187
+    Mens Outs:  ='T10'!S188
+    Mens Avg:  ='T7'!Q187
+    Mens 95:  ='T5'!R183
+
+--- Error #21 ---
+  Position:          C39
+  Total weeks:       16
+  Dominant formula:  =SUM(C33:C38)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(C33:C38) <-- MAJORITY
+      1x  ='T2'!N188
+      1x  ='T8'!S184
+      1x  ='T2'!Q187
+      1x  ='T2'!R187
+  Dissenting cells:
+    Mens Overall:  ='T2'!N188
+    Mens Outs:  ='T8'!S184
+    Mens Avg:  ='T2'!Q187
+    Mens 95:  ='T2'!R187
+
+--- Error #22 ---
+  Position:          C42
+  Total weeks:       26
+  Dominant formula:  =SUM(C6:C41)
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =SUM(C6:C41) <-- MAJORITY
+      1x  ='T2'!N184
+      1x  ='T7'!S186
+      1x  ='T9'!Q187
+      1x  ='T3'!R184
+  Dissenting cells:
+    Mens Overall:  ='T2'!N184
+    Mens Outs:  ='T7'!S186
+    Mens Avg:  ='T9'!Q187
+    Mens 95:  ='T3'!R184
+
+--- Error #23 ---
+  Position:          C50
+  Total weeks:       26
+  Dominant formula:  =IF(C6=180,1,0)+IF(C7=180,1,0)+IF(C8=180,1,0)+IF(C9=180,1,0)+IF(C10=180,1,0)+IF(...
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =IF(C6=180,1,0)+IF(C7=180,1,0)+IF(C8=180,1,0)+IF(C9=180,1,0)+IF(C10=180,1,0)+IF(... <-- MAJORITY
+      1x  ='T8'!N183
+      1x  ='T5'!S187
+      1x  ='T7'!Q186
+      1x  ='T8'!R183
+  Dissenting cells:
+    Mens Overall:  ='T8'!N183
+    Mens Outs:  ='T5'!S187
+    Mens Avg:  ='T7'!Q186
+    Mens 95:  ='T8'!R183
+
+--- Error #24 ---
+  Position:          D19
+  Total weeks:       13
+  Dominant formula:  =SUM(D13:D18)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(D13:D18) <-- MAJORITY
+      1x  ='T12'!O185
+  Dissenting cells:
+    Mens Overall:  ='T12'!O185
+
+--- Error #25 ---
+  Position:          D29
+  Total weeks:       13
+  Dominant formula:  =SUM(D23:D28)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(D23:D28) <-- MAJORITY
+      1x  ='T7'!O187
+  Dissenting cells:
+    Mens Overall:  ='T7'!O187
+
+--- Error #26 ---
+  Position:          D39
+  Total weeks:       13
+  Dominant formula:  =SUM(D33:D38)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(D33:D38) <-- MAJORITY
+      1x  ='T2'!O188
+  Dissenting cells:
+    Mens Overall:  ='T2'!O188
+
+--- Error #27 ---
+  Position:          D42
+  Total weeks:       23
+  Dominant formula:  =SUM(D6:D41)
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =SUM(D6:D41) <-- MAJORITY
+      1x  ='T2'!O184
+  Dissenting cells:
+    Mens Overall:  ='T2'!O184
+
+--- Error #28 ---
+  Position:          D50
+  Total weeks:       23
+  Dominant formula:  =IF(D6=180,1,0)+IF(D7=180,1,0)+IF(D8=180,1,0)+IF(D9=180,1,0)+IF(D10=180,1,0)+IF(...
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =IF(D6=180,1,0)+IF(D7=180,1,0)+IF(D8=180,1,0)+IF(D9=180,1,0)+IF(D10=180,1,0)+IF(... <-- MAJORITY
+      1x  ='T8'!O183
+  Dissenting cells:
+    Mens Overall:  ='T8'!O183
+
+--- Error #29 ---
+  Position:          D9
+  Total weeks:       15
+  Dominant formula:  =SUM(D3:D8)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(D3:D8) <-- MAJORITY
+      1x  ='T1'!O188
+      1x  ='T4'!O183
+      1x  =B9+C9
+  Dissenting cells:
+    Mens Overall:  ='T1'!O188
+    Lady Overall:  ='T4'!O183
+    Standings:  =B9+C9
+
+--- Error #30 ---
+  Position:          E13
+  Total weeks:       16
+  Dominant formula:  =IF(C13,D13/C13,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C13,D13/C13,0) <-- MAJORITY
+      1x  ='Lady Avg'!A11
+      1x  ='T3'!P186
+      1x  ='T6'!P185
+      1x  ='T2'!$Q$189
+  Dissenting cells:
+    Leaders:  ='Lady Avg'!A11
+    Mens Overall:  ='T3'!P186
+    Lady Overall:  ='T6'!P185
+    Standings:  ='T2'!$Q$189
+
+--- Error #31 ---
+  Position:          E14
+  Total weeks:       14
+  Dominant formula:  =IF(C14,D14/C14,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C14,D14/C14,0) <-- MAJORITY
+      1x  ='T11'!P186
+      1x  ='T6'!P186
+  Dissenting cells:
+    Mens Overall:  ='T11'!P186
+    Lady Overall:  ='T6'!P186
+
+--- Error #32 ---
+  Position:          E15
+  Total weeks:       13
+  Dominant formula:  =IF(C15,D15/C15,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C15,D15/C15,0) <-- MAJORITY
+      1x  ='T12'!P183
+  Dissenting cells:
+    Mens Overall:  ='T12'!P183
+
+--- Error #33 ---
+  Position:          E16
+  Total weeks:       14
+  Dominant formula:  =IF(C16,D16/C16,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C16,D16/C16,0) <-- MAJORITY
+      1x  ='Lady 95'!A2
+      1x  ='T4'!P186
+  Dissenting cells:
+    Leaders:  ='Lady 95'!A2
+    Mens Overall:  ='T4'!P186
+
+--- Error #34 ---
+  Position:          E17
+  Total weeks:       14
+  Dominant formula:  =IF(C17,D17/C17,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C17,D17/C17,0) <-- MAJORITY
+      1x  ='Lady 95'!A3
+      1x  ='T1'!P185
+  Dissenting cells:
+    Leaders:  ='Lady 95'!A3
+    Mens Overall:  ='T1'!P185
+
+--- Error #35 ---
+  Position:          E18
+  Total weeks:       14
+  Dominant formula:  =IF(C18,D18/C18,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C18,D18/C18,0) <-- MAJORITY
+      1x  ='Lady 95'!A4
+      1x  ='T5'!P183
+  Dissenting cells:
+    Leaders:  ='Lady 95'!A4
+    Mens Overall:  ='T5'!P183
+
+--- Error #36 ---
+  Position:          E19
+  Total weeks:       14
+  Dominant formula:  =IF(C19,D19/C19,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C19,D19/C19,0) <-- MAJORITY
+      1x  ='Lady 95'!A5
+      1x  ='T12'!P185
+  Dissenting cells:
+    Leaders:  ='Lady 95'!A5
+    Mens Overall:  ='T12'!P185
+
+--- Error #37 ---
+  Position:          E23
+  Total weeks:       14
+  Dominant formula:  =IF(C23,D23/C23,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C23,D23/C23,0) <-- MAJORITY
+      1x  ='Lady 95'!A9
+      1x  ='T10'!P183
+  Dissenting cells:
+    Leaders:  ='Lady 95'!A9
+    Mens Overall:  ='T10'!P183
+
+--- Error #38 ---
+  Position:          E24
+  Total weeks:       14
+  Dominant formula:  =IF(C24,D24/C24,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C24,D24/C24,0) <-- MAJORITY
+      1x  ='Lady 95'!A10
+      1x  ='T5'!P188
+  Dissenting cells:
+    Leaders:  ='Lady 95'!A10
+    Mens Overall:  ='T5'!P188
+
+--- Error #39 ---
+  Position:          E25
+  Total weeks:       14
+  Dominant formula:  =IF(C25,D25/C25,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C25,D25/C25,0) <-- MAJORITY
+      1x  ='Lady 95'!A11
+      1x  ='T12'!P184
+  Dissenting cells:
+    Leaders:  ='Lady 95'!A11
+    Mens Overall:  ='T12'!P184
+
+--- Error #40 ---
+  Position:          E26
+  Total weeks:       13
+  Dominant formula:  =IF(C26,D26/C26,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C26,D26/C26,0) <-- MAJORITY
+      1x  ='T6'!P184
+  Dissenting cells:
+    Mens Overall:  ='T6'!P184
+
+--- Error #41 ---
+  Position:          E27
+  Total weeks:       13
+  Dominant formula:  =IF(C27,D27/C27,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C27,D27/C27,0) <-- MAJORITY
+      1x  ='T1'!P186
+  Dissenting cells:
+    Mens Overall:  ='T1'!P186
+
+--- Error #42 ---
+  Position:          E28
+  Total weeks:       14
+  Dominant formula:  =IF(C28,D28/C28,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C28,D28/C28,0) <-- MAJORITY
+      1x  ='Lady Outs'!A2
+      1x  ='T4'!P187
+  Dissenting cells:
+    Leaders:  ='Lady Outs'!A2
+    Mens Overall:  ='T4'!P187
+
+--- Error #43 ---
+  Position:          E29
+  Total weeks:       14
+  Dominant formula:  =IF(C29,D29/C29,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C29,D29/C29,0) <-- MAJORITY
+      1x  ='Lady Outs'!A3
+      1x  ='T7'!P187
+  Dissenting cells:
+    Leaders:  ='Lady Outs'!A3
+    Mens Overall:  ='T7'!P187
+
+--- Error #44 ---
+  Position:          E3
+  Total weeks:       15
+  Dominant formula:  =IF(C3,D3/C3,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C3,D3/C3,0) <-- MAJORITY
+      1x  ='T3'!P188
+      1x  ='T6'!P188
+      1x  ='T4'!$Q$189
+  Dissenting cells:
+    Mens Overall:  ='T3'!P188
+    Lady Overall:  ='T6'!P188
+    Standings:  ='T4'!$Q$189
+
+--- Error #45 ---
+  Position:          E33
+  Total weeks:       14
+  Dominant formula:  =IF(C33,D33/C33,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C33,D33/C33,0) <-- MAJORITY
+      1x  ='Lady Outs'!A7
+      1x  ='T10'!P184
+  Dissenting cells:
+    Leaders:  ='Lady Outs'!A7
+    Mens Overall:  ='T10'!P184
+
+--- Error #46 ---
+  Position:          E34
+  Total weeks:       14
+  Dominant formula:  =IF(C34,D34/C34,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C34,D34/C34,0) <-- MAJORITY
+      1x  ='Lady Outs'!A8
+      1x  ='T11'!P188
+  Dissenting cells:
+    Leaders:  ='Lady Outs'!A8
+    Mens Overall:  ='T11'!P188
+
+--- Error #47 ---
+  Position:          E35
+  Total weeks:       14
+  Dominant formula:  =IF(C35,D35/C35,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C35,D35/C35,0) <-- MAJORITY
+      1x  ='Lady Outs'!A9
+      1x  ='T5'!P185
+  Dissenting cells:
+    Leaders:  ='Lady Outs'!A9
+    Mens Overall:  ='T5'!P185
+
+--- Error #48 ---
+  Position:          E36
+  Total weeks:       14
+  Dominant formula:  =IF(C36,D36/C36,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C36,D36/C36,0) <-- MAJORITY
+      1x  ='Lady Outs'!A10
+      1x  ='T5'!P187
+  Dissenting cells:
+    Leaders:  ='Lady Outs'!A10
+    Mens Overall:  ='T5'!P187
+
+--- Error #49 ---
+  Position:          E37
+  Total weeks:       14
+  Dominant formula:  =IF(C37,D37/C37,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C37,D37/C37,0) <-- MAJORITY
+      1x  ='Lady Outs'!A11
+      1x  ='T7'!P185
+  Dissenting cells:
+    Leaders:  ='Lady Outs'!A11
+    Mens Overall:  ='T7'!P185
+
+--- Error #50 ---
+  Position:          E38
+  Total weeks:       13
+  Dominant formula:  =IF(C38,D38/C38,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C38,D38/C38,0) <-- MAJORITY
+      1x  ='T10'!P188
+  Dissenting cells:
+    Mens Overall:  ='T10'!P188
+
+--- Error #51 ---
+  Position:          E39
+  Total weeks:       13
+  Dominant formula:  =IF(C39,D39/C39,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C39,D39/C39,0) <-- MAJORITY
+      1x  ='T2'!P188
+  Dissenting cells:
+    Mens Overall:  ='T2'!P188
+
+--- Error #52 ---
+  Position:          E42
+  Total weeks:       23
+  Dominant formula:  =SUM(E6:E41)
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =SUM(E6:E41) <-- MAJORITY
+      1x  ='T2'!P184
+  Dissenting cells:
+    Mens Overall:  ='T2'!P184
+
+--- Error #53 ---
+  Position:          E43
+  Total weeks:       13
+  Dominant formula:  =IF(C43,D43/C43,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C43,D43/C43,0) <-- MAJORITY
+      1x  ='T9'!P187
+  Dissenting cells:
+    Mens Overall:  ='T9'!P187
+
+--- Error #54 ---
+  Position:          E46
+  Total weeks:       13
+  Dominant formula:  =IF(C46,D46/C46,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C46,D46/C46,0) <-- MAJORITY
+      1x  ='T5'!P184
+  Dissenting cells:
+    Mens Overall:  ='T5'!P184
+
+--- Error #55 ---
+  Position:          E48
+  Total weeks:       13
+  Dominant formula:  =IF(C48,D48/C48,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C48,D48/C48,0) <-- MAJORITY
+      1x  ='T1'!P184
+  Dissenting cells:
+    Mens Overall:  ='T1'!P184
+
+--- Error #56 ---
+  Position:          E50
+  Total weeks:       23
+  Dominant formula:  =IF(E6=180,1,0)+IF(E7=180,1,0)+IF(E8=180,1,0)+IF(E9=180,1,0)+IF(E10=180,1,0)+IF(...
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =IF(E6=180,1,0)+IF(E7=180,1,0)+IF(E8=180,1,0)+IF(E9=180,1,0)+IF(E10=180,1,0)+IF(... <-- MAJORITY
+      1x  ='T8'!P183
+  Dissenting cells:
+    Mens Overall:  ='T8'!P183
+
+--- Error #57 ---
+  Position:          E6
+  Total weeks:       16
+  Dominant formula:  =IF(C6,D6/C6,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C6,D6/C6,0) <-- MAJORITY
+      1x  ='Lady Avg'!A4
+      1x  ='T2'!P185
+      1x  ='T12'!P186
+      1x  ='T1'!$Q$189
+  Dissenting cells:
+    Leaders:  ='Lady Avg'!A4
+    Mens Overall:  ='T2'!P185
+    Lady Overall:  ='T12'!P186
+    Standings:  ='T1'!$Q$189
+
+--- Error #58 ---
+  Position:          E7
+  Total weeks:       16
+  Dominant formula:  =IF(C7,D7/C7,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C7,D7/C7,0) <-- MAJORITY
+      1x  ='Lady Avg'!A5
+      1x  ='T3'!P185
+      1x  ='T3'!P183
+      1x  ='T5'!$Q$189
+  Dissenting cells:
+    Leaders:  ='Lady Avg'!A5
+    Mens Overall:  ='T3'!P185
+    Lady Overall:  ='T3'!P183
+    Standings:  ='T5'!$Q$189
+
+--- Error #59 ---
+  Position:          E8
+  Total weeks:       16
+  Dominant formula:  =IF(C8,D8/C8,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C8,D8/C8,0) <-- MAJORITY
+      1x  ='Lady Avg'!A6
+      1x  ='T4'!P184
+      1x  ='T9'!P185
+      1x  ='T8'!$Q$189
+  Dissenting cells:
+    Leaders:  ='Lady Avg'!A6
+    Mens Overall:  ='T4'!P184
+    Lady Overall:  ='T9'!P185
+    Standings:  ='T8'!$Q$189
+
+--- Error #60 ---
+  Position:          E9
+  Total weeks:       16
+  Dominant formula:  =IF(C9,D9/C9,0)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =IF(C9,D9/C9,0) <-- MAJORITY
+      1x  ='Lady Avg'!A7
+      1x  ='T1'!P188
+      1x  ='T4'!P183
+      1x  ='T6'!$Q$189
+  Dissenting cells:
+    Leaders:  ='Lady Avg'!A7
+    Mens Overall:  ='T1'!P188
+    Lady Overall:  ='T4'!P183
+    Standings:  ='T6'!$Q$189
+
+--- Error #61 ---
+  Position:          F19
+  Total weeks:       14
+  Dominant formula:  =SUM(F13:F18)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(F13:F18) <-- MAJORITY
+      1x  ='Lady 95'!B5
+      1x  ='T12'!Q185
+  Dissenting cells:
+    Leaders:  ='Lady 95'!B5
+    Mens Overall:  ='T12'!Q185
+
+--- Error #62 ---
+  Position:          F29
+  Total weeks:       14
+  Dominant formula:  =SUM(F23:F28)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(F23:F28) <-- MAJORITY
+      1x  ='Lady Outs'!B3
+      1x  ='T7'!Q187
+  Dissenting cells:
+    Leaders:  ='Lady Outs'!B3
+    Mens Overall:  ='T7'!Q187
+
+--- Error #63 ---
+  Position:          F39
+  Total weeks:       13
+  Dominant formula:  =SUM(F33:F38)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(F33:F38) <-- MAJORITY
+      1x  ='T2'!Q188
+  Dissenting cells:
+    Mens Overall:  ='T2'!Q188
+
+--- Error #64 ---
+  Position:          F42
+  Total weeks:       23
+  Dominant formula:  =SUM(F6:F41)
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =SUM(F6:F41) <-- MAJORITY
+      1x  ='T2'!Q184
+  Dissenting cells:
+    Mens Overall:  ='T2'!Q184
+
+--- Error #65 ---
+  Position:          F50
+  Total weeks:       23
+  Dominant formula:  =IF(F6=180,1,0)+IF(F7=180,1,0)+IF(F8=180,1,0)+IF(F9=180,1,0)+IF(F10=180,1,0)+IF(...
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =IF(F6=180,1,0)+IF(F7=180,1,0)+IF(F8=180,1,0)+IF(F9=180,1,0)+IF(F10=180,1,0)+IF(... <-- MAJORITY
+      1x  ='T8'!Q183
+  Dissenting cells:
+    Mens Overall:  ='T8'!Q183
+
+--- Error #66 ---
+  Position:          F9
+  Total weeks:       15
+  Dominant formula:  =SUM(F3:F8)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(F3:F8) <-- MAJORITY
+      1x  ='Lady Avg'!B7
+      1x  ='T1'!Q188
+      1x  ='T4'!Q183
+  Dissenting cells:
+    Leaders:  ='Lady Avg'!B7
+    Mens Overall:  ='T1'!Q188
+    Lady Overall:  ='T4'!Q183
+
+--- Error #67 ---
+  Position:          G19
+  Total weeks:       14
+  Dominant formula:  =SUM(G13:G18)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(G13:G18) <-- MAJORITY
+      1x  ='Lady 95'!C5
+      1x  ='T12'!R185
+  Dissenting cells:
+    Leaders:  ='Lady 95'!C5
+    Mens Overall:  ='T12'!R185
+
+--- Error #68 ---
+  Position:          G29
+  Total weeks:       14
+  Dominant formula:  =SUM(G23:G28)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(G23:G28) <-- MAJORITY
+      1x  ='Lady Outs'!C3
+      1x  ='T7'!R187
+  Dissenting cells:
+    Leaders:  ='Lady Outs'!C3
+    Mens Overall:  ='T7'!R187
+
+--- Error #69 ---
+  Position:          G39
+  Total weeks:       13
+  Dominant formula:  =SUM(G33:G38)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(G33:G38) <-- MAJORITY
+      1x  ='T2'!R188
+  Dissenting cells:
+    Mens Overall:  ='T2'!R188
+
+--- Error #70 ---
+  Position:          G42
+  Total weeks:       23
+  Dominant formula:  =SUM(G6:G41)
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =SUM(G6:G41) <-- MAJORITY
+      1x  ='T2'!R184
+  Dissenting cells:
+    Mens Overall:  ='T2'!R184
+
+--- Error #71 ---
+  Position:          G50
+  Total weeks:       23
+  Dominant formula:  =IF(G6=180,1,0)+IF(G7=180,1,0)+IF(G8=180,1,0)+IF(G9=180,1,0)+IF(G10=180,1,0)+IF(...
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =IF(G6=180,1,0)+IF(G7=180,1,0)+IF(G8=180,1,0)+IF(G9=180,1,0)+IF(G10=180,1,0)+IF(... <-- MAJORITY
+      1x  ='T8'!R183
+  Dissenting cells:
+    Mens Overall:  ='T8'!R183
+
+--- Error #72 ---
+  Position:          G9
+  Total weeks:       15
+  Dominant formula:  =SUM(G3:G8)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(G3:G8) <-- MAJORITY
+      1x  ='Lady Avg'!C7
+      1x  ='T1'!R188
+      1x  ='T4'!R183
+  Dissenting cells:
+    Leaders:  ='Lady Avg'!C7
+    Mens Overall:  ='T1'!R188
+    Lady Overall:  ='T4'!R183
+
+--- Error #73 ---
+  Position:          H19
+  Total weeks:       13
+  Dominant formula:  =SUM(H13:H18)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(H13:H18) <-- MAJORITY
+      1x  ='T12'!S185
+  Dissenting cells:
+    Mens Overall:  ='T12'!S185
+
+--- Error #74 ---
+  Position:          H29
+  Total weeks:       13
+  Dominant formula:  =SUM(H23:H28)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(H23:H28) <-- MAJORITY
+      1x  ='T7'!S187
+  Dissenting cells:
+    Mens Overall:  ='T7'!S187
+
+--- Error #75 ---
+  Position:          H39
+  Total weeks:       13
+  Dominant formula:  =SUM(H33:H38)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(H33:H38) <-- MAJORITY
+      1x  ='T2'!S188
+  Dissenting cells:
+    Mens Overall:  ='T2'!S188
+
+--- Error #76 ---
+  Position:          H42
+  Total weeks:       23
+  Dominant formula:  =SUM(H6:H41)
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =SUM(H6:H41) <-- MAJORITY
+      1x  ='T2'!S184
+  Dissenting cells:
+    Mens Overall:  ='T2'!S184
+
+--- Error #77 ---
+  Position:          H50
+  Total weeks:       23
+  Dominant formula:  =IF(H6=180,1,0)+IF(H7=180,1,0)+IF(H8=180,1,0)+IF(H9=180,1,0)+IF(H10=180,1,0)+IF(...
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =IF(H6=180,1,0)+IF(H7=180,1,0)+IF(H8=180,1,0)+IF(H9=180,1,0)+IF(H10=180,1,0)+IF(... <-- MAJORITY
+      1x  ='T8'!S183
+  Dissenting cells:
+    Mens Overall:  ='T8'!S183
+
+--- Error #78 ---
+  Position:          H9
+  Total weeks:       14
+  Dominant formula:  =SUM(H3:H8)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(H3:H8) <-- MAJORITY
+      1x  ='T1'!S188
+      1x  ='T4'!S183
+  Dissenting cells:
+    Mens Overall:  ='T1'!S188
+    Lady Overall:  ='T4'!S183
+
+--- Error #79 ---
+  Position:          I19
+  Total weeks:       13
+  Dominant formula:  =SUM(I13:I18)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(I13:I18) <-- MAJORITY
+      1x  ='T12'!V185
+  Dissenting cells:
+    Mens Overall:  ='T12'!V185
+
+--- Error #80 ---
+  Position:          I29
+  Total weeks:       13
+  Dominant formula:  =SUM(I23:I28)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(I23:I28) <-- MAJORITY
+      1x  ='T7'!V187
+  Dissenting cells:
+    Mens Overall:  ='T7'!V187
+
+--- Error #81 ---
+  Position:          I39
+  Total weeks:       13
+  Dominant formula:  =SUM(I33:I38)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(I33:I38) <-- MAJORITY
+      1x  ='T2'!V188
+  Dissenting cells:
+    Mens Overall:  ='T2'!V188
+
+--- Error #82 ---
+  Position:          I42
+  Total weeks:       23
+  Dominant formula:  =SUM(I6:I41)
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =SUM(I6:I41) <-- MAJORITY
+      1x  ='T2'!V184
+  Dissenting cells:
+    Mens Overall:  ='T2'!V184
+
+--- Error #83 ---
+  Position:          I50
+  Total weeks:       23
+  Dominant formula:  =IF(I6=180,1,0)+IF(I7=180,1,0)+IF(I8=180,1,0)+IF(I9=180,1,0)+IF(I10=180,1,0)+IF(...
+  Dominant count:    22 weeks
+  Formula distribution:
+     22x  =IF(I6=180,1,0)+IF(I7=180,1,0)+IF(I8=180,1,0)+IF(I9=180,1,0)+IF(I10=180,1,0)+IF(... <-- MAJORITY
+      1x  ='T8'!V183
+  Dissenting cells:
+    Mens Overall:  ='T8'!V183
+
+--- Error #84 ---
+  Position:          I9
+  Total weeks:       14
+  Dominant formula:  =SUM(I3:I8)
+  Dominant count:    12 weeks
+  Formula distribution:
+     12x  =SUM(I3:I8) <-- MAJORITY
+      1x  ='T1'!V188
+      1x  ='T4'!T183
+  Dissenting cells:
+    Mens Overall:  ='T1'!V188
+    Lady Overall:  ='T4'!T183
+
+--- Error #85 ---
+  Position:          M42
+  Total weeks:       22
+  Dominant formula:  =SUM(M6:M41)
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =SUM(M6:M41) <-- MAJORITY
+      1x  =SUM(M5:M41)
+  Dissenting cells:
+    W2:  =SUM(M5:M41)
+
+--- Error #86 ---
+  Position:          N183
+  Total weeks:       12
+  Dominant formula:  =B3+B13+B23+B33+B43+B53+B63+B73+B83+B93+B103+B113+B123+B133+B143+B153+B163+B173+...
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =B3+B13+B23+B33+B43+B53+B63+B73+B83+B93+B103+B113+B123+B133+B143+B153+B163+B173+... <-- MAJORITY
+      1x  =B3+B13+B23+B33+B43+B53+B63+B73+B83+B93+B103+B113+B123+B133+B143+B153+B163+B173+...
+  Dissenting cells:
+    T12:  =B3+B13+B23+B33+B43+B53+B63+B73+B83+B93+B103+B113+B123+B133+B143+B153+B163+B173+...
+
+--- Error #87 ---
+  Position:          O183
+  Total weeks:       12
+  Dominant formula:  =C3+C13+C23+C33+C43+C53+C63+C73+C83+C93+C103+C113+C123+C133+C143+C153+C163+C173+...
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =C3+C13+C23+C33+C43+C53+C63+C73+C83+C93+C103+C113+C123+C133+C143+C153+C163+C173+... <-- MAJORITY
+      1x  =C3+C13+C23+C33+C43+C53+C63+C73+C83+C93+C103+C113+C123+C133+C143+C153+C163+C173+...
+  Dissenting cells:
+    T12:  =C3+C13+C23+C33+C43+C53+C63+C73+C83+C93+C103+C113+C123+C133+C143+C153+C163+C173+...
+
+--- Error #88 ---
+  Position:          O189
+  Total weeks:       12
+  Dominant formula:  =SUM(O183:O188)
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =SUM(O183:O188) <-- MAJORITY
+      1x  =SUM(O182:O188)
+  Dissenting cells:
+    T6:  =SUM(O182:O188)
+
+--- Error #89 ---
+  Position:          P183
+  Total weeks:       12
+  Dominant formula:  =D3+D13+D23+D33+D43+D53+D63+D73+D83+D93+D103+D113+D123+D133+D143+D153+D163+D173+...
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =D3+D13+D23+D33+D43+D53+D63+D73+D83+D93+D103+D113+D123+D133+D143+D153+D163+D173+... <-- MAJORITY
+      1x  =D3+D13+D23+D33+D43+D53+D63+D73+D83+D93+D103+D113+D123+D133+D143+D153+D163+D173+...
+  Dissenting cells:
+    T12:  =D3+D13+D23+D33+D43+D53+D63+D73+D83+D93+D103+D113+D123+D133+D143+D153+D163+D173+...
+
+--- Error #90 ---
+  Position:          P189
+  Total weeks:       12
+  Dominant formula:  =SUM(P183:P188)
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =SUM(P183:P188) <-- MAJORITY
+      1x  =SUM(P182:P188)
+  Dissenting cells:
+    T6:  =SUM(P182:P188)
+
+--- Error #91 ---
+  Position:          R183
+  Total weeks:       12
+  Dominant formula:  =F3+F13+F23+F33+F43+F53+F63+F73+F83+F93+F103+F113+F123+F133+F143+F153+F163+F173+...
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =F3+F13+F23+F33+F43+F53+F63+F73+F83+F93+F103+F113+F123+F133+F143+F153+F163+F173+... <-- MAJORITY
+      1x  =F3+F13+F23+F33+F43+F53+F63+F73+F83+F93+F103+F113+F123+F133+F143+F153+F163+F173+...
+  Dissenting cells:
+    T12:  =F3+F13+F23+F33+F43+F53+F63+F73+F83+F93+F103+F113+F123+F133+F143+F153+F163+F173+...
+
+--- Error #92 ---
+  Position:          R189
+  Total weeks:       12
+  Dominant formula:  =SUM(R183:R188)
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =SUM(R183:R188) <-- MAJORITY
+      1x  =SUM(R182:R188)
+  Dissenting cells:
+    T6:  =SUM(R182:R188)
+
+--- Error #93 ---
+  Position:          S183
+  Total weeks:       12
+  Dominant formula:  =G3+G13+G23+G33+G43+G53+G63+G73+G83+G93+G103+G113+G123+G133+G143+G153+G163+G173+...
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =G3+G13+G23+G33+G43+G53+G63+G73+G83+G93+G103+G113+G123+G133+G143+G153+G163+G173+... <-- MAJORITY
+      1x  =G3+G13+G23+G33+G43+G53+G63+G73+G83+G93+G103+G113+G123+G133+G143+G153+G163+G173+...
+  Dissenting cells:
+    T12:  =G3+G13+G23+G33+G43+G53+G63+G73+G83+G93+G103+G113+G123+G133+G143+G153+G163+G173+...
+
+--- Error #94 ---
+  Position:          S189
+  Total weeks:       12
+  Dominant formula:  =SUM(S183:S188)
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =SUM(S183:S188) <-- MAJORITY
+      1x  =SUM(S182:S188)
+  Dissenting cells:
+    T6:  =SUM(S182:S188)
+
+--- Error #95 ---
+  Position:          T1
+  Total weeks:       21
+  Dominant formula:  ='T9'!M1
+  Dominant count:    20 weeks
+  Formula distribution:
+     20x  ='T9'!M1 <-- MAJORITY
+      1x  ='W1 - Team Master'!T1
+  Dissenting cells:
+    W2:  ='W1 - Team Master'!T1
+
+--- Error #96 ---
+  Position:          T183
+  Total weeks:       12
+  Dominant formula:  =H3+H13+H23+H33+H43+H53+H63+H73+H83+H93+H103+H113+H123+H133+H143+H153+H163+H173+...
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =H3+H13+H23+H33+H43+H53+H63+H73+H83+H93+H103+H113+H123+H133+H143+H153+H163+H173+... <-- MAJORITY
+      1x  =H3+H13+H23+H33+H43+H53+H63+H73+H83+H93+H103+H113+H123+H133+H143+H153+H163+H173+...
+  Dissenting cells:
+    T12:  =H3+H13+H23+H33+H43+H53+H63+H73+H83+H93+H103+H113+H123+H133+H143+H153+H163+H173+...
+
+--- Error #97 ---
+  Position:          U183
+  Total weeks:       12
+  Dominant formula:  =I3+I13+I23+I33+I43+I53+I63+I73+I83+I93+I103+I113+I123+I133+I143+I153+I163+I173+...
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =I3+I13+I23+I33+I43+I53+I63+I73+I83+I93+I103+I113+I123+I133+I143+I153+I163+I173+... <-- MAJORITY
+      1x  =I3+I13+I23+I33+I43+I53+I63+I73+I83+I93+I103+I113+I123+I133+I143+I153+I163+I173+...
+  Dissenting cells:
+    T12:  =I3+I13+I23+I33+I43+I53+I63+I73+I83+I93+I103+I113+I123+I133+I143+I153+I163+I173+...
+
+--- Error #98 ---
+  Position:          U47
+  Total weeks:       22
+  Dominant formula:  =IF(U6>=95,1,0)+IF(U7>=95,1,0)+IF(U8>=95,1,0)+IF(U9>=95,1,0)+IF(U10>=95,1,0)+IF(...
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =IF(U6>=95,1,0)+IF(U7>=95,1,0)+IF(U8>=95,1,0)+IF(U9>=95,1,0)+IF(U10>=95,1,0)+IF(... <-- MAJORITY
+      1x  =IF(U6>=95,1,0)+IF(U7>=95,1,0)+IF(U8>=95,1,0)+IF(U9>=95,1,0)+IF(U10>=95,1,0)+IF(...
+  Dissenting cells:
+    W11:  =IF(U6>=95,1,0)+IF(U7>=95,1,0)+IF(U8>=95,1,0)+IF(U9>=95,1,0)+IF(U10>=95,1,0)+IF(...
+
+--- Error #99 ---
+  Position:          U49
+  Total weeks:       22
+  Dominant formula:  =IF(U6=171,1,0)+IF(U7=171,1,0)+IF(U8=171,1,0)+IF(U9=171,1,0)+IF(U10=171,1,0)+IF(...
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =IF(U6=171,1,0)+IF(U7=171,1,0)+IF(U8=171,1,0)+IF(U9=171,1,0)+IF(U10=171,1,0)+IF(... <-- MAJORITY
+      1x  =IF(U6=171,1,0)+IF(U7=171,1,0)+IF(U8=171,1,0)+IF(U9=171,1,0)+IF(U10=171,1,0)+IF(...
+  Dissenting cells:
+    W11:  =IF(U6=171,1,0)+IF(U7=171,1,0)+IF(U8=171,1,0)+IF(U9=171,1,0)+IF(U10=171,1,0)+IF(...
+
+--- Error #100 ---
+  Position:          U50
+  Total weeks:       22
+  Dominant formula:  =IF(U6=180,1,0)+IF(U7=180,1,0)+IF(U8=180,1,0)+IF(U9=180,1,0)+IF(U10=180,1,0)+IF(...
+  Dominant count:    21 weeks
+  Formula distribution:
+     21x  =IF(U6=180,1,0)+IF(U7=180,1,0)+IF(U8=180,1,0)+IF(U9=180,1,0)+IF(U10=180,1,0)+IF(... <-- MAJORITY
+      1x  =IF(U6=180,1,0)+IF(U7=180,1,0)+IF(U8=180,1,0)+IF(U9=180,1,0)+IF(U10=180,1,0)+IF(...
+  Dissenting cells:
+    W11:  =IF(U6=180,1,0)+IF(U7=180,1,0)+IF(U8=180,1,0)+IF(U9=180,1,0)+IF(U10=180,1,0)+IF(...
+
+--- Error #101 ---
+  Position:          V183
+  Total weeks:       12
+  Dominant formula:  =J3+J13+J23+J33+J43+J53+J63+J73+J83+J93+J103+J113+J123+J133+J143+J153+J163+J173+...
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =J3+J13+J23+J33+J43+J53+J63+J73+J83+J93+J103+J113+J123+J133+J143+J153+J163+J173+... <-- MAJORITY
+      1x  =J3+J13+J23+J33+J43+J53+J63+J73+J83+J93+J103+J113+J123+J133+J143+J153+J163+J173+...
+  Dissenting cells:
+    T12:  =J3+J13+J23+J33+J43+J53+J63+J73+J83+J93+J103+J113+J123+J133+J143+J153+J163+J173+...
+
+--- Error #102 ---
+  Position:          V189
+  Total weeks:       12
+  Dominant formula:  =SUM(V183:V188)
+  Dominant count:    11 weeks
+  Formula distribution:
+     11x  =SUM(V183:V188) <-- MAJORITY
+      1x  =SUM(V182:V188)
+  Dissenting cells:
+    T6:  =SUM(V182:V188)
+
+========================================================================================================================
+MEDIUM CONFIDENCE COPY-PASTE ERRORS
+Formula at a given position has 3+ distinct groups of similar size (no clear majority).
+Found 0 positions with MEDIUM confidence errors.
+========================================================================================================================
+
+  (none found)
+
+========================================================================================================================
+OFF-BY-ONE RANGE ERRORS
+Cells at the same position reference ranges that differ by exactly one cell.
+Found 7 positions with off-by-one errors.
+========================================================================================================================
+
+--- Error #1 ---
+  Position: AF42
+    W22: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W21: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W20: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W19: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W18: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W17: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W16: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W15: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W14: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W13: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W12: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W11: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W10: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W9: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W8: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W7: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W6: AF6:AF41 (span=35)  vs  W5: AF7:AF41 (span=34)  => differs by 1 cell
+    W5: AF7:AF41 (span=34)  vs  W4: AF6:AF41 (span=35)  => differs by 1 cell
+    W5: AF7:AF41 (span=34)  vs  W3: AF6:AF41 (span=35)  => differs by 1 cell
+    W5: AF7:AF41 (span=34)  vs  W2: AF6:AF41 (span=35)  => differs by 1 cell
+    W5: AF7:AF41 (span=34)  vs  W1 - Team Master: AF6:AF41 (span=35)  => differs by 1 cell
+
+--- Error #2 ---
+  Position: M42
+    W22: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W21: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W20: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W19: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W18: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W17: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W16: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W15: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W14: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W13: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W12: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W11: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W10: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W9: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W8: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W7: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W6: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W5: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W4: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W3: M6:M41 (span=35)  vs  W2: M5:M41 (span=36)  => differs by 1 cell
+    W2: M5:M41 (span=36)  vs  W1 - Team Master: M6:M41 (span=35)  => differs by 1 cell
+
+--- Error #3 ---
+  Position: O189
+    T1: O183:O188 (span=5)  vs  T6: O182:O188 (span=6)  => differs by 1 cell
+    T2: O183:O188 (span=5)  vs  T6: O182:O188 (span=6)  => differs by 1 cell
+    T3: O183:O188 (span=5)  vs  T6: O182:O188 (span=6)  => differs by 1 cell
+    T4: O183:O188 (span=5)  vs  T6: O182:O188 (span=6)  => differs by 1 cell
+    T5: O183:O188 (span=5)  vs  T6: O182:O188 (span=6)  => differs by 1 cell
+    T6: O182:O188 (span=6)  vs  T7: O183:O188 (span=5)  => differs by 1 cell
+    T6: O182:O188 (span=6)  vs  T8: O183:O188 (span=5)  => differs by 1 cell
+    T6: O182:O188 (span=6)  vs  T9: O183:O188 (span=5)  => differs by 1 cell
+    T6: O182:O188 (span=6)  vs  T10: O183:O188 (span=5)  => differs by 1 cell
+    T6: O182:O188 (span=6)  vs  T11: O183:O188 (span=5)  => differs by 1 cell
+    T6: O182:O188 (span=6)  vs  T12: O183:O188 (span=5)  => differs by 1 cell
+
+--- Error #4 ---
+  Position: P189
+    T1: P183:P188 (span=5)  vs  T6: P182:P188 (span=6)  => differs by 1 cell
+    T2: P183:P188 (span=5)  vs  T6: P182:P188 (span=6)  => differs by 1 cell
+    T3: P183:P188 (span=5)  vs  T6: P182:P188 (span=6)  => differs by 1 cell
+    T4: P183:P188 (span=5)  vs  T6: P182:P188 (span=6)  => differs by 1 cell
+    T5: P183:P188 (span=5)  vs  T6: P182:P188 (span=6)  => differs by 1 cell
+    T6: P182:P188 (span=6)  vs  T7: P183:P188 (span=5)  => differs by 1 cell
+    T6: P182:P188 (span=6)  vs  T8: P183:P188 (span=5)  => differs by 1 cell
+    T6: P182:P188 (span=6)  vs  T9: P183:P188 (span=5)  => differs by 1 cell
+    T6: P182:P188 (span=6)  vs  T10: P183:P188 (span=5)  => differs by 1 cell
+    T6: P182:P188 (span=6)  vs  T11: P183:P188 (span=5)  => differs by 1 cell
+    T6: P182:P188 (span=6)  vs  T12: P183:P188 (span=5)  => differs by 1 cell
+
+--- Error #5 ---
+  Position: R189
+    T1: R183:R188 (span=5)  vs  T6: R182:R188 (span=6)  => differs by 1 cell
+    T2: R183:R188 (span=5)  vs  T6: R182:R188 (span=6)  => differs by 1 cell
+    T3: R183:R188 (span=5)  vs  T6: R182:R188 (span=6)  => differs by 1 cell
+    T4: R183:R188 (span=5)  vs  T6: R182:R188 (span=6)  => differs by 1 cell
+    T5: R183:R188 (span=5)  vs  T6: R182:R188 (span=6)  => differs by 1 cell
+    T6: R182:R188 (span=6)  vs  T7: R183:R188 (span=5)  => differs by 1 cell
+    T6: R182:R188 (span=6)  vs  T8: R183:R188 (span=5)  => differs by 1 cell
+    T6: R182:R188 (span=6)  vs  T9: R183:R188 (span=5)  => differs by 1 cell
+    T6: R182:R188 (span=6)  vs  T10: R183:R188 (span=5)  => differs by 1 cell
+    T6: R182:R188 (span=6)  vs  T11: R183:R188 (span=5)  => differs by 1 cell
+    T6: R182:R188 (span=6)  vs  T12: R183:R188 (span=5)  => differs by 1 cell
+
+--- Error #6 ---
+  Position: S189
+    T1: S183:S188 (span=5)  vs  T6: S182:S188 (span=6)  => differs by 1 cell
+    T2: S183:S188 (span=5)  vs  T6: S182:S188 (span=6)  => differs by 1 cell
+    T3: S183:S188 (span=5)  vs  T6: S182:S188 (span=6)  => differs by 1 cell
+    T4: S183:S188 (span=5)  vs  T6: S182:S188 (span=6)  => differs by 1 cell
+    T5: S183:S188 (span=5)  vs  T6: S182:S188 (span=6)  => differs by 1 cell
+    T6: S182:S188 (span=6)  vs  T7: S183:S188 (span=5)  => differs by 1 cell
+    T6: S182:S188 (span=6)  vs  T8: S183:S188 (span=5)  => differs by 1 cell
+    T6: S182:S188 (span=6)  vs  T9: S183:S188 (span=5)  => differs by 1 cell
+    T6: S182:S188 (span=6)  vs  T10: S183:S188 (span=5)  => differs by 1 cell
+    T6: S182:S188 (span=6)  vs  T11: S183:S188 (span=5)  => differs by 1 cell
+    T6: S182:S188 (span=6)  vs  T12: S183:S188 (span=5)  => differs by 1 cell
+
+--- Error #7 ---
+  Position: V189
+    T1: V183:V188 (span=5)  vs  T6: V182:V188 (span=6)  => differs by 1 cell
+    T2: V183:V188 (span=5)  vs  T6: V182:V188 (span=6)  => differs by 1 cell
+    T3: V183:V188 (span=5)  vs  T6: V182:V188 (span=6)  => differs by 1 cell
+    T4: V183:V188 (span=5)  vs  T6: V182:V188 (span=6)  => differs by 1 cell
+    T5: V183:V188 (span=5)  vs  T6: V182:V188 (span=6)  => differs by 1 cell
+    T6: V182:V188 (span=6)  vs  T7: V183:V188 (span=5)  => differs by 1 cell
+    T6: V182:V188 (span=6)  vs  T8: V183:V188 (span=5)  => differs by 1 cell
+    T6: V182:V188 (span=6)  vs  T9: V183:V188 (span=5)  => differs by 1 cell
+    T6: V182:V188 (span=6)  vs  T10: V183:V188 (span=5)  => differs by 1 cell
+    T6: V182:V188 (span=6)  vs  T11: V183:V188 (span=5)  => differs by 1 cell
+    T6: V182:V188 (span=6)  vs  T12: V183:V188 (span=5)  => differs by 1 cell
+
+========================================================================================================================
+CROSS-SHEET REFERENCE INCONSISTENCIES
+Team/other sheet references that appear in some weekly sheets but not others.
+Found 1 inconsistent cross-sheet references.
+========================================================================================================================
+
+--- Inconsistency #1: T1 ---
+  Present in       1 of 21 weeks
+  Present in:      W2
+  Absent from:     W10, W11, W12, W13, W14, W15, W16, W17, W18, W19, W20, W21, W22, W3, W4, W5, W6, W7, W8, W9
+
+========================================================================================================================
+FULL CROSS-SHEET REFERENCE MAP
+Which team/other sheets each weekly sheet references.
+========================================================================================================================
+
+Sheet   'T1'     'T10'     'T11'     'T12'      'T2'      'T3'      'T4'      'T5'      'T6'      'T7'      'T8'      'T9'       T1       T10       T11       T12       T13       T14       T15       T16       T17       T18       T19       T20       T21       T22       T23       T24       T25       T26       T27       T28       T29       T30       T31       T32       T33       T34       T35       T36       T37       T38       T39        T4       T40       T41       T42       T44        T5        T6        T7        T8        T9    
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+W10YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W11YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W12YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W13YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W14YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W15YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W16YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W17YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W18YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W19YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W2 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W20YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W21YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W22YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W3 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W4 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W5 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W6 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W7 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W8 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+W9 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES                 YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      YES      
+
+========================================================================================================================
+END OF REPORT
+========================================================================================================================

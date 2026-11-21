@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>701 Club Reports</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>701 Club Reports</h1>
+    </header>
+
+    <nav class="tab-navigation">
+        <ul>
+            <li><button class="tab-button active" data-tab="standings">Standings</button></li>
+            <li class="dropdown">
+                <button class="tab-button" data-tab="mens-stats">Mens Stats</button>
+                <div class="dropdown-content">
+                    <button class="sub-tab-button active" data-subtab="mens-overall">Overall</button>
+                    <button class="sub-tab-button" data-subtab="mens-avg">Avg</button>
+                    <button class="sub-tab-button" data-subtab="mens-95">95+</button>
+                    <button class="sub-tab-button" data-subtab="mens-outs">Outs</button>
+                </div>
+            </li>
+            <li class="dropdown">
+                <button class="tab-button" data-tab="lady-stats">Lady Stats</button>
+                <div class="dropdown-content">
+                    <button class="sub-tab-button active" data-subtab="lady-overall">Overall</button>
+                    <button class="sub-tab-button" data-subtab="lady-avg">Avg</button>
+                    <button class="sub-tab-button" data-subtab="lady-95">95+</button>
+                    <button class="sub-tab-button" data-subtab="lady-outs">Outs</button>
+                </div>
+            </li>
+            <li><button class="tab-button" data-tab="leaders">Leaders</button></li>
+        </ul>
+    </nav>
+
+    <main class="content">
+        <!-- Standings Tab -->
+        <section id="standings" class="tab-content active">
+            <h2>Current Standings</h2>
+            <div id="standings-table-container"></div>
+        </section>
+
+        <!-- Mens Stats Tabs -->
+        <section id="mens-stats" class="tab-content">
+            <h2>Mens Stats</h2>
+            <div class="sub-tab-navigation">
+                <button class="sub-tab-button active" data-subtab="mens-overall">Overall</button>
+                <button class="sub-tab-button" data-subtab="mens-avg">Avg</button>
+                <button class="sub-tab-button" data-subtab="mens-95">95+</button>
+                <button class="sub-tab-button" data-subtab="mens-outs">Outs</button>
+            </div>
+            <div id="mens-stats-container"></div>
+        </section>
+
+        <!-- Lady Stats Tabs -->
+        <section id="lady-stats" class="tab-content">
+            <h2>Lady Stats</h2>
+            <div class="sub-tab-navigation">
+                <button class="sub-tab-button active" data-subtab="lady-overall">Overall</button>
+                <button class="sub-tab-button" data-subtab="lady-avg">Avg</button>
+                <button class="sub-tab-button" data-subtab="lady-95">95+</button>
+                <button class="sub-tab-button" data-subtab="lady-outs">Outs</button>
+            </div>
+            <div id="lady-stats-container"></div>
+        </section>
+
+        <!-- Leaders Tab -->
+        <section id="leaders" class="tab-content">
+            <h2>League Leaders</h2>
+            <div id="leaders-table-container"></div>
+        </section>
+    </main>
+
+    <script src="reports.js"></script>
+</body>
+</html>

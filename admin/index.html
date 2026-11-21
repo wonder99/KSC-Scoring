@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - The 701 Club</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <h1>The 701 Club Admin Dashboard</h1>
+            <nav class="admin-nav">
+                <ul class="tab-navigation">
+                    <li><button class="tab-button active" data-tab="score-review">Score Review</button></li>
+                    <li><button class="tab-button" data-tab="team-management">Team Management</button></li>
+                    <li><button class="tab-button" data-tab="schedule-view">Schedule View/Edit</button></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main class="admin-main">
+            <!-- Score Review Tab -->
+            <section id="score-review" class="tab-content active">
+                <h2>Score Review</h2>
+                <div class="admin-card">
+                    <div class="card-header">
+                        <h3>Recent Scores</h3>
+                        <button id="refresh-scores" class="btn btn-secondary">Refresh</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="scores-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Team A</th>
+                                    <th>Team B</th>
+                                    <th>Score A</th>
+                                    <th>Score B</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scores-table-body">
+                                <!-- Scores will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Team Management Tab -->
+            <section id="team-management" class="tab-content">
+                <h2>Team Management</h2>
+                <div class="admin-card">
+                    <div class="card-header">
+                        <h3>Teams</h3>
+                        <button id="add-team-btn" class="btn btn-primary">Add Team</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="teams-table">
+                            <thead>
+                                <tr>
+                                    <th>Team Name</th>
+                                    <th>Players</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teams-table-body">
+                                <!-- Teams will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="admin-card">
+                    <div class="card-header">
+                        <h3>Add New Team</h3>
+                    </div>
+                    <form id="team-form" class="admin-form">
+                        <div class="form-group">
+                            <label for="team-name">Team Name:</label>
+                            <input type="text" id="team-name" name="team-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="player1">Player 1:</label>
+                            <input type="text" id="player1" name="player1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="player2">Player 2:</label>
+                            <input type="text" id="player2" name="player2">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Team</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Schedule View/Edit Tab -->
+            <section id="schedule-view" class="tab-content">
+                <h2>Schedule View/Edit</h2>
+                <div class="admin-card">
+                    <div class="card-header">
+                        <h3>Upcoming Matches</h3>
+                        <button id="refresh-schedule" class="btn btn-secondary">Refresh Schedule</button>
+                    </div>
+                    <div class="schedule-grid" id="schedule-grid">
+                        <!-- Schedule will be populated here -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

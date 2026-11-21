@@ -18,7 +18,9 @@ const PUBLIC_FILES = new Set([
     'team_lists.csv',
     'uploads.html',
     'uploads.js',
-    'user-guide.html'
+    'user-guide.html',
+    'reports',
+    'admin'
 ]);
 const CONTENT_TYPES = {
     '.csv': 'text/csv; charset=utf-8',
@@ -167,6 +169,12 @@ function isAuthorized(request, expectedKey) {
     return supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
 }
 
+function isAdminAuthorized(request) {
+    const adminApiKey = process.env.ADMIN_API_KEY;
+    if (!adminApiKey) return false;
+    return isAuthorized(request, adminApiKey);
+}
+
 async function readRequestBody(request, maxBytes, tooLargeMessage) {
     const chunks = [];
     let size = 0;
@@ -197,27 +205,135 @@ async function readJsonBody(request) {
     }
 }
 
-function validateUploadSelection(selection) {
-    if (!Array.isArray(selection) || selection.length === 0) {
-        throw new RequestError(400, 'Select at least one upload to export.');
+async function handleSeasons(request, response, { pool }) {
+    if (request.method === 'GET') {
+        const result = await pool.query('SELECT * FROM seasons ORDER BY start_date DESC');
+        sendJson(response, 200, { seasons: result.rows });
+        return;
     }
-    if (selection.length > MAX_EXPORT_UPLOADS) {
-        throw new RequestError(400, `Select no more than ${MAX_EXPORT_UPLOADS} uploads at a time.`);
-    }
-
-    const keys = new Set();
-    return selection.map(item => {
-        if (!item || typeof item !== 'object' ||
-            !isValidDate(item.matchDate) ||
-            typeof item.board !== 'string' || !item.board.trim() ||
-            typeof item.team !== 'string' || !item.team.trim()) {
-            throw new RequestError(400, 'An upload selection contains invalid match details.');
+    
+    if (request.method === 'POST') {
+        if (!isAdminAuthorized(request)) {
+            request.resume();
+            sendJson(response, 401, { error: 'Admin authorization required.' });
+            return;
         }
-        const key = `${item.matchDate}\u0000${item.board}\u0000${item.team}`;
-        if (keys.has(key)) throw new RequestError(400, 'An upload was selected more than once.');
-        keys.add(key);
-        return { matchDate: item.matchDate, board: item.board, team: item.team };
-    });
+        
+        try {
+            const body = await readJsonBody(request);
+            const result = await pool.query(
+                'INSERT INTO seasons (name, start_date, end_date) VALUES ($1, $2, $3) RETURNING *',
+                [body.name, body.start_date, body.end_date]
+            );
+            sendJson(response, 201, { season: result.rows[0] });
+        } catch (error) {
+            sendJson(response, 400, { error: 'Failed to create season.' });
+        }
+        return;
+    }
+    
+    request.resume();
+    sendJson(response, 405, { error: 'Method not allowed.' });
+}
+
+async function handleTeams(request, response, { pool }) {
+    if (request.method === 'POST') {
+        if (!isAdminAuthorized(request)) {
+            request.resume();
+            sendJson(response, 401, { error: 'Admin authorization required.' });
+            return;
+        }
+        
+        try {
+            const body = await readJsonBody(request);
+            const result = await pool.query(
+                'INSERT INTO teams (name, captain) VALUES ($1, $2) RETURNING *',
+                [body.name, body.captain]
+            );
+            sendJson(response, 201, { team: result.rows[0] });
+        } catch (error) {
+            sendJson(response, 400, { error: 'Failed to create team.' });
+        }
+        return;
+    }
+    
+    request.resume();
+    sendJson(response, 405, { error: 'Method not allowed.' });
+}
+
+async function handlePlayers(request, response, { pool }) {
+    if (request.method === 'POST') {
+        if (!isAdminAuthorized(request)) {
+            request.resume();
+            sendJson(response, 401, { error: 'Admin authorization required.' });
+            return;
+        }
+        
+        try {
+            const body = await readJsonBody(request);
+            const result = await pool.query(
+                'INSERT INTO players (name, team_id) VALUES ($1, $2) RETURNING *',
+                [body.name, body.team_id]
+            );
+            sendJson(response, 201, { player: result.rows[0] });
+        } catch (error) {
+            sendJson(response, 400, { error: 'Failed to create player.' });
+        }
+        return;
+    }
+    
+    request.resume();
+    sendJson(response, 405, { error: 'Method not allowed.' });
+}
+
+async function handleMatches(request, response, { pool }) {
+    if (request.method === 'POST') {
+        if (!isAdminAuthorized(request)) {
+            request.resume();
+            sendJson(response, 401, { error: 'Admin authorization required.' });
+            return;
+        }
+        
+        try {
+            const body = await readJsonBody(request);
+            const result = await pool.query(
+                'INSERT INTO matches (season_id, team1_id, team2_id, match_date, board) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+                [body.season_id, body.team1_id, body.team2_id, body.match_date, body.board]
+            );
+            sendJson(response, 201, { match: result.rows[0] });
+        } catch (error) {
+            sendJson(response, 400, { error: 'Failed to create match.' });
+        }
+        return;
+    }
+    
+    request.resume();
+    sendJson(response, 405, { error: 'Method not allowed.' });
+}
+
+async function handleScores(request, response, { pool }) {
+    if (request.method === 'POST') {
+        if (!isAdminAuthorized(request)) {
+            request.resume();
+            sendJson(response, 401, { error: 'Admin authorization required.' });
+            return;
+        }
+        
+        try {
+            const body = await readJsonBody(request);
+            const result = await pool.query(
+                'INSERT INTO scores (match_id, player_id, game_number, round_scores, checkout) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+                [body.match_id, body.player_id, body.game_number, body.round_scores, body.checkout]
+            );
+            sendJson(response, 201, { score: result.rows[0] });
+        } catch (error) {
+            sendJson(response, 400, { error: 'Failed to create score.' });
+        }
+        return;
+    }
+    
+    request.resume();
+    sendJson(response, 405, { error: 'Method not allowed.' });
 }
 
 async function handleUploadList(request, response, { pool, uploadApiKey }) {
@@ -330,8 +446,313 @@ async function handleUploadExport(request, response, { pool, uploadApiKey }) {
     response.end(file);
 }
 
-function serializeCsvCell(value) {
-    return `"${String(value ?? '').replace(/"/g, '""')}"`;
+async function handleStandings(request, response, { pool }) {
+    if (request.method !== 'GET') {
+        request.resume();
+        sendJson(response, 405, { error: 'Method not allowed.' });
+        return;
+    }
+    
+    try {
+        const result = await pool.query(`
+            SELECT 
+                team_name,
+                total_matches,
+                wins,
+                draws,
+                losses,
+                CASE 
+                    WHEN total_matches > 0 THEN ROUND((wins::FLOAT * 3 + draws::FLOAT) / (total_matches::FLOAT * 3) * 100, 2)
+                    ELSE 0 
+                END as points_percentage
+            FROM standings 
+            ORDER BY wins DESC, points_percentage DESC
+        `);
+        sendJson(response, 200, { standings: result.rows });
+    } catch (error) {
+        sendJson(response, 500, { error: 'Failed to fetch standings.' });
+    }
+}
+
+async function handleMensOverall(request, response, { pool }) {
+    if (request.method !== 'GET') {
+        request.resume();
+        sendJson(response, 405, { error: 'Method not allowed.' });
+        return;
+    }
+    
+    try {
+        const result = await pool.query(`
+            SELECT 
+                p.name as player_name,
+                t.name as team_name,
+                COUNT(s.id) as total_scores,
+                AVG(s.checkout) as avg_checkout
+            FROM scores s
+            JOIN players p ON s.player_id = p.id
+            JOIN teams t ON p.team_id = t.id
+            WHERE t.name LIKE '%Men%'
+            GROUP BY p.id, p.name, t.name
+            ORDER BY avg_checkout DESC
+            LIMIT 10
+        `);
+        sendJson(response, 200, { mens_overall: result.rows });
+    } catch (error) {
+        sendJson(response, 500, { error: 'Failed to fetch men\'s overall report.' });
+    }
+}
+
+async function handleMensAvg(request, response, { pool }) {
+    if (request.method !== 'GET') {
+        request.resume();
+        sendJson(response, 405, { error: 'Method not allowed.' });
+        return;
+    }
+    
+    try {
+        const result = await pool.query(`
+            SELECT 
+                p.name as player_name,
+                t.name as team_name,
+                AVG(s.checkout) as avg_checkout
+            FROM scores s
+            JOIN players p ON s.player_id = p.id
+            JOIN teams t ON p.team_id = t.id
+            WHERE t.name LIKE '%Men%'
+            GROUP BY p.id, p.name, t.name
+            ORDER BY avg_checkout DESC
+            LIMIT 10
+        `);
+        sendJson(response, 200, { mens_avg: result.rows });
+    } catch (error) {
+        sendJson(response, 500, { error: 'Failed to fetch men\'s average report.' });
+    }
+}
+
+async function handleMens95(request, response, { pool }) {
+    if (request.method !== 'GET') {
+        request.resume();
+        sendJson(response, 405, { error: 'Method not allowed.' });
+        return;
+    }
+    
+    try {
+        const result = await pool.query(`
+            SELECT 
+                p.name as player_name,
+                t.name as team_name,
+                COUNT(*) as nines_five_count
+            FROM scores s
+            JOIN players p ON s.player_id = p.id
+            JOIN teams t ON p.team_id = t.id
+            WHERE t.name LIKE '%Men%' AND s.checkout = 95
+            GROUP BY p.id, p.name, t.name
+            ORDER BY nines_five_count DESC
+            LIMIT 10
+        `);
+        sendJson(response, 200, { mens_95: result.rows });
+    } catch (error) {
+        sendJson(response, 500, { error: 'Failed to fetch men\'s 95 report.' });
+    }
+}
+
+async function handleMensOuts(request, response, { pool }) {
+    if (request.method !== 'GET') {
+        request.resume();
+        sendJson(response, 405, { error: 'Method not allowed.' });
+        return;
+    }
+    
+    try {
+        const result = await pool.query(`
+            SELECT 
+                p.name as player_name,
+                t.name as team_name,
+                COUNT(*) as outs_count
+            FROM scores s
+            JOIN players p ON s.player_id = p.id
+            JOIN teams t ON p.team_id = t.id
+            WHERE t.name LIKE '%Men%' AND s.checkout IS NULL
+            GROUP BY p.id, p.name, t.name
+            ORDER BY outs_count DESC
+            LIMIT 10
+        `);
+        sendJson(response, 200, { mens_outs: result.rows });
+    } catch (error) {
+        sendJson(response, 500, { error: 'Failed to fetch men\'s outs report.' });
+    }
+}
+
+async function handleLadyOverall(request, response, { pool }) {
+    if (request.method !== 'GET') {
+        request.resume();
+        sendJson(response, 405, { error: 'Method not allowed.' });
+        return;
+    }
+    
+    try {
+        const result = await pool.query(`
+            SELECT 
+                p.name as player_name,
+                t.name as team_name,
+                COUNT(s.id) as total_scores,
+                AVG(s.checkout) as avg_checkout
+            FROM scores s
+            JOIN players p ON s.player_id = p.id
+            JOIN teams t ON p.team_id = t.id
+            WHERE t.name LIKE '%Lady%'
+            GROUP BY p.id, p.name, t.name
+            ORDER BY avg_checkout DESC
+            LIMIT 10
+        `);
+        sendJson(response, 200, { lady_overall: result.rows });
+    } catch (error) {
+        sendJson(response, 500, { error: 'Failed to fetch ladies\' overall report.' });
+    }
+}
+
+async function handleLadyAvg(request, response, { pool }) {
+    if (request.method !== 'GET') {
+        request.resume();
+        sendJson(response, 405, { error: 'Method not allowed.' });
+        return;
+    }
+    
+    try {
+        const result = await pool.query(`
+            SELECT 
+                p.name as player_name,
+                t.name as team_name,
+                AVG(s.checkout) as avg_checkout
+            FROM scores s
+            JOIN players p ON s.player_id = p.id
+            JOIN teams t ON p.team_id = t.id
+            WHERE t.name LIKE '%Lady%'
+            GROUP BY p.id, p.name, t.name
+            ORDER BY avg_checkout DESC
+            LIMIT 10
+        `);
+        sendJson(response, 200, { lady_avg: result.rows });
+    } catch (error) {
+        sendJson(response, 500, { error: 'Failed to fetch ladies\' average report.' });
+    }
+}
+
+async function handleLady95(request, response, { pool }) {
+    if (request.method !== 'GET') {
+        request.resume();
+        sendJson(response, 405, { error: 'Method not allowed.' });
+        return;
+    }
+    
+    try {
+        const result = await pool.query(`
+            SELECT 
+                p.name as player_name,
+                t.name as team_name,
+                COUNT(*) as nines_five_count
+            FROM scores s
+            JOIN players p ON s.player_id = p.id
+            JOIN teams t ON p.team_id = t.id
+            WHERE t.name LIKE '%Lady%' AND s.checkout = 95
+            GROUP BY p.id, p.name, t.name
+            ORDER BY nines_five_count DESC
+            LIMIT 10
+        `);
+        sendJson(response, 200, { lady_95: result.rows });
+    } catch (error) {
+        sendJson(response, 500, { error: 'Failed to fetch ladies\' 95 report.' });
+    }
+}
+
+async function handleLadyOuts(request, response, { pool }) {
+    if (request.method !== 'GET') {
+        request.resume();
+        sendJson(response, 405, { error: 'Method not allowed.' });
+        return;
+    }
+    
+    try {
+        const result = await pool.query(`
+            SELECT 
+                p.name as player_name,
+                t.name as team_name,
+                COUNT(*) as outs_count
+            FROM scores s
+            JOIN players p ON s.player_id = p.id
+            JOIN teams t ON p.team_id = t.id
+            WHERE t.name LIKE '%Lady%' AND s.checkout IS NULL
+            GROUP BY p.id, p.name, t.name
+            ORDER BY outs_count DESC
+            LIMIT 10
+        `);
+        sendJson(response, 200, { lady_outs: result.rows });
+    } catch (error) {
+        sendJson(response, 500, { error: 'Failed to fetch ladies\' outs report.' });
+    }
+}
+
+async function handleLeaders(request, response, { pool }) {
+    if (request.method !== 'GET') {
+        request.resume();
+        sendJson(response, 405, { error: 'Method not allowed.' });
+        return;
+    }
+    
+    try {
+        const result = await pool.query(`
+            SELECT 
+                p.name as player_name,
+                t.name as team_name,
+                COUNT(s.id) as total_scores,
+                AVG(s.checkout) as avg_checkout
+            FROM scores s
+            JOIN players p ON s.player_id = p.id
+            JOIN teams t ON p.team_id = t.id
+            GROUP BY p.id, p.name, t.name
+            ORDER BY total_scores DESC
+            LIMIT 10
+        `);
+        sendJson(response, 200, { leaders: result.rows });
+    } catch (error) {
+        sendJson(response, 500, { error: 'Failed to fetch leaders report.' });
+    }
+}
+
+async function handleMatchReport(request, response, { pool }) {
+    if (request.method !== 'GET') {
+        request.resume();
+        sendJson(response, 405, { error: 'Method not allowed.' });
+        return;
+    }
+    
+    // Extract match ID from URL path
+    const matchId = url.pathname.split('/').pop();
+    
+    try {
+        const result = await pool.query(`
+            SELECT 
+                m.id,
+                m.match_date,
+                t1.name as team1_name,
+                t2.name as team2_name,
+                s.game_number,
+                p.name as player_name,
+                s.round_scores,
+                s.checkout
+            FROM matches m
+            JOIN teams t1 ON m.team1_id = t1.id
+            JOIN teams t2 ON m.team2_id = t2.id
+            JOIN scores s ON s.match_id = m.id
+            JOIN players p ON s.player_id = p.id
+            WHERE m.id = $1
+            ORDER BY s.game_number, p.name
+        `, [matchId]);
+        
+        sendJson(response, 200, { match_report: result.rows });
+    } catch (error) {
+        sendJson(response, 500, { error: 'Failed to fetch match report.' });
+    }
 }
 
 async function handleUpload(request, response, url, { pool, uploadApiKey }) {
@@ -437,9 +858,39 @@ function createServer({ pool, uploadApiKey, publicDir = __dirname }) {
                 ? handleUploadList(request, response, context)
                 : pathname === '/api/score-uploads/export'
                     ? handleUploadExport(request, response, context)
-                    : pathname.startsWith('/api/')
-                        ? Promise.resolve(sendJson(response, 404, { error: 'API route not found.' }))
-                        : serveStatic(request, response, publicDir, pathname);
+                    : pathname === '/api/seasons'
+                        ? handleSeasons(request, response, context)
+                        : pathname === '/api/teams'
+                            ? handleTeams(request, response, context)
+                            : pathname === '/api/players'
+                                ? handlePlayers(request, response, context)
+                                : pathname === '/api/matches'
+                                    ? handleMatches(request, response, context)
+                                    : pathname === '/api/scores'
+                                        ? handleScores(request, response, context)
+                                        : pathname === '/api/reports/standings'
+                                            ? handleStandings(request, response, context)
+                                            : pathname === '/api/reports/mens-overall'
+                                                ? handleMensOverall(request, response, context)
+                                                : pathname === '/api/reports/mens-avg'
+                                                    ? handleMensAvg(request, response, context)
+                                                    : pathname === '/api/reports/mens-95'
+                                                        ? handleMens95(request, response, context)
+                                                        : pathname === '/api/reports/mens-outs'
+                                                            ? handleMensOuts(request, response, context)
+                                                            : pathname === '/api/reports/lady-overall'
+                                                                ? handleLadyOverall(request, response, context)
+                                                                : pathname === '/api/reports/lady-avg'
+                                                                    ? handleLadyAvg(request, response, context)
+                                                                    : pathname === '/api/reports/lady-95'
+                                                                        ? handleLady95(request, response, context)
+                                                                        : pathname === '/api/reports/lady-outs'
+                                                                            ? handleLadyOuts(request, response, context)
+                                                                            : pathname === '/api/reports/leaders'
+                                                                                ? handleLeaders(request, response, context)
+                                                                                : pathname.startsWith('/api/reports/match/')
+                                                                                    ? handleMatchReport(request, response, context)
+                                                                                    : serveStatic(request, response, publicDir, pathname);
         handler.catch(error => {
             if (response.headersSent) {
                 response.destroy(error);
@@ -467,6 +918,80 @@ async function initializeDatabase(pool) {
             uploaded_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (match_date, board, team)
         )
+    `);
+}
+
+async function initializeLeagueTables(pool) {
+    // Create seasons table
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS seasons (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL UNIQUE,
+            start_date DATE NOT NULL,
+            end_date DATE NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+    
+    // Create teams table
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS teams (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL UNIQUE,
+            captain VARCHAR(255),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+    
+    // Create players table
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS players (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            team_id INTEGER REFERENCES teams(id),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+    
+    // Create matches table
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS matches (
+            id SERIAL PRIMARY KEY,
+            season_id INTEGER REFERENCES seasons(id),
+            team1_id INTEGER REFERENCES teams(id),
+            team2_id INTEGER REFERENCES teams(id),
+            match_date DATE NOT NULL,
+            board VARCHAR(50),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+    
+    // Create scores table
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS scores (
+            id SERIAL PRIMARY KEY,
+            match_id INTEGER REFERENCES matches(id),
+            player_id INTEGER REFERENCES players(id),
+            game_number INTEGER NOT NULL,
+            round_scores INTEGER[],
+            checkout INTEGER,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+    
+    // Create standings view
+    await pool.query(`
+        CREATE OR REPLACE VIEW standings AS
+        SELECT 
+            t.name as team_name,
+            COUNT(m.id) as total_matches,
+            SUM(CASE WHEN (m.team1_id = t.id AND s.checkout IS NOT NULL) OR (m.team2_id = t.id AND s.checkout IS NOT NULL) THEN 1 ELSE 0 END) as wins,
+            SUM(CASE WHEN m.team1_id = t.id AND m.team2_id = t.id THEN 1 ELSE 0 END) as draws,
+            SUM(CASE WHEN (m.team1_id = t.id AND s.checkout IS NULL) OR (m.team2_id = t.id AND s.checkout IS NULL) THEN 1 ELSE 0 END) as losses
+        FROM teams t
+        LEFT JOIN matches m ON (m.team1_id = t.id OR m.team2_id = t.id)
+        LEFT JOIN scores s ON s.match_id = m.id
+        GROUP BY t.id, t.name
     `);
 }
 
@@ -513,4 +1038,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { createServer, initializeDatabase, parseCsv, validateScoreCsv };
+module.exports = { createServer, initializeDatabase, initializeLeagueTables, parseCsv, validateScoreCsv };

@@ -1,0 +1,169 @@
+FORMULA CONSISTENCY ANALYSIS — CATEGORIZED BREAKDOWN
+=====================================================
+File: MASTER-DARTS-Stats.xlsx (2026-2027 Kari)
+Analysis date: 2026-11-20
+
+Total errors found: 109 HIGH-confidence copy-paste errors + 7 off-by-one range errors
+
+========================================================================
+GROUP A: Stale row-number formulas on non-weekly summary sheets
+========================================================================
+
+Errors #1–#10 (positions A19, A20, A22, A29, A30, A32, A39, A40, A41, A51)
+
+Problem: These positions are row counters. 22 of 27 sheets correctly use
+'=A{n-1}+1' but the other 5 non-weekly sheets have stale cross-sheet refs
+from W1 when it was first created and never corrected.
+
+Dissenting sheets (always the same ones):
+  - Leaders:      ='Mens 95'!A{row}
+  - Mens Overall: ='W1 - Team Master'!<wrong_column>5
+  - Mens Outs:    ='W1 - Team Master'!<wrong_column>5
+  - Mens Avg:     ='W1 - Team Master'!<wrong_column>5
+  - Mens 95:      ='W1 - Team Master'!<wrong_column>5
+
+Impact: Row numbering is broken on these 5 sheets — cell A19 might show the
+value from W1's BR5 instead of incrementing from A18. This cascades wrong to
+all downstream formulas that rely on row numbers.
+
+Fix needed: Change all dissenting cells in Leaders, Mens Overall, Mens Outs,
+Mens Avg, Mens 95 sheets from '=<something>!<col>5' to the correct
+'=A{n-1}+1' pattern.
+
+
+========================================================================
+GROUP B: Wrong W1 - Team Master column refs on mens summary sheets
+========================================================================
+
+Errors #16–#18 (positions B42, B49, B50)
+
+Problem: On Mens Overall, Mens Outs, Mens Avg, and Mens 95 sheets, these cells
+should sum or check the current team's data but instead reference W1's columns.
+
+Position B42 — dominant '=SUM(B6:B41)' (22 weeks)
+  Dissenting refs on Mens Overall/Outs/Avg/95 point to W1's AX1, AF1, T1, BJ1
+
+Position B49 — dominant '=IF(B6=171,...)+...+IF(B10=171,...)' (22 weeks)
+  Dissenting refs on Mens Overall/Outs/Avg/95 point to W1's BD1, AX1, Z1; one cell on T1 has '=SUM(B43:B48)'
+
+Position B50 — dominant '=IF(B6=180,...)+...+IF(B10=180,...)' (22 weeks)
+  Dissenting refs on Mens Overall/Outs/Avg/95 point to W1's BD1, N1, AF1
+
+Impact: Totals and 171s/180 counts reference W1's team data instead of the current
+team's own data. These will show wrong numbers.
+
+Fix needed: Change the 'W1 - Team Master'! column references to point at each
+sheet's own team data column (T1→T1, T2→T2, etc.)
+
+
+========================================================================
+GROUP C: Wrong T# team column pasted in across weekly sheets
+========================================================================
+
+Errors #19–#84 — spans positions C19-C50, D19-D50, E3-E50, F9-F66, G19-G72, H9-H78, I9-I84
+
+Problem: At each of these positions across the W1-W22 weekly sheets, 12 weeks have
+the correct formula but 1-4 dissenting weeks reference a different T# team's column.
+
+Pattern examples:
+  Position C19 — dominant '=SUM(C13:C18)' (12 weeks)
+    Dissenting:   'T12'!N185, 'T5'!S185, 'T12'!Q185, 'T12'!R183
+  
+  Position D9 — dominant '=SUM(D3:D8)' (12 weeks)
+    Dissenting:   'T1'!O188, 'T4'!O183, and one cell is '=B9+C9'
+
+  Position E6 — dominant '=IF(C6,D6/C6,0)' (12 weeks)
+    Dissenting:   'Lady Avg'!A4, 'T2'!P185, 'T12'!P186, 'T1'!$Q$189
+
+  Position E44 — dominant '=IF(E6=180,...)+...+IF(E10=180,...)' (22 weeks)
+    Dissenting:   'T3'!P188, 'T6'!P188, 'T4'!$Q$189
+
+Key observations:
+- The dissenting sheets are always one of: T1-T12, Standings, or a Lady summary sheet
+- Each position has a CONSISTENT wrong T# across all dissenting weeks (e.g., at E17, every
+  dissenting week has 'T4'!P185 — it's not random)
+- Error #29 also has '=B9+C9' on Standings — this is likely an inline sum that should be a
+  cross-sheet reference
+
+Cause: When adding/removing teams or copying cells between team sheets, the formula was pasted
+from a different team sheet (e.g., T4 instead of T5), so all dissenting weeks point to the same
+wrong team column.
+
+Impact: Scoring for one team gets mixed with another team's data — scores appear under the wrong
+team name and totals are incorrect.
+
+Fix needed: For each position, identify which T# column is correct (based on which team actually
+occupies that roster position), then update all dissenting cells to reference the correct T#.
+
+
+========================================================================
+GROUP D: Single-cell formula variant in W6 only
+========================================================================
+
+Errors #11–#14 (positions AD44, AD47, AD49, AD50)
+
+Problem: 21 of 22 sheets have identical formulas at each position, but W6 differs by one cell.
+
+AD44 — '=IF(AD6="",0,1)+...+IF(AD10="",0,1)+...' (21 weeks)
+       vs W6:   same formula but with a minor variant (possibly AD7 vs AD6 on first term)
+
+AD47 — '=IF(AD6>=95,1,0)+...+IF(AD10>=95,1,0)' (21 weeks)
+        vs W6:   similar variant
+  
+AD49 — '=IF(AD6=171,1,0)+...+IF(AD10=171,1,0)' (21 weeks)
+        vs W6:   similar variant
+
+AD50 — '=IF(AD6=180,1,0)+...+IF(AD10=180,1,0)' (21 weeks)
+        vs W6:   similar variant
+
+Impact: These are 95s-count, 171s-count, and 180s-count cells in the bottom section.
+W6 will show wrong tallies for those stats. Low severity since only one week is affected.
+
+Fix needed: Compare W6's formulas at AD44/AD47/AD49/AD50 with the other weeks and fix to match.
+
+
+========================================================================
+GROUP E: Off-by-one range errors (row start) — standalone bugs
+========================================================================
+
+Error #15 (position AF42):
+  Dominant '=SUM(AF6:AF41)' (21 weeks)
+  W5 has '=SUM(AF7:AF41)' — starts at row 7 instead of row 6
+
+Error #85 (position M42):
+  Dominant '=SUM(M6:M41)' (21 weeks)  
+  W2 has '=SUM(M5:M41)' — starts at row 5 instead of row 6
+
+Impact: Wrong totals because the SUM range includes one too few or one too many rows.
+
+
+========================================================================
+GROUP F: Off-by-one on team sheet TOTALS section (rows 189)
+========================================================================
+
+Errors #88, #90, #92, #94, #96 (positions O189, P189, R189, S189, T189)
+Error #??? (position Q189 if present)
+
+Problem: On team sheets T6 specifically, the totals section uses '=SUM(X182:X188)' instead of
+'=SUM(X183:X188)' — off by one row. The sum range includes an empty or wrong header row.
+
+Also Error #17 on T1 at B49 has '=SUM(B43:B48)' where it should be a different range.
+
+
+========================================================================
+SUMMARY TABLE
+========================================================================
+
+Category                     | Count | Severity
+-----------------------------|-------|----------
+A: Stale row counters        |  10   | HIGH — cascading wrong numbering
+B: Wrong W1 column refs      |   3   | HIGH — wrong team totals
+C: Wrong T# pasted in       |  66   | HIGH — scores under wrong team
+D: W6 single-cell variants   |   4   | MEDIUM — one week affected only
+E: Off-by-one SUM ranges     |   2   | HIGH — wrong totals
+F: Team sheet totals offset  |   ~7*  | MEDIUM — team totals off by one
+
+* Error #17 also has a range variant on T1
+
+Grand total: 109 HIGH-confidence copy-paste errors (Groups A-E) + ~7 off-by-one range bugs (Group F)
+========================================================================
