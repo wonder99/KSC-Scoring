@@ -955,6 +955,52 @@ function createResultsCSV() {
     return formatMatchResultsCSV(state.matchResults);
 }
 
+function createBrowserSubmission() {
+    saveActiveGame();
+    const games = state.matchResults.map(result => {
+        const slot = state.games[result.game - 1] || createEmptyGameSlot();
+        let remaining = STARTING_SCORE;
+        const turns = (slot.history || []).map(turn => {
+            const remainingBefore = remaining;
+            const busted = Boolean(turn.busted);
+            const remainingAfter = busted
+                ? remainingBefore
+                : Math.max(0, remainingBefore - Number(turn.total || 0));
+            const checkoutRemaining = !busted && remainingAfter === 0
+                ? 0
+                : null;
+            remaining = remainingAfter;
+            return {
+                player: turn.player,
+                score: Number(turn.total || 0),
+                darts: (turn.darts || []).map(dart => ({
+                    score: Number(dart.score || 0),
+                    label: dart.label
+                })),
+                busted,
+                remainingBefore,
+                remainingAfter,
+                checkoutRemaining
+            };
+        });
+        return {
+            game: result.game,
+            winner: result.winner,
+            players: result.players.map(player => ({
+                name: player.name
+            })),
+            turns
+        };
+    });
+    return {
+        matchDate: state.matchDate,
+        board: state.board,
+        team: state.teamName,
+        opponent: state.opponent,
+        games
+    };
+}
+
 function setServerUploadStatus(message, kind = '') {
     const status = $('server-upload-status');
     status.textContent = message;
@@ -978,13 +1024,14 @@ async function uploadResultsToServer() {
     button.disabled = true;
     setServerUploadStatus('Submitting results to the league server…');
     try {
-        const response = await fetch('/api/score-uploads', {
+        const submission = createBrowserSubmission();
+        const response = await fetch('/api/score-submissions', {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${uploadKey}`,
-                'Content-Type': 'text/csv'
+                'Content-Type': 'application/json'
             },
-            body: createResultsCSV()
+            body: JSON.stringify(submission)
         });
         
         const contentType = response.headers.get('content-type') || 'unknown content type';

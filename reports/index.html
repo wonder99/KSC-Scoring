@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KSC Darts League Reports</title>
+    <link rel="stylesheet" href="/reports/styles.css">
+</head>
+<body>
+    <main class="reports-shell">
+        <header class="reports-header">
+            <div>
+                <p class="eyebrow">The 701 Club</p>
+                <h1>League Reports</h1>
+            </div>
+            <nav aria-label="League navigation">
+                <a href="/">Scorer</a>
+                <a href="/uploads">Uploads</a>
+            </nav>
+        </header>
+
+        <section class="controls" aria-label="Report controls">
+            <label for="season-select">Season</label>
+            <select id="season-select" disabled>
+                <option>Loading seasons...</option>
+            </select>
+        </section>
+
+        <nav class="tabs" aria-label="Report type">
+            <button class="tab active" type="button" data-report="standings">Standings</button>
+            <button class="tab" type="button" data-report="mens">Mens Stats</button>
+            <button class="tab" type="button" data-report="ladies">Ladies Stats</button>
+            <button class="tab" type="button" data-report="leaders">Leaders</button>
+        </nav>
+
+        <nav id="subtabs" class="subtabs hidden" aria-label="Stats category">
+            <button class="subtab active" type="button" data-category="overall">Overall</button>
+            <button class="subtab" type="button" data-category="avg">Average</button>
+            <button class="subtab" type="button" data-category="95">95+</button>
+            <button class="subtab" type="button" data-category="outs">Outs</button>
+        </nav>
+
+        <p id="report-status" class="status" role="status" aria-live="polite">Loading report...</p>
+        <section id="report-content" class="report-content"></section>
+    </main>
+    <script src="/reports/reports.js"></script>
+</body>
+</html>

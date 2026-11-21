@@ -30,7 +30,7 @@
         }
 
         a { color: var(--green-dark); }
-        a:focus-visible, .button:focus-visible `py -m http.server 8000`{ outline: 3px solid #e8b900; outline-offset: 3px; }
+        a:focus-visible, .button:focus-visible { outline: 3px solid #e8b900; outline-offset: 3px; }
 
         .page { width: min(900px, calc(100% - 32px)); margin: 28px auto 56px; }
 
@@ -170,6 +170,7 @@
             <a href="#score">Enter scores</a>
             <a href="#checkout">Finish the game</a>
             <a href="#results">History and results</a>
+            <a href="#reports">League reports</a>
             <a href="#phone">Use on a phone</a>
         </nav>
 
@@ -180,7 +181,7 @@
                 <li>Choose your team. The app looks up the opponent and board automatically.</li>
                 <li>Tap <strong>Start Game</strong>. The first four roster players start above the divider in <strong>Playing this game</strong>, and exactly four names always stay there. Drag an unselected name into its desired position; the fourth selected player moves below the divider. Their top-to-bottom order is the play order. To move a selected player down, drop them on the desired row; the names in between shift up. On a phone, use <strong>Add</strong> to replace the fourth player, <strong>Replace</strong> to swap a selected player with the first unselected player, and the arrows to set play order.</li>
                 <li>An optional <strong>Spare</strong> player is available. If selected, Spare’s turn starts with 25 points entered. Tap <strong>Submit Turn</strong> to add those points.</li>
-                <li>Tap <strong>Start Game</strong> again to begin. Each game starts at 701. There are seven games per selected fixture; choose a lineup again after each game.</li>
+                <li>Tap <strong>Start Game</strong> again to begin. Each game starts at 701. There are seven games per selected match; choose a lineup again after each game.</li>
             </ol>
         </section>
 
@@ -219,10 +220,22 @@
             <h2>4. Review and share results</h2>
             <p>After a game ends, the result screen offers:</p>
             <ul>
-                <li><strong>Save to League</strong> stores the match results on the league server. Enter the league upload key and save after each game; recorded turn scores are included even when your team loses.</li>
+                <li><strong>Submit to League</strong> stores the match results on the league server. The first press reveals the league upload key field; enter the key and press <strong>Submit Results</strong>. Recorded dart totals, remaining scores, lineups, and turn history are included even when your team loses.</li>
                 <li><strong>Choose lineup</strong> returns to player selection for the next game.</li>
             </ul>
-            <p>To download saved results, select <strong>Browse uploaded scores</strong> on the scorer page (or open <code>/uploads</code> on the Node Web Service). Enter the league upload key, select one or more match/team uploads, and download the combined CSV.</p>
+            <p>Normally submit after all seven games are complete. For the 2026-2027 season, weeks 1–10 through November 18 are preserved from the league workbook and cannot be overwritten through the scorer.</p>
+            <p>To browse compatibility CSV files, open <code>/uploads</code>. Enter the league upload key, select one or more match/team uploads, and download the combined CSV.</p>
+        </section>
+
+        <section id="reports">
+            <h2>League reports</h2>
+            <p>Open <strong>View league reports</strong> from the scorer landing page or visit <code>/reports</code>. Reports are public and do not require the league upload or admin key.</p>
+            <ul>
+                <li><strong>Standings</strong> shows wins, losses, games, and team average.</li>
+                <li><strong>Mens Stats</strong> and <strong>Ladies Stats</strong> show overall totals, averages, 95+, outs, and other categories.</li>
+                <li><strong>Leaders</strong> shows each player's position in the public ranking reports.</li>
+            </ul>
+            <p>Select a season at the top of the reports page. The report includes established workbook statistics and any accepted submissions after the preserved baseline cutoff.</p>
         </section>
 
         <section id="phone">
@@ -230,18 +243,12 @@
             <ol>
                 <li>Open the link shared by the organizer in Safari or Chrome.</li>
                 <li>For quicker access, use the browser menu and choose <strong>Add to Home Screen</strong>. This creates a shortcut to the website, not an offline app.</li>
-                <li>Keep the page open during the match. Do not refresh or close it before downloading the results.</li>
+                <li>The page keeps match progress in this browser using local storage. Refreshing or reopening the site on the same phone usually restores the saved match.</li>
             </ol>
-            <p class="warning">An internet connection is required to open the app and load the roster and schedule. Scores are not synchronized between phones or saved to an account. Refreshing or closing the page loses the current session.</p>
+            <p class="warning">An internet connection is required to open the Node website and submit scores to the league database. Match progress is local to this browser and not synchronized between phones. Use <strong>Submit to League</strong> before clearing browser data or changing devices.</p>
         </section>
 
-        <section>
-            <h2>For the organizer: putting it online</h2>
-            <p>This is a static website; it does not need a server-side program or build step. A simple option is <a href="https://app.netlify.com/drop">Netlify Drop</a>: sign in, then drag a folder containing <code>index.html</code>, <code>app.js</code>, <code>styles.css</code>, <code>team_lists.csv</code>, <code>dart_league_schedule.csv</code>, and this guide onto the upload page. Share the resulting website link with players. Upload the updated files again whenever the roster or schedule changes.</p>
-            <p class="warning">The roster and schedule CSV files are served to anyone who can access the site. Do not publish names or other information unless the group is comfortable with it being publicly accessible. A link alone does not provide password protection.</p>
-        </section>
-
-        <footer>KSC Darts Scorer · Keep the page open until your results are downloaded.</footer>
+        <footer>KSC Darts Scorer · Submit completed match results to preserve them in the league database.</footer>
     </main>
 </body>
 </html>

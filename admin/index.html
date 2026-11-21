@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KSC Darts League Administration</title>
+    <link rel="stylesheet" href="/admin/styles.css">
+</head>
+<body>
+    <main class="admin-shell">
+        <header class="admin-header">
+            <div>
+                <p class="eyebrow">The 701 Club</p>
+                <h1>League Administration</h1>
+            </div>
+            <nav>
+                <a href="/">Scorer</a>
+                <a href="/reports">Reports</a>
+                <a href="/admin/admin-guide.html">Admin guide</a>
+            </nav>
+        </header>
+
+        <section class="auth-card" id="auth-card">
+            <label for="admin-key">Admin key</label>
+            <input id="admin-key" type="password" autocomplete="current-password">
+            <button id="unlock-admin" type="button">Unlock</button>
+            <p id="auth-status" role="status"></p>
+        </section>
+
+        <section id="admin-app" class="hidden">
+            <nav class="tabs" aria-label="Admin sections">
+                <button class="tab active" type="button" data-tab="seasons">Seasons</button>
+                <button class="tab" type="button" data-tab="teams">Teams</button>
+                <button class="tab" type="button" data-tab="players">Players</button>
+                <button class="tab" type="button" data-tab="fixtures">Schedule</button>
+                <button class="tab" type="button" data-tab="submissions">Submissions</button>
+            </nav>
+
+            <section class="admin-panel active" data-panel="seasons">
+                <h2>Seasons</h2>
+                <form id="season-form" class="inline-form">
+                    <label>Name<input name="name" required placeholder="2026-2027"></label>
+                    <label>Start<input name="startDate" type="date"></label>
+                    <label>End<input name="endDate" type="date"></label>
+                    <label class="checkbox"><input name="active" type="checkbox"> Active</label>
+                    <button type="submit">Add season</button>
+                </form>
+                <div id="season-list" class="data-list"></div>
+            </section>
+
+            <section class="admin-panel" data-panel="teams">
+                <h2>Teams</h2>
+                <form id="team-form" class="inline-form">
+                    <label>Name<input name="name" required></label>
+                    <button type="submit">Add team</button>
+                </form>
+                <div id="team-list" class="data-list"></div>
+            </section>
+
+            <section class="admin-panel" data-panel="players">
+                <h2>Players</h2>
+                <form id="player-form" class="inline-form">
+                    <label>First name<input name="firstName" required></label>
+                    <label>Last name<input name="lastName"></label>
+                    <label>Gender
+                        <select name="gender" required>
+                            <option value="M">M</option>
+                            <option value="F">F</option>
+                        </select>
+                    </label>
+                    <label>Season<select name="seasonId" id="player-season"></select></label>
+                    <label>Team<select name="teamId" id="player-team"></select></label>
+                    <button type="submit">Add player</button>
+                </form>
+                <form id="player-edit-form" class="inline-form hidden">
+                    <input type="hidden" name="playerId">
+                    <label>First name<input name="firstName" required></label>
+                    <label>Last name<input name="lastName"></label>
+                    <label>Gender
+                        <select name="gender" required>
+                            <option value="M">M</option>
+                            <option value="F">F</option>
+                        </select>
+                    </label>
+                    <div class="form-actions">
+                        <button type="submit">Save player</button>
+                        <button type="button" id="cancel-player-edit">Cancel</button>
+                    </div>
+                </form>
+                <div id="player-list" class="data-list"></div>
+            </section>
+
+            <section class="admin-panel" data-panel="fixtures">
+                <h2>Schedule</h2>
+                <form id="fixture-form" class="inline-form">
+                    <label>Season<select name="seasonId" id="fixture-season" required></select></label>
+                    <label>Week<input name="weekNumber" type="number" min="1"></label>
+                    <label>Date<input name="matchDate" type="date" required></label>
+                    <label>Board<input name="boardNumber"></label>
+                    <label>Home team<select name="homeTeamId" id="fixture-home" required></select></label>
+                    <label>Away team<select name="awayTeamId" id="fixture-away" required></select></label>
+                    <button type="submit">Add match</button>
+                </form>
+                <div id="fixture-list" class="data-list"></div>
+            </section>
+
+            <section class="admin-panel" data-panel="submissions">
+                <h2>Submissions</h2>
+                <form id="submission-review-form" class="submission-review hidden">
+                    <input type="hidden" name="submissionId">
+                    <div class="submission-review-header">
+                        <div>
+                            <strong id="submission-review-title">Submission</strong>
+                            <p id="submission-review-summary"></p>
+                        </div>
+                        <button type="button" id="cancel-submission-review">Close</button>
+                    </div>
+                    <div id="submission-turn-editor" class="submission-turn-editor"></div>
+                    <label>Revision reason<input name="reason" required placeholder="Why are these scores changing?"></label>
+                    <div class="submission-review-actions">
+                        <button type="submit">Save revisions</button>
+                        <button type="button" id="reject-reviewed-submission" class="danger-button">Reject submission</button>
+                        <button type="button" id="accept-reviewed-submission">Accept submission</button>
+                    </div>
+                </form>
+                <div id="submission-list" class="data-list"></div>
+            </section>
+        </section>
+    </main>
+    <script src="/admin/admin.js"></script>
+</body>
+</html>

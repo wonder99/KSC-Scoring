@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>The 701 Club | Admin Guide</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #0b1219;
+            --card: #121e2e;
+            --border: #25415f;
+            --text: #ecf0f1;
+            --muted: #9dafc1;
+            --accent: #2ecc71;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-width: 320px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            line-height: 1.55;
+        }
+        main {
+            max-width: 940px;
+            margin: 0 auto;
+            padding: 24px 16px 56px;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: 16px;
+        }
+        nav { display: flex; flex-wrap: wrap; gap: 12px; }
+        a { color: var(--accent); }
+        h1, h2, h3 { line-height: 1.25; }
+        h1 { margin: 4px 0 16px; }
+        h2 { margin-top: 0; }
+        section {
+            margin-top: 18px;
+            padding: 18px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--card);
+        }
+        .notice {
+            border-left: 4px solid #e8b900;
+            background: #262217;
+        }
+        .danger {
+            border-left: 4px solid #e74c3c;
+            background: #2a1717;
+        }
+        code {
+            color: #8be1a7;
+            white-space: nowrap;
+        }
+        ul, ol { padding-left: 1.35rem; }
+        li { margin: 6px 0; }
+        @media (max-width: 700px) {
+            header { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <div>
+                <p>The 701 Club</p>
+                <h1>League Administration Guide</h1>
+            </div>
+            <nav aria-label="Page navigation">
+                <a href="/admin">Admin dashboard</a>
+                <a href="/reports">Reports</a>
+                <a href="/">Scorer</a>
+            </nav>
+        </header>
+
+        <section class="notice">
+            <h2>Before you begin</h2>
+            <p>Open <code>/admin</code> and enter the <strong>ADMIN_API_KEY</strong> configured on the server. The key is not stored in source files. It is held in browser session storage after successful authentication.</p>
+            <p>Teams, players, matches, submissions, and reports use the selected season. Keep exactly one season marked active for public report defaults and player submissions.</p>
+        </section>
+
+        <section>
+            <h2>Seasons</h2>
+            <ul>
+                <li>Add a season by name, start date, and optional end date.</li>
+                <li>Mark only the current season active.</li>
+                <li>The 2026-2027 baseline is preserved through Week 10, ending November 18. Submissions for Week 10 or earlier are blocked.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Teams</h2>
+            <ul>
+                <li>Add a team by entering its display name.</li>
+                <li>Each team card shows the team name and active-season player count.</li>
+                <li>Roster limits are not used.</li>
+                <li>Delete a team only when it has no active season or schedule dependencies.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Players</h2>
+            <p>Player cards are compact and ordered by team, player name, gender, and actions.</p>
+            <ul>
+                <li><strong>Add:</strong> enter first name, optional last name, gender, season, and team.</li>
+                <li><strong>Edit:</strong> use the edit form to correct first name, last name, or gender. The existing player ID is preserved, so linked baselines and turn history remain with the person.</li>
+                <li><strong>Remove:</strong> remove the player from the selected season roster without deleting the player's database record.</li>
+                <li><strong>Merge:</strong> enter the canonical player ID to keep. All roster, baseline, turn, lineup, and finish references for the duplicate move to that record.</li>
+                <li><strong>Delete:</strong> delete the whole player record. Use Remove or Merge instead when historical stats or submissions exist.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Schedule</h2>
+            <ul>
+                <li>Add a match with season, week, date, board, home team, and away team.</li>
+                <li>Schedule rows show Week, date/board, and both team names in one compact line.</li>
+                <li>Edit changes week, date, board, or team IDs.</li>
+                <li>Delete a match only after reviewing linked games and submissions.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Submissions</h2>
+            <ul>
+                <li><strong>Review turns:</strong> opens normalized turn rows and lets the organizer revise a score with a required reason.</li>
+                <li><strong>Accept:</strong> include an accepted submission in public reports.</li>
+                <li><strong>Reject:</strong> remove that submission from public reports while preserving the audit record.</li>
+                <li>A repeated browser or CSV submission supersedes earlier accepted data for the same match game.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Reports</h2>
+            <p>Public reports at <code>/reports</code> combine preserved workbook baselines with accepted submissions after Week 10. Report categories include standings, mens/ladies overall statistics, averages, 95+, outs, and leaders.</p>
+            <p>Stat reports do not cap the number of players. 95+ and outs report views include only qualifying players.</p>
+        </section>
+
+        <section class="danger">
+            <h2>Destructive operations</h2>
+            <p>Deleting a team, player, match, or submission can affect linked historical data. Prefer removing a player from a roster or rejecting a submission unless permanent deletion is necessary.</p>
+            <p>Merging duplicates requires confirming a canonical player ID. Verify the ID and name before confirming.</p>
+        </section>
+
+        <section>
+            <h2>Backups and restore</h2>
+            <p>Create a backup from a server terminal with <code>npm.cmd run backup</code>. Backups are custom-format PostgreSQL dumps stored in <code>backups/</code>.</p>
+            <p>Before restoring, stop the app and confirm that <code>DATABASE_URL</code> points to the intended target database. Restore with:</p>
+            <p><code>npm.cmd run restore -- --confirm=RESTORE --file=backups\league-file.dump</code></p>
+            <p>The restore command removes existing objects before restoring the dump. It is intentionally blocked unless <code>--confirm=RESTORE</code> is supplied.</p>
+        </section>
+    </main>
+</body>
+</html>

@@ -10,7 +10,10 @@
     <main id="roster-screen" class="screen active">
         <h1>🎯 KSC Darts Scorer</h1>
         <p class="subtitle">Double-out · One team score · Four players</p>
-        <a class="player-guide-link" href="user-guide.html">Read the player guide</a>
+        <nav class="landing-links" aria-label="League resources">
+            <a class="player-guide-link" href="user-guide.html">Read the player guide</a>
+            <a class="player-guide-link" href="/reports">View league reports</a>
+        </nav>
 
         <section class="setup-card">
             <p class="persistence-status" role="status" aria-live="polite"></p>
@@ -26,7 +29,7 @@
             <p class="opponent-display">Opponent: <strong id="opponent-name">Select a match day and team</strong><span id="board-display" class="board-display"></span></p>
             <button id="start-game-btn" class="btn btn-primary" type="button" disabled>Start Game</button>
         </section>
-        <p class="app-version">Version 24</p>
+        <p class="app-version">Version 25</p>
     </main>
 
     <main id="lineup-screen" class="screen">

@@ -1,0 +1,166 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    color-scheme: dark;
+    --bg: #0b1219;
+    --card: #121e2e;
+    --border: #25415f;
+    --text: #ecf0f1;
+    --muted: #9dafc1;
+    --accent: #2ecc71;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.reports-shell {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+}
+
+.reports-header,
+.controls,
+.tabs,
+.subtabs,
+.leader-grid {
+    display: flex;
+    gap: 12px;
+}
+
+.reports-header {
+    align-items: center;
+    justify-content: space-between;
+}
+
+.reports-header nav {
+    display: flex;
+    gap: 16px;
+}
+
+.reports-header a {
+    color: var(--accent);
+}
+
+.eyebrow {
+    margin: 0;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+.controls {
+    align-items: center;
+    margin: 24px 0 16px;
+}
+
+select,
+.tab,
+.subtab {
+    min-height: 42px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--text);
+}
+
+select {
+    padding: 8px 12px;
+}
+
+.tabs,
+.subtabs {
+    flex-wrap: wrap;
+}
+
+.tab,
+.subtab {
+    padding: 8px 14px;
+    cursor: pointer;
+}
+
+.tab.active,
+.subtab.active {
+    border-color: var(--accent);
+    background: #183425;
+}
+
+.subtabs {
+    margin-top: 12px;
+}
+
+.hidden {
+    display: none;
+}
+
+.status {
+    min-height: 24px;
+    color: var(--muted);
+}
+
+.table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+
+th,
+td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+}
+
+th {
+    color: var(--muted);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.leader-grid {
+    align-items: flex-start;
+}
+
+.leader-grid section {
+    flex: 1 1 0;
+}
+
+.empty {
+    color: var(--muted);
+}
+
+@media (max-width: 700px) {
+    .reports-header,
+    .leader-grid {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    th,
+    td {
+        padding: 9px 10px;
+    }
+}
