@@ -477,7 +477,18 @@ async function startServer() {
     if (!uploadApiKey) throw new Error('UPLOAD_API_KEY must be configured.');
 
     const { Pool } = require('pg');
+    console.log(`Attempting to connect to database: ${databaseUrl}`);
     const pool = new Pool({ connectionString: databaseUrl });
+    
+    // Add a test connection before proceeding
+    try {
+        await pool.query('SELECT 1');
+        console.log('Database connection successful');
+    } catch (dbError) {
+        console.error('Database connection failed:', dbError.message);
+        throw new Error(`Could not connect to database: ${dbError.message}`);
+    }
+    
     await initializeDatabase(pool);
 
     const server = createServer({ pool, uploadApiKey });
