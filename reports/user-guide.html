@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>701 Club Reports - User Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .guide-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #1abc9c;
+            padding-bottom: 0.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        h3 {
+            color: #34495e;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .note {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .warning {
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .steps {
+            counter-reset: step-counter;
+            margin: 1.5rem 0;
+        }
+
+        .steps li {
+            margin-bottom: 1rem;
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .steps li:before {
+            counter-increment: step-counter;
+            content: counter(step-counter) ".";
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-weight: bold;
+            color: #1abc9c;
+        }
+
+        .report-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .report-card {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .report-card h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 0.5rem;
+        }
+
+        .report-card ul {
+            margin-left: 1.5rem;
+        }
+
+        .report-card li {
+            margin-bottom: 0.5rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+            margin-top: 2rem;
+        }
+
+        .highlight {
+            background-color: #fff9c4;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            header {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .guide-container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>701 Club Reports</h1>
+        <p class="subtitle">User Guide for Accessing and Understanding League Statistics</p>
+    </header>
+
+    <div class="guide-container">
+        <h2>How to Access the Public Reports Website</h2>
+        <p>The 701 Club reports website is accessible through a public URL that can be shared with all members. To access the reports:</p>
+        
+        <ol class="steps">
+            <li>Open your web browser (Chrome, Firefox, Safari, Edge, etc.)</li>
+            <li>Navigate to the public URL: <span class="highlight">https://the-701-club-reports.vercel.app</span></li>
+            <li>Wait for the page to load completely</li>
+        </ol>
+
+        <div class="note">
+            <p><strong>Note:</strong> The reports website is updated automatically with the latest league statistics. All data is refreshed regularly to ensure accuracy.</p>
+        </div>
+
+        <h2>Overview of Available Reports</h2>
+        <p>The 701 Club reports website provides several different types of statistical information:</p>
+        
+        <div class="report-overview">
+            <div class="report-card">
+                <h3>Standings</h3>
+                <p>Shows the current league standings with team positions and points.</p>
+                <ul>
+                    <li>Team names</li>
+                    <li>Points earned</li>
+                    <li>Wins, losses, and draws</li>
+                    <li>Current position in the league</li>
+                </ul>
+            </div>
+            
+            <div class="report-card">
+                <h3>Men's Stats</h3>
+                <p>Detailed statistics for male players including averages and performance metrics.</p>
+                <ul>
+                    <li>Overall performance statistics</li>
+                    <li>Average scores</li>
+                    <li>95+ scores</li>
+                    <li>Outs information</li>
+                </ul>
+            </div>
+            
+            <div class="report-card">
+                <h3>Ladies' Stats</h3>
+                <p>Detailed statistics for female players including averages and performance metrics.</p>
+                <ul>
+                    <li>Overall performance statistics</li>
+                    <li>Average scores</li>
+                    <li>95+ scores</li>
+                    <li>Outs information</li>
+                </ul>
+            </div>
+            
+            <div class="report-card">
+                <h3>Leaders</h3>
+                <p>Shows top performers in various categories across the league.</p>
+                <ul>
+                    <li>Top scorers</li>
+                    <li>Best averages</li>
+                    <li>Consistent performers</li>
+                    <li>League leaders in different metrics</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>Navigating Between Tabs and Sections</h2>
+        <p>The website features an intuitive tab-based navigation system that allows you to easily switch between different reports:</p>
+        
+        <ol class="steps">
+            <li>Use the main navigation tabs at the top of the page:
+                <ul>
+                    <li><span class="highlight">Standings</span> - For current league positions</li>
+                    <li><span class="highlight">Men's Stats</span> - For detailed male player statistics (dropdown menu for sub-tabs)</li>
+                    <li><span class="highlight">Ladies' Stats</span> - For detailed female player statistics (dropdown menu for sub-tabs)</li>
+                    <li><span class="highlight">Leaders</span> - For top performers in various categories</li>
+                </ul>
+            </li>
+            <li>For Men's Stats and Ladies' Stats, click on the dropdown arrow next to each tab to access detailed sub-reports:
+                <ul>
+                    <li><span class="highlight">Overall</span> - Complete player statistics</li>
+                    <li><span class="highlight">Avg</span> - Average scores</li>
+                    <li><span class="highlight">95+</span> - Number of 95+ scores</li>
+                    <li><span class="highlight">Outs</span> - Information about outs</li>
+                </ul>
+            </li>
+            <li>Click on any tab to view the corresponding statistics immediately</li>
+        </ol>
+
+        <h2>What Each Report Shows</h2>
+        
+        <h3>Standings</h3>
+        <p>The Standings report displays the current league position of all teams in the 701 Club. This includes:</p>
+        <ul>
+            <li>Team names and their current positions</li>
+            <li>Total points earned by each team</li>
+            <li>Win, loss, and draw records</li>
+            <li>Points difference between teams</li>
+        </ul>
+
+        <h3>Men's Stats</h3>
+        <p>The Men's Stats report provides detailed performance data for male players:</p>
+        <ul>
+            <li><strong>Overall</strong>: Complete player statistics including total points, wins, losses, and other metrics</li>
+            <li><strong>Avg</strong>: Average scores for each player</li>
+            <li><strong>95+</strong>: Number of times each player has scored 95 or higher</li>
+            <li><strong>Outs</strong>: Information about outs and their impact on performance</li>
+        </ul>
+
+        <h3>Ladies' Stats</h3>
+        <p>The Ladies' Stats report provides detailed performance data for female players:</p>
+        <ul>
+            <li><strong>Overall</strong>: Complete player statistics including total points, wins, losses, and other metrics</li>
+            <li><strong>Avg</strong>: Average scores for each player</li>
+            <li><strong>95+</strong>: Number of times each player has scored 95 or higher</li>
+            <li><strong>Outs</strong>: Information about outs and their impact on performance</li>
+        </ul>
+
+        <h3>Leaders</h3>
+        <p>The Leaders report highlights top performers across different categories:</p>
+        <ul>
+            <li>Top scoring players in the league</li>
+            <li>Players with the best averages</li>
+            <li>Most consistent performers</li>
+            <li>League leaders in various statistical categories</li>
+        </ul>
+
+        <div class="warning">
+            <p><strong>Important:</strong> All data is automatically updated and reflects the most recent league statistics. The website refreshes regularly to ensure you always have access to the latest information.</p>
+        </div>
+
+        <h2>Additional Information and Tips</h2>
+        <ul>
+            <li>All reports are displayed in a clear, easy-to-read table format</li>
+            <li>Tables are sortable by clicking on column headers</li>
+            <li>Some reports may take a moment to load when first accessed</li>
+            <li>For best viewing experience, use desktop or laptop browsers</li>
+            <li>Mobile-friendly design allows access on smartphones and tablets</li>
+        </ul>
+
+        <p>If you encounter any issues accessing the reports or have questions about the data, please contact the league administrators for assistance.</p>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 The 701 Club. All rights reserved.</p>
+        <p>This user guide is designed to help regular members access and understand league statistics.</p>
+    </footer>
+</body>
+</html>
