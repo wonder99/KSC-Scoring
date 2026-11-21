@@ -5,7 +5,8 @@
   "description": "Browser-based 701 darts scorer with CSV result uploads",
   "scripts": {
     "start": "node server.js",
-    "test": "node --test"
+    "test": "node --test tests/*.test.js",
+    "test:all": "node tests/test-runner.js"
   },
   "engines": {
     "node": ">=20"

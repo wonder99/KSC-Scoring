@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard User Guide - The 701 Club</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+        
+        .guide-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        
+        h2 {
+            color: #3498db;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        h3 {
+            color: #2c3e50;
+            margin: 20px 0 10px 0;
+        }
+        
+        p {
+            margin-bottom: 15px;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 10px;
+        }
+        
+        .note {
+            background-color: #e3f2fd;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .warning {
+            background-color: #ffebee;
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .step {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        .step-number {
+            background-color: #3498db;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .tab-navigation {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .tab-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .tab-button:hover {
+            background-color: #2980b9;
+        }
+        
+        .tab-button.active {
+            background-color: #2c3e50;
+        }
+        
+        .tabs-content {
+            margin-top: 20px;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        code {
+            background-color: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .screenshot {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+            }
+            
+            h2 {
+                font-size: 1.3em;
+            }
+            
+            .step {
+                flex-direction: column;
+            }
+            
+            .step-number {
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Admin Dashboard User Guide</h1>
+            <p class="subtitle">The 701 Club Admin Panel - Complete Usage Instructions</p>
+        </header>
+
+        <div class="guide-section">
+            <h2>Overview</h2>
+            <p>This user guide provides detailed instructions for accessing and using the The 701 Club admin dashboard. The admin panel allows authorized administrators to manage scores, teams, and match schedules for the darts league.</p>
+            
+            <div class="note">
+                <strong>Note:</strong> This dashboard requires an ADMIN_API_KEY to access. Make sure you have the correct key before proceeding.
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <h2>How to Access the Admin Dashboard</h2>
+            <p>To access the admin dashboard, follow these steps:</p>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div>
+                    <p><strong>Open your web browser</strong> and navigate to the main application URL.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <div>
+                    <p><strong>Locate the admin login section</strong> - This is typically found in the top navigation bar or footer of the website.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <div>
+                    <p><strong>Enter your ADMIN_API_KEY</strong> when prompted. This key is required for authentication and should be provided by the system administrator.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <div>
+                    <p><strong>Click Login</strong> to access the admin dashboard interface.</p>
+                </div>
+            </div>
+            
+            <div class="warning">
+                <strong>Security Warning:</strong> Never share your ADMIN_API_KEY with unauthorized users. Keep it secure and rotate keys periodically for security.
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <h2>Main Dashboard Tabs</h2>
+            <p>The admin dashboard is organized into three main tabs, each serving a specific purpose:</p>
+            
+            <div class="tab-navigation">
+                <button class="tab-button active" data-tab="score-review">Score Review</button>
+                <button class="tab-button" data-tab="team-management">Team Management</button>
+                <button class="tab-button" data-tab="schedule-view">Schedule View/Edit</button>
+            </div>
+            
+            <div class="tabs-content">
+                <div id="score-review" class="tab-content active">
+                    <h3>Score Review Tab</h3>
+                    <p>This tab allows you to view, edit, and delete scores for matches. It displays a comprehensive list of all recorded scores with options for management.</p>
+                    
+                    <h4>Key Features:</h4>
+                    <ul>
+                        <li>View all current scores in a sortable table format</li>
+                        <li>Edit existing scores directly</li>
+                        <li>Delete incorrect or duplicate scores</li>
+                        <li>Recalculate scores if needed</li>
+                        <li>Refresh the score list to see updates</li>
+                    </ul>
+                </div>
+                
+                <div id="team-management" class="tab-content">
+                    <h3>Team Management Tab</h3>
+                    <p>This tab allows you to manage teams participating in the league. You can add new teams, view existing teams, and remove teams when needed.</p>
+                    
+                    <h4>Key Features:</h4>
+                    <ul>
+                        <li>Add new teams with player information</li>
+                        <li>View all current teams and their rosters</li>
+                        <li>Delete teams that are no longer participating</li>
+                        <li>Manage team members and player assignments</li>
+                    </ul>
+                </div>
+                
+                <div id="schedule-view" class="tab-content">
+                    <h3>Schedule View/Edit Tab</h3>
+                    <p>This tab allows you to view the current season schedule and make edits to upcoming matches.</p>
+                    
+                    <h4>Key Features:</h4>
+                    <ul>
+                        <li>View upcoming matches in a grid format</li>
+                        <li>Edit match details including date, time, and venue</li>
+                        <li>Delete matches that are no longer needed</li>
+                        <li>Add new matches to the schedule</li>
+                        <li>Refresh the schedule to see updates</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <h2>Detailed Function Instructions</h2>
+            
+            <div class="guide-section">
+                <h3>Score Review Tab</h3>
+                <p>The Score Review tab displays a table of all recorded scores. Here's how to use it:</p>
+                
+                <h4>Viewing Scores:</h4>
+                <ul>
+                    <li>All scores are displayed in a table format with date, teams, and scores</li>
+                    <li>Click the "Refresh" button to update the score list</li>
+                </ul>
+                
+                <h4>Editing Scores:</h4>
+                <p>To edit a score:</p>
+                <ol>
+                    <li>Locate the score you want to edit in the table</li>
+                    <li>Click the "Edit" button for that row (note: actual editing functionality is implemented in the dashboard)</li>
+                    <li>Make your changes and save them</li>
+                </ol>
+                
+                <h4>Deleting Scores:</h4>
+                <p>To delete a score:</p>
+                <ol>
+                    <li>Locate the score you want to delete in the table</li>
+                    <li>Click the "Delete" button for that row</li>
+                    <li>Confirm the deletion when prompted</li>
+                </ol>
+                
+                <h4>Recalculating Scores:</h4>
+                <p>To recalculate a score:</p>
+                <ol>
+                    <li>Locate the score you want to recalculate in the table</li>
+                    <li>Click the "Recalculate" button for that row</li>
+                    <li>The system will recompute the score based on current rules</li>
+                </ol>
+            </div>
+
+            <div class="guide-section">
+                <h3>Team Management Tab</h3>
+                <p>The Team Management tab allows you to manage all teams in the league:</p>
+                
+                <h4>Adding New Teams:</h4>
+                <p>To add a new team:</p>
+                <ol>
+                    <li>Fill out the "Add New Team" form with team details</li>
+                    <li>Enter the team name</li>
+                    <li>Add players (at least one player required, up to two players)</li>
+                    <li>Click "Add Team" to submit the form</li>
+                </ol>
+                
+                <h4>Viewing Teams:</h4>
+                <ul>
+                    <li>All teams are displayed in a table format</li>
+                    <li>Shows team name and list of players</li>
+                    <li>Use the refresh button to update the team list</li>
+                </ul>
+                
+                <h4>Deleting Teams:</h4>
+                <p>To delete a team:</p>
+                <ol>
+                    <li>Locate the team you want to delete in the table</li>
+                    <li>Click the "Delete" button for that row</li>
+                    <li>Confirm the deletion when prompted</li>
+                </ol>
+            </div>
+
+            <div class="guide-section">
+                <h3>Schedule View/Edit Tab</h3>
+                <p>The Schedule View/Edit tab displays upcoming matches in a grid format:</p>
+                
+                <h4>Viewing Matches:</h4>
+                <ul>
+                    <li>Upcoming matches are displayed in cards with date, time, teams, and venue</li>
+                    <li>Use the "Refresh Schedule" button to update the display</li>
+                </ul>
+                
+                <h4>Editing Matches:</h4>
+                <p>To edit a match:</p>
+                <ol>
+                    <li>Locate the match you want to edit in the grid</li>
+                    <li>Click the "Edit" button for that match</li>
+                    <li>Make your changes and save them (note: actual editing functionality is implemented in the dashboard)</li>
+                </ol>
+                
+                <h4>Deleting Matches:</h4>
+                <p>To delete a match:</p>
+                <ol>
+                    <li>Locate the match you want to delete</li>
+                    <li>Click the "Delete" button for that match</li>
+                    <li>Confirm the deletion when prompted</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <h2>Troubleshooting Tips</h2>
+            <p>If you encounter issues while using the admin dashboard:</p>
+            
+            <ul>
+                <li>Ensure your ADMIN_API_KEY is correct and has not expired</li>
+                <li>Try refreshing the page if data doesn't load properly</li>
+                <li>Check that you have proper permissions to perform the requested action</li>
+                <li>Contact system administrator if issues persist</li>
+            </ul>
+            
+            <div class="note">
+                <strong>Tip:</strong> All actions in the admin dashboard are logged for security purposes. If you make changes, they will be recorded.
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <h2>Best Practices</h2>
+            <ul>
+                <li>Always verify data before making edits to ensure accuracy</li>
+                <li>Use the "Refresh" buttons to make sure you're working with current information</li>
+                <li>Confirm deletions before proceeding, as they cannot be undone</li>
+                <li>Keep your ADMIN_API_KEY secure and never share it with unauthorized users</li>
+                <li>Document major changes made in the admin panel for future reference</li>
+            </ul>
+        </div>
+
+        <div class="guide-section">
+            <h2>Need Help?</h2>
+            <p>If you need assistance using the admin dashboard:</p>
+            <ul>
+                <li>Contact your system administrator</li>
+                <li>Review this user guide again for detailed instructions</li>
+                <li>Check the help section within the dashboard itself</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove active class from all buttons and contents
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // Add active class to clicked button and corresponding content
+                    button.classList.add('active');
+                    const tabId = button.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
