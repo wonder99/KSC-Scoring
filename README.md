@@ -121,9 +121,14 @@ Open `/stats` to view:
 - Mens Overall, Average, 95+, and Outs
 - Ladies Overall, Average, 95+, and Outs
 - Mens and Ladies Honourable Mentions showing player and score (men: 171+; ladies: 130+)
-- Mens and Ladies Overall reports include the Hon. Mentions count
+- Mens and Ladies 50+ Finishes showing player and finish value
+- Mens and Ladies Overall reports include Hon. Mentions and 50+ Finish counts
 - League leaders
 - Team and player totals based on week 10 workbook baselines plus accepted post-cutoff submissions
+
+The workbook baselines include Honourable Mentions and 50+ finishes imported from the Leaders sheet. Historical 50+ finishes are also imported from the `W1 - Team Master` and `W1`–`W10` weekly sheets, where row 51 contains the finish count and rows 52–53 contain the individual finish values. Live database rosters, rather than `team_lists.csv`, resolve these historical player records.
+
+All post-cutoff public reports are recalculated from accepted `game_submission` turns whenever reports are loaded. Rejected or superseded submissions are excluded; submitted but unaccepted turns do not affect public totals.
 
 Report filtering uses the active season. Report rows are not artificially capped.
 
@@ -176,6 +181,8 @@ npm run backfill:scores        Normalize existing CSV upload rows
 npm run backfill:rosters       Import team_lists.csv plus workbook genders
 npm run backfill:schedule      Import dart_league_schedule.csv
 npm run backfill:baselines     Import established XLSX totals
+npm run backfill:honourable    Import Honourable Mentions from the workbook
+npm run backfill:finishes      Import 50+ finishes from the workbook
 npm run merge:keepers-duplicates Merge the previously identified Keepers name duplicates
 npm run backup                 Create a PostgreSQL backup
 npm run restore -- ...         Restore a PostgreSQL backup with confirmation

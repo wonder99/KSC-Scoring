@@ -60,6 +60,63 @@ function extractWorkbookBaselines(workbookPath) {
     return JSON.parse(result.stdout);
 }
 
+function extractHighFinishes(workbookPath) {
+    if (!workbookPath || !fs.existsSync(workbookPath)) {
+        throw new Error(`Workbook not found: ${workbookPath || '(missing)'}`);
+    }
+    const pythonCode = [
+        'import json, sys',
+        'import openpyxl',
+        'p=sys.argv[1]',
+        'w=openpyxl.load_workbook(p, data_only=True, read_only=True)',
+        'finishes=[]',
+        'if "Leaders" in w.sheetnames:',
+        '    s=w["Leaders"]',
+        '    for r in range(40,50):',
+        '        name=s.cell(r,1).value',
+        '        team=s.cell(r,2).value',
+        '        score=s.cell(r,3).value',
+        '        if name and team and isinstance(score,(int,float)):',
+        '            finishes.append({"gender":"M","name":str(name).strip(),"team":str(team).strip(),"score":int(score),"sheet":"Leaders","row":r})',
+        '        name=s.cell(r,5).value',
+        '        team=s.cell(r,6).value',
+        '        score=s.cell(r,7).value',
+        '        if name and team and isinstance(score,(int,float)):',
+        '            finishes.append({"gender":"F","name":str(name).strip(),"team":str(team).strip(),"score":int(score),"sheet":"Leaders","row":r})',
+        'weekly=["W10","W9","W8","W7","W6","W5","W4","W3","W2","W1 - Team Master"]',
+        'for sheet in weekly:',
+        '    if sheet not in w.sheetnames:',
+        '        continue',
+        '    s=w[sheet]',
+        '    for c in range(1,s.max_column+1):',
+        '        count=s.cell(51,c).value',
+        '        name=s.cell(5,c).value',
+        '        if not count or not name:',
+        '            continue',
+        '        team=None',
+        '        for cc in range(c,0,-1):',
+        '            header=s.cell(1,cc).value',
+        '            if isinstance(header,str) and header.strip() and not header.strip().startswith("Week ") and not header.strip().startswith("Team "):',
+        '                team=header.strip()',
+        '                break',
+        '        gender=s.cell(4,c).value',
+        '        score_count=int(count) if isinstance(count,(int,float)) else 0',
+        '        for r in range(52,52+score_count):',
+        '            score=s.cell(r,c).value',
+        '            if isinstance(score,(int,float)):',
+        '                finishes.append({"gender":"F" if gender=="F" else "M","name":str(name).strip(),"team":team,"score":int(score),"sheet":sheet,"row":r})',
+        'print(json.dumps(finishes))'
+    ].join('\n');
+    const result = spawnSync('python', ['-c', pythonCode, workbookPath], {
+        encoding: 'utf8',
+        maxBuffer: 10 * 1024 * 1024
+    });
+    if (result.status !== 0) {
+        throw new Error(result.stderr || 'Workbook high finishes extraction failed.');
+    }
+    return JSON.parse(result.stdout);
+}
+
 function extractHonourableMentions(workbookPath) {
     if (!workbookPath || !fs.existsSync(workbookPath)) {
         throw new Error(`Workbook not found: ${workbookPath || '(missing)'}`);
@@ -183,8 +240,51 @@ async function findPlayer(client, rosterRow) {
     return null;
 }
 
+async function findRosterPlayer(client, seasonId, teamId, workbookName) {
+    let firstName = String(workbookName).trim().split(/\s+/)[0]
+        .replace(/[.,]+$/g, '');
+    const aliases = {
+        Gerry: 'Jerry',
+        Ginger: 'Terry',
+        'Chris S': 'Chris',
+        'Chris S.': 'Chris',
+        'Mark H': 'Mark Howard',
+        'Mark H.': 'Mark Howard',
+        Steve: 'Steve',
+        Chico: 'Chico',
+        Dave: 'Dave',
+        Monty: 'Monty',
+        Andrew: 'Andrew'
+    };
+    if (aliases[firstName]) firstName = aliases[firstName];
+
+    let result = await client.query(
+        `SELECT p.id
+         FROM team_roster tr
+         JOIN player p ON p.id = tr.player_id
+         WHERE tr.season_id = $1
+           AND tr.team_id = $2
+           AND lower(p.first_name) = lower($3)
+         ORDER BY p.id
+         LIMIT 1`,
+        [seasonId, teamId, firstName]
+    );
+    if (result.rows.length) return result.rows[0];
+
+    result = await client.query(
+        `SELECT p.id
+         FROM team_roster tr
+         JOIN player p ON p.id = tr.player_id
+         WHERE tr.season_id = $1
+           AND lower(p.first_name) = lower($2)
+         ORDER BY p.id
+         LIMIT 1`,
+        [seasonId, firstName]
+    );
+    return result.rows[0] || null;
+}
+
 async function importHonourableMentionsWithClient(client, seasonId, csvPath, workbookPath) {
-    const roster = parseTeamListCsv(fs.readFileSync(csvPath, 'utf8'));
     const mentions = extractHonourableMentions(workbookPath);
     const unmatched = [];
     let mentionRows = 0;
@@ -220,22 +320,12 @@ async function importHonourableMentionsWithClient(client, seasonId, csvPath, wor
           continue;
         }
 
-        const rosterRow = matchWorkbookPlayer(
-          mention.team,
-          mention.name,
-          roster
+        const player = await findRosterPlayer(
+          client,
+          seasonId,
+          team.id,
+          mention.name
         );
-        if (!rosterRow) {
-          unmatched.push({
-              team: mention.team,
-              player: mention.name,
-              score: mention.score,
-              reason: 'no authoritative roster match'
-          });
-          continue;
-        }
-
-        const player = await findPlayer(client, rosterRow);
         if (!player) {
           unmatched.push({
               team: mention.team,
@@ -298,6 +388,120 @@ async function importHonourableMentions(pool, csvPath, workbookPath) {
           season: season.name,
           mentionRows: result.mentionRows,
           unmatched: result.unmatched
+        };
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
+async function importHighFinishesWithClient(client, seasonId, csvPath, workbookPath) {
+    const finishes = extractHighFinishes(workbookPath);
+    const unmatched = [];
+    let finishRows = 0;
+
+    await client.query(
+        'DELETE FROM high_finish WHERE season_id = $1',
+        [seasonId]
+    );
+
+    for (const finish of finishes) {
+        const finishTeam = /^Chris S\.?$/i.test(finish.name)
+            ? 'Jug Zone'
+            : finish.team;
+        if (finish.score < 50 || finish.score > 170) {
+            unmatched.push({
+                team: finishTeam,
+                player: finish.name,
+                score: finish.score,
+                reason: 'score is outside the 50+ finish range'
+            });
+            continue;
+        }
+
+        const team = await findTeam(client, finishTeam);
+        if (!team) {
+            unmatched.push({
+                team: finishTeam,
+                player: finish.name,
+                score: finish.score,
+                reason: 'team not found'
+            });
+            continue;
+        }
+
+        const player = await findRosterPlayer(
+            client,
+            seasonId,
+            team.id,
+            finish.name
+        );
+
+        if (!player) {
+            unmatched.push({
+                team: finishTeam,
+                player: finish.name,
+                score: finish.score,
+                reason: 'player not found'
+            });
+            continue;
+        }
+
+        await client.query(
+            `INSERT INTO high_finish (
+                season_id, team_id, player_id, score,
+                source_sheet, source_row, source_reference
+             )
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (season_id, team_id, player_id, score)
+             DO UPDATE SET
+                source_sheet = EXCLUDED.source_sheet,
+                source_row = EXCLUDED.source_row,
+                source_reference = EXCLUDED.source_reference,
+                imported_at = CURRENT_TIMESTAMP`,
+            [
+                seasonId,
+                team.id,
+                player.id,
+                finish.score,
+                finish.sheet,
+                finish.row,
+                `${finish.sheet}!${finish.gender === 'M' ? 'A' : 'E'}${finish.row}:${finish.gender === 'M' ? 'C' : 'G'}${finish.row}`
+            ]
+        );
+        finishRows++;
+    }
+
+    return { finishRows, unmatched };
+}
+
+async function importHighFinishes(pool, csvPath, workbookPath) {
+    if (!pool || typeof pool.connect !== 'function') {
+        throw new TypeError('A PostgreSQL pool with transactions is required.');
+    }
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const seasonResult = await client.query(
+            'SELECT id, name FROM season WHERE active = TRUE LIMIT 1'
+        );
+        if (!seasonResult.rows.length) {
+            throw new Error('No active season exists.');
+        }
+        const season = seasonResult.rows[0];
+        const result = await importHighFinishesWithClient(
+            client,
+            season.id,
+            csvPath,
+            workbookPath
+        );
+        await client.query('COMMIT');
+        return {
+            season: season.name,
+            finishRows: result.finishRows,
+            unmatched: result.unmatched
         };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -453,6 +657,12 @@ async function importWorkbookBaselines(pool, csvPath, workbookPath, baselineWeek
             csvPath,
             workbookPath
         );
+        const highFinishResult = await importHighFinishesWithClient(
+            client,
+            season.id,
+            csvPath,
+            workbookPath
+        );
         await client.query('COMMIT');
         return {
             season: season.name,
@@ -460,7 +670,11 @@ async function importWorkbookBaselines(pool, csvPath, workbookPath, baselineWeek
             teamRows,
             playerRows,
             mentionRows: honourableResult.mentionRows,
-            unmatched: unmatched.concat(honourableResult.unmatched)
+            finishRows: highFinishResult.finishRows,
+            unmatched: unmatched.concat(
+                honourableResult.unmatched,
+                highFinishResult.unmatched
+            )
         };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -483,7 +697,7 @@ if (require.main === module) {
             .then(async result => {
                 await pool.end();
                 console.log(
-                    `Imported ${result.playerRows} player baselines, ${result.teamRows} team baselines, and ${result.mentionRows} Honourable Mentions through week ${result.baselineThroughWeek} for ${result.season}.`
+                    `Imported ${result.playerRows} player baselines, ${result.teamRows} team baselines, ${result.mentionRows} Honourable Mentions, and ${result.finishRows} high finishes through week ${result.baselineThroughWeek} for ${result.season}.`
                 );
                 if (result.unmatched.length) {
                     console.error(JSON.stringify(result.unmatched, null, 2));
@@ -499,8 +713,10 @@ if (require.main === module) {
 
 module.exports = {
     extractWorkbookBaselines,
+    extractHighFinishes,
     extractHonourableMentions,
     importWorkbookBaselines,
+    importHighFinishes,
     importHonourableMentions,
     matchWorkbookPlayer,
     parseTeamListCsv

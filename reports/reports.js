@@ -3,6 +3,7 @@
 let activeReport = 'standings';
 let activeCategory = 'overall';
 let selectedSeason = '';
+let reportLoadSequence = 0;
 
 const seasonSelect = document.getElementById('season-select');
 const reportStatus = document.getElementById('report-status');
@@ -109,11 +110,13 @@ function renderTable(rows, columns) {
 }
 
 async function loadReport() {
+    const loadSequence = ++reportLoadSequence;
     reportStatus.textContent = 'Loading report...';
     reportContent.innerHTML = '';
     try {
         if (activeReport === 'standings') {
             const payload = await fetchJson(`/api/reports/standings${seasonQuery()}`);
+            if (loadSequence !== reportLoadSequence) return;
             renderTable(payload.standings, [
                 { key: 'team', label: 'Team' },
                 { key: 'wins', label: 'Wins' },
@@ -123,6 +126,7 @@ async function loadReport() {
             ]);
         } else if (activeReport === 'leaders') {
             const payload = await fetchJson(`/api/reports/leaders${seasonQuery()}`);
+            if (loadSequence !== reportLoadSequence) return;
             const columns = [
                 { key: 'player', label: 'Player' },
                 { key: 'team', label: 'Team' },
@@ -140,6 +144,7 @@ async function loadReport() {
             const payload = await fetchJson(
                 `/api/reports/${gender}-${activeCategory}${seasonQuery()}`
             );
+            if (loadSequence !== reportLoadSequence) return;
             const categoryColumns = {
                 overall: [
                     { key: 'player', label: 'Player' },
@@ -171,13 +176,19 @@ async function loadReport() {
                 honourable: [
                     { key: 'player', label: 'Player' },
                     { key: 'team', label: 'Team' },
-                    { key: 'score', label: 'Score' }
+                    { key: 'score', label: 'Score', numeric: true }
+                ],
+                finishes: [
+                    { key: 'player', label: 'Player' },
+                    { key: 'team', label: 'Team' },
+                    { key: 'score', label: 'Finish', numeric: true }
                 ]
             };
             renderTable(payload.players, categoryColumns[activeCategory]);
         }
         reportStatus.textContent = '';
     } catch (error) {
+        if (loadSequence !== reportLoadSequence) return;
         reportStatus.textContent = error.message;
         reportContent.innerHTML = '';
     }

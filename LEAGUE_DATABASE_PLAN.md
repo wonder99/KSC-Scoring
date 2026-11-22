@@ -34,7 +34,10 @@ Player calculations found in the workbook:
 - `95+` is the count of player turn scores that are at least 95
 - Outs is a recorded checkout/finish count
 - 171 and 180 are counts of turn scores equal to those values
-- `50+Fin.` is present in the player summary, but its exact workbook rule and source cells need a manual validation pass
+- Honourable Mentions are recorded individual turn scores: 171+ for men and 130+ for ladies
+- `50+Fin.` is the count of player finishes from 50 through 170
+- Individual `50+` finish values come from the Leaders sheet and W1-W10 rows 51-53
+- In W1-W10, row 51 contains the number of finishes, row 52 contains the first finish, and row 53 contains the second finish when present
 - Team average is total team Score divided by total team Shots
 
 The browser currently captures turn totals (and dart-grid details), game winners, and the four-player lineup. It also has a spare-player path that automatically submits 25. The database design must retain these facts rather than only storing spreadsheet totals.
@@ -151,6 +154,10 @@ Add or revise:
 - `GET /api/reports/lady-avg?season=...`
 - `GET /api/reports/lady-95?season=...`
 - `GET /api/reports/lady-outs?season=...`
+- `GET /api/reports/mens-honourable?season=...`
+- `GET /api/reports/lady-honourable?season=...`
+- `GET /api/reports/mens-finishes?season=...`
+- `GET /api/reports/lady-finishes?season=...`
 - `GET /api/reports/leaders?season=...`
 - `GET /api/reports/match/:id`
 
@@ -165,6 +172,8 @@ Implement report SQL after seeding migration fixtures and comparing every result
 - 95+: count of accepted recorded turns with `score >= 95`
 - Outs: count of accepted finishes credited to the player
 - 171/180: count of accepted turns where the total equals 171/180
+- Honourable Mentions: count individual accepted turns at 171+ for men or 130+ for ladies; detailed reports list player/team/score
+- 50+ Finishes: count accepted checkouts or baseline records from 50 through 170; detailed reports list player/team/finish
 - Team average: `SUM(team turn score) / SUM(team turn shots)`
 - Standings: wins and losses by fixture, not by a cache maintained outside the transaction
 - Rankings: use workbook order and sorting rules, including ties, as migration fixtures

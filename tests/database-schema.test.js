@@ -247,6 +247,50 @@ test('honourable mention reports show player scores and overall reports include 
     assert.match(reportsHtml, /data-category="honourable">Honourable Mentions/);
 });
 
+test('high finish reports list individual 50+ finishes', () => {
+    const fs = require('node:fs');
+    const server = fs.readFileSync(
+        path.join(__dirname, '../server.js'),
+        'utf8'
+    );
+    const reportsScript = fs.readFileSync(
+        path.join(__dirname, '../reports/reports.js'),
+        'utf8'
+    );
+    const reportsHtml = fs.readFileSync(
+        path.join(__dirname, '../reports/index.html'),
+        'utf8'
+    );
+
+    assert.match(server, /mens-finishes/);
+    assert.match(server, /lady-finishes/);
+    assert.match(server, /ts\.checkout_remaining = 0[\s\S]*?ts\.score >= 50/);
+    assert.match(reportsScript, /key: 'score', label: 'Finish', numeric: true/);
+    assert.match(reportsHtml, /data-category="finishes">50\+ Finishes/);
+});
+
+test('weekly high-finish imports read W1-W10 and rows 51-53', () => {
+    const fs = require('node:fs');
+    const importer = fs.readFileSync(
+        path.join(__dirname, '../db/import-workbook-baselines.js'),
+        'utf8'
+    );
+    assert.match(importer, /W1 - Team Master/);
+    assert.match(importer, /for c in range\(1,s\.max_column\+1\)/);
+    assert.match(importer, /count=s\.cell\(51,c\)\.value/);
+    assert.match(importer, /score_count=int\(count\)/);
+});
+
+test('report loading ignores stale tab responses', () => {
+    const fs = require('node:fs');
+    const reportsScript = fs.readFileSync(
+        path.join(__dirname, '../reports/reports.js'),
+        'utf8'
+    );
+    assert.match(reportsScript, /reportLoadSequence/);
+    assert.match(reportsScript, /loadSequence !== reportLoadSequence/);
+});
+
 test('backup filenames are deterministic and restore confirmation is explicit', () => {
     const now = new Date('2026-11-21T17:30:00.000Z');
     const filename = buildBackupFilename(now, 'C:\\backups');
