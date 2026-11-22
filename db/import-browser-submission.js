@@ -138,6 +138,53 @@ async function findOrCreatePlayer(client, name) {
     return created.rows[0];
 }
 
+async function resolveRosterPlayerName(client, seasonId, teamId, name) {
+    const { firstName, lastName } = splitPlayerName(name);
+    if (String(name).trim().toLowerCase() === 'spare') return 'Spare';
+    if (lastName) {
+        const exact = await client.query(
+            `SELECT p.first_name, p.last_name
+             FROM team_roster tr
+             JOIN player p ON p.id = tr.player_id
+             WHERE tr.season_id = $1
+               AND tr.team_id = $2
+               AND lower(p.first_name) = lower($3)
+               AND lower(COALESCE(p.last_name, '')) = lower($4)
+             LIMIT 1`,
+            [seasonId, teamId, firstName, lastName]
+        );
+        if (!exact.rows.length) {
+            throw new Error(`${name.trim()} is not on this team's active roster.`);
+        }
+        return [exact.rows[0].first_name, exact.rows[0].last_name]
+            .filter(Boolean)
+            .join(' ');
+    }
+    const result = await client.query(
+        `SELECT p.first_name, p.last_name
+         FROM team_roster tr
+         JOIN player p ON p.id = tr.player_id
+         WHERE tr.season_id = $1
+           AND tr.team_id = $2
+           AND lower(p.first_name) = lower($3)
+         ORDER BY
+           CASE WHEN COALESCE(p.last_name, '') = '' THEN 1 ELSE 0 END,
+           p.last_name,
+           p.id
+         LIMIT 2`,
+        [seasonId, teamId, firstName]
+    );
+    if (result.rows.length === 1) {
+        return [result.rows[0].first_name, result.rows[0].last_name]
+            .filter(Boolean)
+            .join(' ');
+    }
+    if (!result.rows.length) {
+        throw new Error(`${name.trim()} is not on this team's active roster.`);
+    }
+    throw new Error(`Player name "${name.trim()}" is ambiguous on this team's active roster.`);
+}
+
 async function ensureSeason(client, matchDate) {
     const active = await client.query(
         'SELECT id, name FROM season WHERE active = TRUE LIMIT 1'
@@ -322,13 +369,21 @@ async function normalizeBrowserSubmission(pool, payload, compatibilityCsvText, c
             );
 
             for (const playerData of game.players) {
-                const player = await findOrCreatePlayer(client, playerData.name);
-                await client.query(
-                    `INSERT INTO team_roster (season_id, team_id, player_id)
-                     VALUES ($1, $2, $3)
-                     ON CONFLICT (season_id, team_id, player_id) DO NOTHING`,
-                    [season.id, team.id, player.id]
+                const canonicalName = await resolveRosterPlayerName(
+                    client,
+                    season.id,
+                    team.id,
+                    playerData.name
                 );
+                const player = await findOrCreatePlayer(client, canonicalName);
+                if (canonicalName !== 'Spare') {
+                    await client.query(
+                        `INSERT INTO team_roster (season_id, team_id, player_id)
+                         VALUES ($1, $2, $3)
+                         ON CONFLICT (season_id, team_id, player_id) DO NOTHING`,
+                        [season.id, team.id, player.id]
+                    );
+                }
                 await client.query(
                     `INSERT INTO game_player_score (
                         match_game_id, team_id, player_id
@@ -343,7 +398,13 @@ async function normalizeBrowserSubmission(pool, payload, compatibilityCsvText, c
             let turnNumberByPlayer = new Map();
             let playOrder = 0;
             for (const turn of game.turns) {
-                const player = await findOrCreatePlayer(client, turn.player);
+                const canonicalName = await resolveRosterPlayerName(
+                    client,
+                    season.id,
+                    team.id,
+                    turn.player
+                );
+                const player = await findOrCreatePlayer(client, canonicalName);
                 const nextTurnNumber = (turnNumberByPlayer.get(player.id) || 0) + 1;
                 turnNumberByPlayer.set(player.id, nextTurnNumber);
                 const checkoutRemaining = turn.checkoutRemaining === 0 ||

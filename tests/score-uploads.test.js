@@ -660,6 +660,31 @@ test('startup ensures turn play order is available', () => {
     assert.match(server, /ALTER TABLE turn_score[\s\S]*ADD COLUMN IF NOT EXISTS play_order INTEGER/);
 });
 
+test('browser roster preserves first and last names', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const app = fs.readFileSync(
+        path.join(__dirname, '../app.js'),
+        'utf8'
+    );
+    assert.match(app, /const firstName = row\[1\] \|\| ''/);
+    assert.match(app, /const lastName = row\[2\] \|\| ''/);
+    assert.match(app, /\[firstName, lastName\]\.filter\(Boolean\)\.join\(' '\)/);
+});
+
+test('browser submissions resolve short names through the team roster', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const importer = fs.readFileSync(
+        path.join(__dirname, '../db/import-browser-submission.js'),
+        'utf8'
+    );
+    assert.match(importer, /resolveRosterPlayerName/);
+    assert.match(importer, /FROM team_roster tr/);
+    assert.match(importer, /tr\.team_id = \$2/);
+    assert.match(importer, /is not on this team's active roster/);
+});
+
 test('admin uses Schedule and Match terminology for the schedule UI', () => {
     const fs = require('node:fs');
     const path = require('node:path');

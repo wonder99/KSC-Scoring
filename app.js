@@ -263,8 +263,12 @@ function clearSelectedTeamCookie() {
 
 function loadRosters(rows) {
     state.teams.clear();
-    for (const [team, player] of rows) {
-        if (!team || !player || /^team\s*name$/i.test(team) || /^player\s*name$/i.test(player)) continue;
+    for (const row of rows) {
+        const team = row[0] || '';
+        const firstName = row[1] || '';
+        const lastName = row[2] || '';
+        const player = [firstName, lastName].filter(Boolean).join(' ').trim();
+        if (!team || !player || /^team\s*name$/i.test(team) || /^player\s*name$/i.test(firstName)) continue;
         const key = canonicalTeamName(team);
         if (!state.teams.has(key)) state.teams.set(key, { name: team, players: [] });
         const roster = state.teams.get(key);
