@@ -81,7 +81,7 @@
 
         <section class="notice">
             <h2>Before you begin</h2>
-            <p>Open <code>/admin</code> and enter the <strong>ADMIN_API_KEY</strong> configured on the server. The key is not stored in source files. It is held in browser session storage after successful authentication.</p>
+            <p>Open <code>/admin</code> and enter the <strong>ADMIN_API_KEY</strong> configured on the server. Successful login creates a 12-hour HttpOnly session cookie. The key is cleared from form fields and is not stored in browser session storage or source files.</p>
             <p>Teams, players, matches, submissions, and reports use the selected season. Keep exactly one season marked active for public report defaults and player submissions.</p>
         </section>
 
@@ -127,7 +127,7 @@
         </section>
 
         <section>
-            <h2>Submissions</h2>
+            <h2>Score Uploads</h2>
             <ul>
                 <li><strong>Review turns:</strong> opens normalized turn rows and lets the organizer revise a score with a required reason.</li>
                 <li><strong>Accept:</strong> include an accepted submission in public reports.</li>
@@ -151,6 +151,7 @@
         <section>
             <h2>Backups and restore</h2>
             <p>The <strong>Backups</strong> tab can create a custom-format PostgreSQL backup and download it to the administrator's computer. Restore the database only after choosing a listed backup and typing <code>RESTORE</code> exactly.</p>
+            <p>Use <strong>Upload Backup</strong> to restore a lost backup file to the server. Uploading is only file recovery; it does not change the database. Download or restore the uploaded file from the backup list afterward.</p>
             <p>Web backup and restore require <code>pg_dump</code> and <code>pg_restore</code> to be installed in the Node server environment and available on <code>PATH</code>.</p>
             <p>Create a backup from a server terminal with <code>npm.cmd run backup</code>. Backups are custom-format PostgreSQL dumps stored in <code>backups/</code>.</p>
             <p>Before restoring, stop the app and confirm that <code>DATABASE_URL</code> points to the intended target database. Restore with:</p>

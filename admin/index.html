@@ -17,13 +17,14 @@
                 <a href="/">Scorer</a>
                 <a href="/reports">Reports</a>
                 <a href="/admin/admin-guide.html">Admin guide</a>
+                <button id="logout-admin" type="button" class="hidden">Logout</button>
             </nav>
         </header>
 
         <section class="auth-card" id="auth-card">
-            <label for="admin-key">Admin key</label>
+            <label for="admin-key">Admin Password</label>
             <input id="admin-key" type="password" autocomplete="current-password">
-            <button id="unlock-admin" type="button">Unlock</button>
+            <button id="unlock-admin" type="button">Login</button>
             <p id="auth-status" role="status"></p>
         </section>
 
@@ -33,7 +34,7 @@
                 <button class="tab" type="button" data-tab="teams">Teams</button>
                 <button class="tab" type="button" data-tab="players">Players</button>
                 <button class="tab" type="button" data-tab="fixtures">Schedule</button>
-                <button class="tab" type="button" data-tab="submissions">Submissions</button>
+                <button class="tab" type="button" data-tab="submissions">Score Uploads</button>
                 <button class="tab" type="button" data-tab="backups">Backups</button>
             </nav>
 
@@ -114,7 +115,7 @@
             </section>
 
             <section class="admin-panel" data-panel="submissions">
-                <h2>Submissions</h2>
+                <h2>Score Uploads</h2>
                 <form id="submission-review-form" class="submission-review hidden">
                     <input type="hidden" name="submissionId">
                     <div class="submission-review-header">
@@ -142,6 +143,12 @@
                     <button id="create-backup" type="button">Create Backup</button>
                     <p id="backup-status" role="status" aria-live="polite"></p>
                 </div>
+                <form id="backup-upload-form" class="backup-upload-form">
+                    <label>Upload a backup .dump file
+                        <input id="backup-upload-file" name="backupFile" type="file" accept=".dump,application/octet-stream">
+                    </label>
+                    <button type="submit">Upload Backup</button>
+                </form>
                 <div id="backup-list" class="data-list"></div>
                 <form id="backup-restore-form" class="inline-form">
                     <label>Backup

@@ -57,6 +57,7 @@ Import existing XLSX statistics through week 10 and continue adding new week res
 `npm.cmd run backfill:baselines -- team_lists.csv "C:\path\to\league-workbook.xlsx" 10`
 
 Configure `ADMIN_API_KEY` to enable the dashboard at `/admin`.
+The `/admin` page creates a 12-hour HttpOnly session cookie after the key is entered. The admin API also continues to accept `Authorization: Bearer <ADMIN_API_KEY>` for scripts and integrations.
 Do not run `darts_league_schema.sql` or `darts_league_schema_postgresql.sql` against an existing database; those files are workbook model references rather than the migration runner.
 
 Applied migrations are recorded in `schema_migrations`. Starting the server requires a working `DATABASE_URL` and `UPLOAD_API_KEY`.
@@ -76,6 +77,8 @@ Existing `score_csv_uploads` records can be reconciled after migrations with `np
 ## Database backups
 
 Authenticated administrators can create, download, and restore backups from `/admin` in the **Backups** tab. Restore requires typing `RESTORE` exactly and confirmation in the browser.
+Use **Upload Backup** to upload an existing `.dump` file. The upload is stored in `backups/` and does not modify or restore the database. Download and restore remain separate actions.
+Administrators can also upload an existing `.dump` file in the Backups tab. Uploading preserves the file on the server but does not restore or modify the database until the backup is selected and restored with confirmation.
 
 Web backup creation and restore require `pg_dump` and `pg_restore` to be installed inside the running Node server environment. The local Windows machine and hosted container must both have PostgreSQL client tools on `PATH`.
 

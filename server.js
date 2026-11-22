@@ -9,6 +9,7 @@ const MAX_CSV_BYTES = 1024 * 1024;
 const MAX_JSON_BYTES = 64 * 1024;
 const MAX_EXPORT_UPLOADS = 100;
 const MAX_EXPORT_CSV_BYTES = 10 * 1024 * 1024;
+const MAX_BACKUP_UPLOAD_BYTES = 1024 * 1024 * 1024;
 const PUBLIC_FILES = new Set([
     'app.js',
     'dart_league_schedule.csv',
@@ -174,8 +175,37 @@ function isAuthorized(request, expectedKey) {
     return supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
 }
 
-function isAdminAuthorized(request, adminApiKey) {
-    return Boolean(adminApiKey) && isAuthorized(request, adminApiKey);
+function parseCookies(request) {
+    const cookies = {};
+    const header = request.headers.cookie || '';
+    for (const part of header.split(';')) {
+        const separator = part.indexOf('=');
+        if (separator < 0) continue;
+        const name = part.slice(0, separator).trim();
+        const value = part.slice(separator + 1).trim();
+        if (name) {
+            try {
+                cookies[name] = decodeURIComponent(value);
+            } catch {
+                cookies[name] = value;
+            }
+        }
+    }
+    return cookies;
+}
+
+function isAdminAuthorized(request, adminApiKey, adminSessions) {
+    if (Boolean(adminApiKey) && isAuthorized(request, adminApiKey)) return true;
+    if (!adminSessions) return false;
+    const sessionId = parseCookies(request).ksc_admin_session;
+    if (!sessionId) return false;
+    const session = adminSessions.get(sessionId);
+    if (!session) return false;
+    if (session.expiresAt <= Date.now()) {
+        adminSessions.delete(sessionId);
+        return false;
+    }
+    return true;
 }
 
 async function readRequestBody(request, maxBytes, tooLargeMessage) {
@@ -197,6 +227,23 @@ async function readRequestBody(request, maxBytes, tooLargeMessage) {
 
 function readCsvBody(request) {
     return readRequestBody(request, MAX_CSV_BYTES, 'The CSV exceeds the 1 MB upload limit.');
+}
+
+async function readBinaryBody(request, maxBytes, tooLargeMessage) {
+    const chunks = [];
+    let size = 0;
+    let tooLarge = false;
+    for await (const chunk of request) {
+        size += chunk.length;
+        if (size > maxBytes) {
+            tooLarge = true;
+            chunks.length = 0;
+        } else if (!tooLarge) {
+            chunks.push(chunk);
+        }
+    }
+    if (tooLarge) throw new RequestError(413, tooLargeMessage);
+    return Buffer.concat(chunks);
 }
 
 async function readJsonBody(request) {
@@ -620,8 +667,53 @@ async function handleSeasons(request, response, { pool }) {
     });
 }
 
+async function handleAdminSession(request, response, context) {
+    if (request.method === 'GET') {
+        if (!isAdminAuthorized(request, context.adminApiKey, context.adminSessions)) {
+            throw new RequestError(401, 'A valid admin session or key is required.');
+        }
+        sendJson(response, 200, { authenticated: true });
+        return;
+    }
+    if (request.method === 'DELETE') {
+        const sessionId = parseCookies(request).ksc_admin_session;
+        if (sessionId) context.adminSessions.delete(sessionId);
+        response.writeHead(200, {
+            'Set-Cookie': 'ksc_admin_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0',
+            'Cache-Control': 'no-store'
+        });
+        response.end(JSON.stringify({ authenticated: false }));
+        return;
+    }
+    if (request.method !== 'POST') {
+        throw new RequestError(405, 'Method not allowed.');
+    }
+    if ((request.headers['content-type'] || '').split(';')[0].trim().toLowerCase() !== 'application/json') {
+        throw new RequestError(415, 'Content-Type must be application/json.');
+    }
+    const body = await readJsonBody(request);
+    const suppliedKey = typeof body.key === 'string' ? body.key : '';
+    if (!context.adminApiKey ||
+        suppliedKey.length !== context.adminApiKey.length ||
+        !crypto.timingSafeEqual(Buffer.from(suppliedKey), Buffer.from(context.adminApiKey))) {
+        throw new RequestError(401, 'A valid admin key is required.');
+    }
+    const sessionId = crypto.randomBytes(32).toString('base64url');
+    context.adminSessions.set(sessionId, {
+        expiresAt: Date.now() + (12 * 60 * 60 * 1000)
+    });
+    const secure = request.socket && request.socket.encrypted ? '; Secure' : '';
+    response.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Set-Cookie': `ksc_admin_session=${sessionId}; HttpOnly; SameSite=Strict; Path=/; Max-Age=43200${secure}`,
+        'Cache-Control': 'no-store',
+        'X-Content-Type-Options': 'nosniff'
+    });
+    response.end(JSON.stringify({ authenticated: true }));
+}
+
 async function handleAdminSeasonMutation(request, response, context) {
-    if (!isAdminAuthorized(request, context.adminApiKey)) {
+    if (!isAdminAuthorized(request, context.adminApiKey, context.adminSessions)) {
         throw new RequestError(401, 'A valid admin key is required.');
     }
     if (request.method === 'GET') {
@@ -673,7 +765,7 @@ async function handleAdminSeasonMutation(request, response, context) {
 }
 
 async function handleAdminTeams(request, response, url, context) {
-    if (!isAdminAuthorized(request, context.adminApiKey)) {
+    if (!isAdminAuthorized(request, context.adminApiKey, context.adminSessions)) {
         throw new RequestError(401, 'A valid admin key is required.');
     }
     if (request.method === 'GET') {
@@ -740,7 +832,7 @@ async function handleAdminTeams(request, response, url, context) {
 }
 
 async function handleAdminPlayers(request, response, url, context) {
-    if (!isAdminAuthorized(request, context.adminApiKey)) {
+    if (!isAdminAuthorized(request, context.adminApiKey, context.adminSessions)) {
         throw new RequestError(401, 'A valid admin key is required.');
     }
     if (request.method === 'POST' && /^\/api\/admin\/players\/merge\/?$/.test(url.pathname)) {
@@ -904,7 +996,7 @@ async function handleAdminPlayers(request, response, url, context) {
 }
 
 async function handleAdminFixtures(request, response, url, context) {
-    if (!isAdminAuthorized(request, context.adminApiKey)) {
+    if (!isAdminAuthorized(request, context.adminApiKey, context.adminSessions)) {
         throw new RequestError(401, 'A valid admin key is required.');
     }
     if (request.method === 'GET') {
@@ -998,12 +1090,17 @@ async function handleAdminFixtures(request, response, url, context) {
 }
 
 async function handleAdminBackups(request, response, url, context) {
-    if (!isAdminAuthorized(request, context.adminApiKey)) {
+    if (!isAdminAuthorized(request, context.adminApiKey, context.adminSessions)) {
         throw new RequestError(401, 'A valid admin key is required.');
     }
 
     const backupDir = path.join(__dirname, 'backups');
-    const { isValidBackupFilename, listDatabaseBackups, createDatabaseBackup } =
+    const {
+        isValidBackupFilename,
+        listDatabaseBackups,
+        createDatabaseBackup,
+        normalizeUploadedBackupFilename
+    } =
         require('./db/backup');
 
     if (url.pathname === '/api/admin/backups' && request.method === 'GET') {
@@ -1029,6 +1126,67 @@ async function handleAdminBackups(request, response, url, context) {
                 `Database backup is unavailable: ${error.message}`
             );
         }
+        return;
+    }
+
+    if (url.pathname === '/api/admin/backups/upload' && request.method === 'POST') {
+        if ((request.headers['content-type'] || '').split(';')[0].trim().toLowerCase() !== 'application/octet-stream') {
+            throw new RequestError(415, 'Content-Type must be application/octet-stream.');
+        }
+        const headerName = request.headers['x-backup-filename'];
+        let requestedName = '';
+        if (typeof headerName === 'string') {
+            try {
+                requestedName = decodeURIComponent(headerName);
+            } catch {
+                requestedName = headerName;
+            }
+        }
+        let filename;
+        try {
+            filename = normalizeUploadedBackupFilename(requestedName);
+        } catch (error) {
+            throw new RequestError(400, error.message);
+        }
+
+        await fs.mkdir(backupDir, { recursive: true });
+        let finalFile = path.join(backupDir, filename);
+        if (await fs.stat(finalFile).then(() => true).catch(() => false)) {
+            const stamp = Date.now();
+            const stem = filename.replace(/\.dump$/i, '');
+            filename = `${stem}-uploaded-${stamp}.dump`;
+            finalFile = path.join(backupDir, filename);
+        }
+
+        const content = await readBinaryBody(
+            request,
+            MAX_BACKUP_UPLOAD_BYTES,
+            'The backup upload exceeds the 1 GB limit.'
+        );
+        if (!content.length) {
+            throw new RequestError(400, 'The uploaded backup is empty.');
+        }
+
+        const tempFile = path.join(
+            backupDir,
+            `.${filename}.${process.pid}.${Date.now()}.upload`
+        );
+        try {
+            await fs.writeFile(tempFile, content, { flag: 'wx' });
+            await fs.rename(tempFile, finalFile);
+        } catch (error) {
+            await fs.unlink(tempFile).catch(() => {});
+            throw error;
+        }
+        const stat = await fs.stat(finalFile);
+        sendJson(response, 201, {
+            uploaded: true,
+            backup: {
+                filename,
+                size: stat.size,
+                createdAt: stat.mtime.toISOString()
+            }
+        });
         return;
     }
 
@@ -1096,7 +1254,7 @@ async function handleAdminBackups(request, response, url, context) {
 }
 
 async function handleAdminSubmissions(request, response, url, context) {
-    if (!isAdminAuthorized(request, context.adminApiKey)) {
+    if (!isAdminAuthorized(request, context.adminApiKey, context.adminSessions)) {
         throw new RequestError(401, 'A valid admin key is required.');
     }
     if (request.method === 'GET') {
@@ -1238,7 +1396,7 @@ async function handleAdminSubmissions(request, response, url, context) {
 }
 
 async function handleAdminSubmissionDetail(request, response, url, context) {
-    if (!isAdminAuthorized(request, context.adminApiKey)) {
+    if (!isAdminAuthorized(request, context.adminApiKey, context.adminSessions)) {
         throw new RequestError(401, 'A valid admin key is required.');
     }
     if (request.method !== 'GET') {
@@ -1284,7 +1442,7 @@ async function handleAdminSubmissionDetail(request, response, url, context) {
 }
 
 async function handleAdminRosterDelete(request, response, url, context) {
-    if (!isAdminAuthorized(request, context.adminApiKey)) {
+    if (!isAdminAuthorized(request, context.adminApiKey, context.adminSessions)) {
         throw new RequestError(401, 'A valid admin key is required.');
     }
     if (request.method !== 'DELETE') {
@@ -1705,6 +1863,7 @@ async function serveStatic(request, response, publicDir, pathname) {
 function createServer({ pool, uploadApiKey, adminApiKey = process.env.ADMIN_API_KEY || null, publicDir = __dirname }) {
     if (!pool || typeof pool.query !== 'function') throw new TypeError('A PostgreSQL pool is required.');
     if (!uploadApiKey) throw new Error('UPLOAD_API_KEY must be configured.');
+    const adminSessions = new Map();
 
     return http.createServer((request, response) => {
         let url;
@@ -1715,7 +1874,7 @@ function createServer({ pool, uploadApiKey, adminApiKey = process.env.ADMIN_API_
             return;
         }
         const pathname = decodeURIComponent(url.pathname);
-        const context = { pool, uploadApiKey, adminApiKey };
+        const context = { pool, uploadApiKey, adminApiKey, adminSessions };
         let handler;
         if (pathname === '/api/score-submissions') {
             handler = handleBrowserSubmission(request, response, context);
@@ -1727,6 +1886,8 @@ function createServer({ pool, uploadApiKey, adminApiKey = process.env.ADMIN_API_
             handler = handleUploadExport(request, response, context);
         } else if (pathname === '/api/seasons') {
             handler = handleSeasons(request, response, context);
+        } else if (pathname === '/api/admin/session') {
+            handler = handleAdminSession(request, response, context);
         } else if (pathname === '/api/admin/seasons') {
             handler = handleAdminSeasonMutation(request, response, context);
         } else if (pathname === '/api/admin/teams' ||
@@ -1742,6 +1903,7 @@ function createServer({ pool, uploadApiKey, adminApiKey = process.env.ADMIN_API_
         } else if (pathname === '/api/admin/backups' ||
                    pathname === '/api/admin/backups/create' ||
                    pathname === '/api/admin/backups/download' ||
+                   pathname === '/api/admin/backups/upload' ||
                    pathname === '/api/admin/backups/restore') {
             handler = handleAdminBackups(request, response, url, context);
         } else if (pathname === '/api/admin/submissions') {

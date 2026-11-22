@@ -19,6 +19,7 @@ const {
 } = require('../db/backfill-team-list-rosters');
 const { buildBackupFilename } = require('../db/backup');
 const { parseRestoreArguments } = require('../db/restore');
+const { normalizeUploadedBackupFilename } = require('../db/backup');
 
 test('core league migration contains no destructive table drops', () => {
     const migrationPath = path.join(__dirname, '../migrations/001_core_league_schema.sql');
@@ -227,6 +228,12 @@ test('backup filenames are deterministic and restore confirmation is explicit', 
         ]),
         { backupFile: 'C:\\backups\\league.dump', confirmed: true }
     );
+
+    const uploadedName = normalizeUploadedBackupFilename(
+        'C:\\backups\\old database.dump',
+        now
+    );
+    assert.match(uploadedName, /^league-upload-.*old-database\.dump$/);
 });
 
 test('Gerald is the Aimless Wonders canonical player name', () => {

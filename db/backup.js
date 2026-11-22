@@ -44,6 +44,33 @@ function isValidBackupFilename(filename) {
         && /^league-[^/\\\\]+\.dump$/.test(filename);
 }
 
+function normalizeUploadedBackupFilename(filename, now = new Date()) {
+    if (typeof filename !== 'string') {
+        throw new Error('A backup filename is required.');
+    }
+    let basename = path.basename(filename.trim());
+    try {
+        basename = path.basename(decodeURIComponent(basename));
+    } catch {
+        // Keep the original sanitized basename.
+    }
+    const cleaned = basename
+        .replace(/[^A-Za-z0-9._-]/g, '-')
+        .replace(/\.dump$/i, '');
+    if (!cleaned) throw new Error('A valid backup filename is required.');
+    const timestamp = now.toISOString()
+        .replace(/:/g, '-')
+        .replace(/\..*$/, '');
+    const stem = cleaned.toLowerCase().startsWith('league-')
+        ? cleaned
+        : `league-upload-${timestamp}-${cleaned}`;
+    const normalized = `${stem}.dump`;
+    if (!isValidBackupFilename(normalized)) {
+        throw new Error('A valid backup filename is required.');
+    }
+    return normalized;
+}
+
 async function listDatabaseBackups(backupDir = path.join(__dirname, '..', 'backups')) {
     if (!fs.existsSync(backupDir)) return [];
     const entries = await fs.promises.readdir(backupDir, { withFileTypes: true });
@@ -77,5 +104,6 @@ module.exports = {
     buildBackupFilename,
     createDatabaseBackup,
     isValidBackupFilename,
-    listDatabaseBackups
+    listDatabaseBackups,
+    normalizeUploadedBackupFilename
 };

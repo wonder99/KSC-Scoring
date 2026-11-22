@@ -256,7 +256,7 @@ test('serves public standings for the active season', async () => {
                 const response = await fetch(`${baseUrl}/reports`);
                 assert.equal(response.status, 200);
                 assert.match(response.headers.get('content-type'), /text\/html/);
-                assert.match(await response.text(), /League Reports/);
+                assert.match(await response.text(), /League Stats/);
             });
         });
 
@@ -314,6 +314,44 @@ test('rejects malformed normalized browser submissions', async () => {
     });
 });
 
+test('creates and validates an HttpOnly admin session', async () => {
+    await withServer({
+        query: async sql => {
+            if (/FROM season/.test(sql)) return { rows: [] };
+            return { rows: [] };
+        }
+    }, async baseUrl => {
+        const rejected = await fetch(`${baseUrl}/api/admin/session`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: 'wrong-key' })
+        });
+        assert.equal(rejected.status, 401);
+
+        const login = await fetch(`${baseUrl}/api/admin/session`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: 'test-admin-key' })
+        });
+        assert.equal(login.status, 200);
+        assert.match(login.headers.get('set-cookie'), /HttpOnly/);
+        assert.match(login.headers.get('set-cookie'), /SameSite=Strict/);
+        const cookie = login.headers.get('set-cookie').split(';')[0];
+
+        const current = await fetch(`${baseUrl}/api/admin/session`, {
+            headers: { Cookie: cookie }
+        });
+        assert.equal(current.status, 200);
+        assert.deepEqual(await current.json(), { authenticated: true });
+
+        const logout = await fetch(`${baseUrl}/api/admin/session`, {
+            method: 'DELETE',
+            headers: { Cookie: cookie }
+        });
+        assert.equal(logout.status, 200);
+    });
+});
+
 test('requires the admin key for admin season management', async () => {
     let queryCount = 0;
     await withServer({
@@ -350,6 +388,35 @@ test('lists database backups through the authenticated admin API', async () => {
 
         const response = await fetch(`${baseUrl}/api/admin/backups`, {
             headers: { Authorization: 'Bearer test-admin-key' }
+        });
+
+        test('requires admin authorization for backup upload', async () => {
+            await withServer({ query: async () => ({ rows: [] }) }, async baseUrl => {
+                const response = await fetch(`${baseUrl}/api/admin/backups/upload`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/octet-stream',
+                        'X-Backup-Filename': 'league-test.dump'
+                    },
+                    body: Buffer.from('test dump')
+                });
+                assert.equal(response.status, 401);
+            });
+        });
+
+        test('backup upload rejects invalid content type and filename', async () => {
+            await withServer({ query: async () => ({ rows: [] }) }, async baseUrl => {
+                const response = await fetch(`${baseUrl}/api/admin/backups/upload`, {
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer test-admin-key',
+                        'Content-Type': 'text/plain',
+                        'X-Backup-Filename': 'league-test.dump'
+                    },
+                    body: 'not a dump'
+                });
+                assert.equal(response.status, 415);
+            });
         });
         assert.equal(response.status, 200);
         assert.ok(Array.isArray((await response.json()).backups));
@@ -389,7 +456,7 @@ test('serves player and admin guides', async () => {
     await withServer({ query: async () => ({ rows: [] }) }, async baseUrl => {
         const playerGuide = await fetch(`${baseUrl}/user-guide.html`);
         assert.equal(playerGuide.status, 200);
-        assert.match(await playerGuide.text(), /League reports/);
+        assert.match(await playerGuide.text(), /League Stats/);
 
         const adminGuide = await fetch(`${baseUrl}/admin/admin-guide.html`);
         assert.equal(adminGuide.status, 200);
@@ -405,6 +472,18 @@ test('admin season rendering does not reference a fixture variable', () => {
         'utf8'
     );
     assert.doesNotMatch(script, /fixture\.season_id.*season-list|season-list.*fixture\.season_id/i);
+});
+
+test('admin dashboard uses server sessions instead of sessionStorage keys', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const script = fs.readFileSync(
+        path.join(__dirname, '../admin/admin.js'),
+        'utf8'
+    );
+    assert.doesNotMatch(script, /sessionStorage/);
+    assert.match(script, /\/api\/admin\/session/);
+    assert.match(script, /JSON\.stringify\(\{ key: suppliedKey \}\)/);
 });
 
 test('admin exposes web backup controls', () => {
@@ -423,6 +502,17 @@ test('admin exposes web backup controls', () => {
     assert.match(html, /id="backup-restore-form"/);
     assert.match(script, /\/api\/admin\/backups\/create/);
     assert.match(script, /\/api\/admin\/backups\/restore/);
+});
+
+test('admin HTML contains one backup upload form', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const html = fs.readFileSync(
+        path.join(__dirname, '../admin/index.html'),
+        'utf8'
+    );
+    const matches = html.match(/id="backup-upload-form"/g) || [];
+    assert.equal(matches.length, 1);
 });
 
 test('submission review uses a form instead of per-turn prompts', () => {
@@ -458,6 +548,17 @@ test('admin uses Schedule and Match terminology for the schedule UI', () => {
     assert.match(html, /Add Match/);
     assert.match(script, /match-card/);
     assert.doesNotMatch(script, />Fixtures<|Delete this fixture/);
+});
+
+test('admin labels score submissions as Score Uploads', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const html = fs.readFileSync(
+        path.join(__dirname, '../admin/index.html'),
+        'utf8'
+    );
+    assert.match(html, />Score Uploads<\//);
+    assert.match(html, /<h2>Score Uploads<\/h2>/);
 });
 
 test('admin teams and players use compact no-limit presentation', () => {

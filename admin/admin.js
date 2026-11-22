@@ -1,6 +1,6 @@
 'use strict';
 
-let adminKey = sessionStorage.getItem('701-admin-key') || '';
+let adminKey = '';
 let seasons = [];
 let teams = [];
 
@@ -22,7 +22,7 @@ async function adminFetch(url, options = {}) {
         ...options,
         headers: {
             Accept: 'application/json',
-            Authorization: `Bearer ${adminKey}`,
+            ...(adminKey ? { Authorization: `Bearer ${adminKey}` } : {}),
             ...(options.body ? { 'Content-Type': 'application/json' } : {}),
             ...(options.headers || {})
         }
@@ -207,13 +207,23 @@ async function openSubmissionReview(submissionId) {
 }
 
 async function unlock() {
-    adminKey = document.getElementById('admin-key').value.trim();
+    const suppliedKey = document.getElementById('admin-key').value.trim();
     authStatus.textContent = 'Checking key...';
     try {
-        await adminFetch('/api/admin/seasons');
-        sessionStorage.setItem('701-admin-key', adminKey);
+        const response = await fetch('/api/admin/session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json'
+            },
+            body: JSON.stringify({ key: suppliedKey })
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || 'Admin password was rejected.');
         authCard.classList.add('hidden');
         adminApp.classList.remove('hidden');
+        document.getElementById('logout-admin').classList.remove('hidden');
+        document.getElementById('admin-key').value = '';
         await refreshAll();
     } catch (error) {
         authStatus.textContent = error.message;
@@ -232,6 +242,16 @@ async function refreshAll() {
 document.getElementById('unlock-admin').addEventListener('click', unlock);
 document.getElementById('admin-key').addEventListener('keydown', event => {
     if (event.key === 'Enter') unlock();
+});
+document.getElementById('logout-admin').addEventListener('click', async () => {
+    try {
+        await fetch('/api/admin/session', { method: 'DELETE' });
+    } finally {
+        document.getElementById('logout-admin').classList.add('hidden');
+        adminApp.classList.add('hidden');
+        authCard.classList.remove('hidden');
+        authStatus.textContent = '';
+    }
 });
 
 document.querySelectorAll('.tab').forEach(button => {
@@ -460,6 +480,44 @@ document.getElementById('create-backup').addEventListener('click', async () => {
     }
 });
 
+document.getElementById('backup-upload-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const fileInput = document.getElementById('backup-upload-file');
+    const file = fileInput.files && fileInput.files[0];
+    const status = document.getElementById('backup-status');
+    if (!file) {
+        status.textContent = 'Choose a .dump backup file.';
+        return;
+    }
+    if (!file.name.toLowerCase().endsWith('.dump')) {
+        status.textContent = 'The selected file must use the .dump extension.';
+        return;
+    }
+    if (file.size > 1024 * 1024 * 1024) {
+        status.textContent = 'The backup upload exceeds the 1 GB limit.';
+        return;
+    }
+    status.textContent = `Uploading ${file.name}...`;
+    try {
+        const response = await fetch('/api/admin/backups/upload', {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${adminKey}`,
+                'Content-Type': 'application/octet-stream',
+                'X-Backup-Filename': encodeURIComponent(file.name)
+            },
+            body: file
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || 'Backup upload failed.');
+        status.textContent = `Uploaded ${payload.backup.filename}`;
+        fileInput.value = '';
+        await loadBackups();
+    } catch (error) {
+        status.textContent = error.message;
+    }
+});
+
 document.getElementById('backup-restore-form').addEventListener('submit', async event => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -646,7 +704,12 @@ document.addEventListener('click', async event => {
     }
 });
 
-if (adminKey) {
-    document.getElementById('admin-key').value = adminKey;
-    unlock();
-}
+fetch('/api/admin/session', { headers: { Accept: 'application/json' } })
+    .then(response => {
+        if (!response.ok) return;
+        authCard.classList.add('hidden');
+        adminApp.classList.remove('hidden');
+        document.getElementById('logout-admin').classList.remove('hidden');
+        return refreshAll();
+    })
+    .catch(() => {});
