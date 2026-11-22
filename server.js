@@ -2031,6 +2031,10 @@ async function initializeDatabase(pool) {
             PRIMARY KEY (match_date, board, team)
         )
     `);
+    await pool.query(`
+        ALTER TABLE turn_score
+            ADD COLUMN IF NOT EXISTS play_order INTEGER
+    `);
     const { runMigrations } = require('./db/migrate');
     return runMigrations(pool);
 }

@@ -650,6 +650,16 @@ test('turn revisions recalculate the whole game countdown in the database', () =
     assert.match(server, /let remaining = 701/);
 });
 
+test('startup ensures turn play order is available', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const server = fs.readFileSync(
+        path.join(__dirname, '../server.js'),
+        'utf8'
+    );
+    assert.match(server, /ALTER TABLE turn_score[\s\S]*ADD COLUMN IF NOT EXISTS play_order INTEGER/);
+});
+
 test('admin uses Schedule and Match terminology for the schedule UI', () => {
     const fs = require('node:fs');
     const path = require('node:path');
