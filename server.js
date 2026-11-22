@@ -1241,9 +1241,13 @@ async function handleAdminBackups(request, response, url, context) {
                 confirmed: true
             });
         } catch (error) {
+            const detail = error.message || 'Unknown restore error.';
+            const statusCode = /not installed|not available on PATH/i.test(detail)
+                ? 501
+                : 400;
             throw new RequestError(
-                501,
-                `Database restore is unavailable: ${error.message}`
+                statusCode,
+                `Database restore failed: ${detail}`
             );
         }
         sendJson(response, 200, { restored: true, filename });

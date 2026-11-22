@@ -238,6 +238,18 @@ test('backup filenames are deterministic and restore confirmation is explicit', 
     assert.match(uploadedName, /^league-upload-.*old-database\.dump$/);
 });
 
+test('restore implementation captures missing-tool and pg_restore stderr details', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const restoreSource = fs.readFileSync(
+        path.join(__dirname, '../db/restore.js'),
+        'utf8'
+    );
+    assert.match(restoreSource, /not available on PATH/);
+    assert.match(restoreSource, /result\.stderr/);
+    assert.match(restoreSource, /pg_restore failed with exit code/);
+});
+
 test('Gerald is the Aimless Wonders canonical player name', () => {
     const fs = require('node:fs');
     const path = require('node:path');

@@ -26,11 +26,24 @@ function createDatabaseBackup({
         '--no-privileges',
         '--dbname', databaseUrl,
         '--file', backupFile
-    ], { stdio: 'inherit', env: process.env });
+    ], { encoding: 'utf8', env: process.env });
 
-    if (result.error) throw result.error;
+    if (result.error) {
+        if (result.error.code === 'ENOENT') {
+            throw new Error(
+                'pg_dump is not installed or not available on PATH in the server environment.'
+            );
+        }
+        throw result.error;
+    }
     if (result.status !== 0) {
-        throw new Error(`pg_dump failed with exit code ${result.status}.`);
+        const detail = [
+            result.stderr,
+            result.stdout
+        ].filter(Boolean).join('\n').trim();
+        throw new Error(
+            `pg_dump failed with exit code ${result.status}.${detail ? ` ${detail}` : ''}`
+        );
     }
     if (!fs.existsSync(backupFile) || fs.statSync(backupFile).size === 0) {
         throw new Error('pg_dump completed without creating a backup file.');
