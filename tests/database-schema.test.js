@@ -18,7 +18,11 @@ const {
     genderForTeamListPlayer
 } = require('../db/backfill-team-list-rosters');
 const { buildBackupFilename } = require('../db/backup');
-const { parseRestoreArguments } = require('../db/restore');
+const {
+    formatRestoreFailure,
+    isExpectedExtensionOwnershipWarning,
+    parseRestoreArguments
+} = require('../db/restore');
 const { normalizeUploadedBackupFilename } = require('../db/backup');
 const { createPool } = require('../db/connection');
 const { normalizeBrowserSubmission } = require('../db/import-browser-submission');
@@ -248,6 +252,17 @@ test('restore implementation captures missing-tool and pg_restore stderr details
     assert.match(restoreSource, /not available on PATH/);
     assert.match(restoreSource, /result\.stderr/);
     assert.match(restoreSource, /pg_restore failed with exit code/);
+
+    const warning = [
+        'pg_restore: error: could not execute query: ERROR: must be owner of extension pg_stat_statements',
+        'pg_restore: warning: errors ignored on restore: 2'
+    ].join('\n');
+    assert.equal(isExpectedExtensionOwnershipWarning(warning), true);
+    assert.equal(formatRestoreFailure({
+        status: 1,
+        stderr: warning,
+        stdout: ''
+    }), null);
 });
 
 test('Gerald is the Aimless Wonders canonical player name', () => {

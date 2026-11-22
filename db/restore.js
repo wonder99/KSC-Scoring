@@ -16,6 +16,25 @@ function parseRestoreArguments(args) {
     };
 }
 
+function isExpectedExtensionOwnershipWarning(detail) {
+    const normalized = String(detail || '');
+    return /must be owner of extension pg_stat_statements/i.test(normalized)
+        && /errors ignored on restore: 2/i.test(normalized);
+}
+
+function formatRestoreFailure(result) {
+    const detail = [
+        result.stderr,
+        result.stdout
+    ].filter(Boolean).join('\n').trim();
+
+    if (isExpectedExtensionOwnershipWarning(detail)) {
+        return null;
+    }
+
+    return `pg_restore failed with exit code ${result.status}.${detail ? ` ${detail}` : ''}`;
+}
+
 function restoreDatabaseBackup({
     databaseUrl = process.env.DATABASE_URL,
     backupFile,
@@ -50,13 +69,8 @@ function restoreDatabaseBackup({
         throw result.error;
     }
     if (result.status !== 0) {
-        const detail = [
-            result.stderr,
-            result.stdout
-        ].filter(Boolean).join('\n').trim();
-        throw new Error(
-            `pg_restore failed with exit code ${result.status}.${detail ? ` ${detail}` : ''}`
-        );
+        const failure = formatRestoreFailure(result);
+        if (failure) throw new Error(failure);
     }
     return resolvedFile;
 }
@@ -75,4 +89,9 @@ if (require.main === module) {
     }
 }
 
-module.exports = { parseRestoreArguments, restoreDatabaseBackup };
+module.exports = {
+    formatRestoreFailure,
+    isExpectedExtensionOwnershipWarning,
+    parseRestoreArguments,
+    restoreDatabaseBackup
+};

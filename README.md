@@ -1,4 +1,4 @@
-# The 701 Club
+# KSC Darts League
 
 A browser-based 701 darts scorer backed by PostgreSQL. The app supports live match scoring, normalized league submissions, public reports, CSV compatibility downloads, and authenticated league administration.
 
@@ -97,6 +97,7 @@ npm.cmd run restore -- --confirm=RESTORE --file=backups\league-YYYY-MM-DDTHH-mm-
 ```
 
 Restores are destructive in the target database. `pg_dump` and `pg_restore` must be installed and available on `PATH`.
+Restore treats the common `pg_stat_statements` ownership warning as a partial-success warning when it is limited to two ignored extension operations. Other `pg_restore` errors remain failures and should be reviewed before relying on the restored database.
 
 ## Start a match
 

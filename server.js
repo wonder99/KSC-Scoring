@@ -2012,7 +2012,7 @@ async function startServer() {
         server.once('error', reject);
         server.listen(port, '0.0.0.0', resolve);
     });
-    console.log(`701 Club server listening on port ${port}.`);
+    console.log(`KSC Darts League server listening on port ${port}.`);
 
     for (const signal of ['SIGINT', 'SIGTERM']) {
         process.once(signal, () => {
@@ -2023,7 +2023,7 @@ async function startServer() {
 
 if (require.main === module) {
     startServer().catch(error => {
-        console.error('Could not start the 701 Club server:', error);
+        console.error('Could not start the KSC Darts League server:', error);
         process.exitCode = 1;
     });
 }

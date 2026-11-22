@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>The 701 Club | Admin Guide</title>
+    <title>KSC Darts League | Admin Guide</title>
     <style>
         :root {
             color-scheme: dark;
@@ -69,7 +69,7 @@
     <main>
         <header>
             <div>
-                <p>The 701 Club</p>
+                <p>KSC Darts League</p>
                 <h1>League Administration Guide</h1>
             </div>
             <nav aria-label="Page navigation">
@@ -157,6 +157,7 @@
             <p>Before restoring, stop the app and confirm that <code>DATABASE_URL</code> points to the intended target database. Restore with:</p>
             <p><code>npm.cmd run restore -- --confirm=RESTORE --file=backups\league-file.dump</code></p>
             <p>The restore command removes existing objects before restoring the dump. It is intentionally blocked unless <code>--confirm=RESTORE</code> is supplied.</p>
+            <p>If restore reports that the server is not the owner of the <code>pg_stat_statements</code> extension and lists exactly two ignored extension operations, this is treated as a warning and the restore can still complete. Other restore errors remain failures and require review.</p>
         </section>
     </main>
 </body>
