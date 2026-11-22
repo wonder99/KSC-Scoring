@@ -534,6 +534,18 @@ test('admin HTML contains one backup upload form', () => {
     assert.equal(matches.length, 1);
 });
 
+test('admin form resets are guarded against missing DOM elements', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const script = fs.readFileSync(
+        path.join(__dirname, '../admin/admin.js'),
+        'utf8'
+    );
+    assert.match(script, /typeof event\.currentTarget\.reset === 'function'/);
+    assert.match(script, /typeof form\.reset === 'function'/);
+    assert.match(script, /typeof restoreForm\.reset === 'function'/);
+});
+
 test('submission review uses a form instead of per-turn prompts', () => {
     const fs = require('node:fs');
     const path = require('node:path');

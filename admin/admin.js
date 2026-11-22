@@ -276,7 +276,9 @@ document.getElementById('season-form').addEventListener('submit', async event =>
                 active: form.get('active') === 'on'
             })
         });
-        event.currentTarget.reset();
+        if (event.currentTarget && typeof event.currentTarget.reset === 'function') {
+            event.currentTarget.reset();
+        }
         await refreshAll();
     } catch (error) { alert(error.message); }
 });
@@ -291,7 +293,9 @@ document.getElementById('team-form').addEventListener('submit', async event => {
                 name: form.get('name')
             })
         });
-        event.currentTarget.reset();
+        if (event.currentTarget && typeof event.currentTarget.reset === 'function') {
+            event.currentTarget.reset();
+        }
         await loadTeams();
     } catch (error) { alert(error.message); }
 });
@@ -310,8 +314,12 @@ document.getElementById('player-form').addEventListener('submit', async event =>
                 teamId: Number(form.get('teamId'))
             })
         });
-        event.currentTarget.reset();
-        event.currentTarget.classList.add('hidden');
+        if (event.currentTarget && typeof event.currentTarget.reset === 'function') {
+            event.currentTarget.reset();
+        }
+        if (event.currentTarget && event.currentTarget.classList) {
+            event.currentTarget.classList.add('hidden');
+        }
         await loadPlayers();
     } catch (error) { alert(error.message); }
 });
@@ -325,8 +333,8 @@ document.getElementById('show-player-form').addEventListener('click', () => {
 
 document.getElementById('cancel-player-add').addEventListener('click', () => {
     const form = document.getElementById('player-form');
-    form.reset();
-    form.classList.add('hidden');
+    if (form && typeof form.reset === 'function') form.reset();
+    if (form && form.classList) form.classList.add('hidden');
 });
 
 document.getElementById('player-edit-form').addEventListener('submit', async event => {
@@ -341,16 +349,20 @@ document.getElementById('player-edit-form').addEventListener('submit', async eve
                 gender: form.get('gender')
             })
         });
-        event.currentTarget.reset();
-        event.currentTarget.classList.add('hidden');
+        if (event.currentTarget && typeof event.currentTarget.reset === 'function') {
+            event.currentTarget.reset();
+        }
+        if (event.currentTarget && event.currentTarget.classList) {
+            event.currentTarget.classList.add('hidden');
+        }
         await loadPlayers();
     } catch (error) { alert(error.message); }
 });
 
 document.getElementById('cancel-player-edit').addEventListener('click', () => {
     const form = document.getElementById('player-edit-form');
-    form.reset();
-    form.classList.add('hidden');
+    if (form && typeof form.reset === 'function') form.reset();
+    if (form && form.classList) form.classList.add('hidden');
 });
 
 document.getElementById('cancel-submission-review').addEventListener('click', () => {
@@ -403,8 +415,12 @@ document.getElementById('submission-review-form').addEventListener('submit', asy
             alert('No turn values changed.');
             return;
         }
-        event.currentTarget.reset();
-        event.currentTarget.classList.add('hidden');
+        if (event.currentTarget && typeof event.currentTarget.reset === 'function') {
+            event.currentTarget.reset();
+        }
+        if (event.currentTarget && event.currentTarget.classList) {
+            event.currentTarget.classList.add('hidden');
+        }
         await loadSubmissions();
     } catch (error) { alert(error.message); }
 });
@@ -422,8 +438,8 @@ async function setReviewedSubmissionStatus(status) {
             method: 'POST',
             body: JSON.stringify({ submissionId, status })
         });
-        form.reset();
-        form.classList.add('hidden');
+        if (form && typeof form.reset === 'function') form.reset();
+        if (form && form.classList) form.classList.add('hidden');
         await loadSubmissions();
     } catch (error) { alert(error.message); }
 }
@@ -450,8 +466,12 @@ document.getElementById('fixture-form').addEventListener('submit', async event =
                 awayTeamId: Number(form.get('awayTeamId'))
             })
         });
-        event.currentTarget.reset();
-        event.currentTarget.classList.add('hidden');
+        if (event.currentTarget && typeof event.currentTarget.reset === 'function') {
+            event.currentTarget.reset();
+        }
+        if (event.currentTarget && event.currentTarget.classList) {
+            event.currentTarget.classList.add('hidden');
+        }
         await loadFixtures();
     } catch (error) { alert(error.message); }
 });
@@ -464,8 +484,8 @@ document.getElementById('show-fixture-form').addEventListener('click', () => {
 
 document.getElementById('cancel-fixture-add').addEventListener('click', () => {
     const form = document.getElementById('fixture-form');
-    form.reset();
-    form.classList.add('hidden');
+    if (form && typeof form.reset === 'function') form.reset();
+    if (form && form.classList) form.classList.add('hidden');
 });
 
 document.getElementById('create-backup').addEventListener('click', async () => {
@@ -520,6 +540,7 @@ document.getElementById('backup-upload-form').addEventListener('submit', async e
 
 document.getElementById('backup-restore-form').addEventListener('submit', async event => {
     event.preventDefault();
+    const restoreForm = event.currentTarget;
     const form = new FormData(event.currentTarget);
     const filename = String(form.get('backupFile') || '');
     const confirmation = String(form.get('confirmation') || '');
@@ -542,7 +563,9 @@ document.getElementById('backup-restore-form').addEventListener('submit', async 
             body: JSON.stringify({ filename, confirmation })
         });
         status.textContent = `Restored ${filename}`;
-        event.currentTarget.reset();
+        if (restoreForm && typeof restoreForm.reset === 'function') {
+            restoreForm.reset();
+        }
         await refreshAll();
     } catch (error) {
         status.textContent = error.message;
