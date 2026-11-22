@@ -127,6 +127,7 @@ CREATE TABLE IF NOT EXISTS turn_score (
     team_id INTEGER NOT NULL REFERENCES team(id) ON DELETE CASCADE,
     player_id INTEGER NOT NULL REFERENCES player(id) ON DELETE CASCADE,
     turn_number INTEGER NOT NULL,
+    play_order INTEGER,
     score INTEGER NOT NULL,
     dart_scores JSONB,
     is_bust BOOLEAN NOT NULL DEFAULT FALSE,

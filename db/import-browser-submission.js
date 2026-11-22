@@ -341,6 +341,7 @@ async function normalizeBrowserSubmission(pool, payload, compatibilityCsvText, c
             }
 
             let turnNumberByPlayer = new Map();
+            let playOrder = 0;
             for (const turn of game.turns) {
                 const player = await findOrCreatePlayer(client, turn.player);
                 const nextTurnNumber = (turnNumberByPlayer.get(player.id) || 0) + 1;
@@ -352,15 +353,16 @@ async function normalizeBrowserSubmission(pool, payload, compatibilityCsvText, c
                 await client.query(
                     `INSERT INTO turn_score (
                         submission_id, match_game_id, team_id, player_id,
-                        turn_number, score, dart_scores, is_bust,
+                        turn_number, play_order, score, dart_scores, is_bust,
                         remaining_before, remaining_after, checkout_remaining
                      )
-                     VALUES ($1, $2, $3, $4, $5, $6, $7::JSONB, $8, $9, $10, $11)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8::JSONB, $9, $10, $11, $12)
                      ON CONFLICT (
                         match_game_id, team_id, player_id, turn_number
                      )
                      DO UPDATE SET
                         submission_id = EXCLUDED.submission_id,
+                        play_order = EXCLUDED.play_order,
                         score = EXCLUDED.score,
                         dart_scores = EXCLUDED.dart_scores,
                         is_bust = EXCLUDED.is_bust,
@@ -373,6 +375,7 @@ async function normalizeBrowserSubmission(pool, payload, compatibilityCsvText, c
                         team.id,
                         player.id,
                         nextTurnNumber,
+                        playOrder,
                         turn.score,
                         JSON.stringify(turn.darts),
                         turn.busted,
@@ -381,6 +384,7 @@ async function normalizeBrowserSubmission(pool, payload, compatibilityCsvText, c
                         checkoutRemaining
                     ]
                 );
+                playOrder++;
                 rowCount++;
             }
         }

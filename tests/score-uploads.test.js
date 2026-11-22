@@ -541,9 +541,33 @@ test('admin form resets are guarded against missing DOM elements', () => {
         path.join(__dirname, '../admin/admin.js'),
         'utf8'
     );
-    assert.match(script, /typeof event\.currentTarget\.reset === 'function'/);
-    assert.match(script, /typeof form\.reset === 'function'/);
-    assert.match(script, /typeof restoreForm\.reset === 'function'/);
+    assert.match(script, /function resetForm\(formOrId\)/);
+    assert.match(script, /resetForm\(restoreForm\)/);
+    assert.doesNotMatch(script, /restoreForm\.reset\(\)/);
+});
+
+test('uploads page uses compact responsive table formatting', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const html = fs.readFileSync(
+        path.join(__dirname, '../uploads.html'),
+        'utf8'
+    );
+    const script = fs.readFileSync(
+        path.join(__dirname, '../uploads.js'),
+        'utf8'
+    );
+    const styles = fs.readFileSync(
+        path.join(__dirname, '../styles.css'),
+        'utf8'
+    );
+    assert.match(html, /uploads-key-row/);
+    assert.match(html, /uploads-actions/);
+    assert.match(script, /function formatMatchDate/);
+    assert.match(script, /uploads-empty/);
+    assert.match(styles, /\.uploads-table/);
+    assert.match(styles, /\.uploads-table td:first-child,[\s\S]*\.uploads-table th:first-child/);
+    assert.match(styles, /@media \(max-width: 700px\)/);
 });
 
 test('submission review uses a form instead of per-turn prompts', () => {
@@ -561,6 +585,52 @@ test('submission review uses a form instead of per-turn prompts', () => {
     assert.match(html, /id="submission-turn-editor"/);
     assert.match(script, /submission-review-form.*addEventListener/s);
     assert.doesNotMatch(script, /const scoreText = window\.prompt/);
+});
+
+test('submission review renders one unified game table', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const script = fs.readFileSync(
+        path.join(__dirname, '../admin/admin.js'),
+        'utf8'
+    );
+    const styles = fs.readFileSync(
+        path.join(__dirname, '../admin/styles.css'),
+        'utf8'
+    );
+    assert.match(script, /formatShortDate\(detail\.submission\.match_date\)/);
+    assert.match(script, /detail\.turns\.find\(turn => turn\.team\)/);
+    assert.match(script, /submission-review-team/);
+    assert.match(script, /<strong>\$\{escapeHtml\(player\.name\)\}<\/strong>/);
+    assert.match(script, /<div class="submission-turn-list"/);
+    assert.match(script, /<section class="submission-game"/);
+    assert.match(script, /review-game-layout/);
+    assert.match(script, /review-game-table/);
+    assert.match(script, /review-table-separator/);
+    assert.match(script, /<th scope="col">Player<\/th>/);
+    assert.match(script, /After R\$\{index \+ 1\}/);
+    assert.match(script, /review-turn-cell/);
+    assert.match(script, /input type="text"/);
+    assert.match(script, /inputmode="numeric"/);
+    assert.match(script, /calculatedAfter/);
+    assert.match(script, /won with a \${checkoutTurn\.score} checkout/);
+    assert.match(script, /review-game-outcome/);
+    assert.match(script, /review-game-win/);
+    assert.match(script, /review-game-loss/);
+    assert.match(script, /play_order/);
+    assert.match(script, /left\.id - right\.id/);
+    assert.match(styles, /\.submission-turn-list/);
+    assert.match(styles, /\.review-game-layout/);
+    assert.match(styles, /\.review-game-table/);
+    assert.match(styles, /\.review-table-separator/);
+    assert.match(styles, /font-size: 1rem/);
+    assert.match(styles, /\.review-turn-cell input\[type="text"\]/);
+    assert.match(styles, /height: 36px/);
+    assert.match(styles, /@media \(max-width: 480px\)/);
+    assert.match(styles, /\.review-game-outcome/);
+    assert.match(styles, /\.review-game-win/);
+    assert.match(styles, /\.review-game-loss/);
+    assert.match(styles, /font-size: 1\.05rem/);
 });
 
 test('admin uses Schedule and Match terminology for the schedule UI', () => {

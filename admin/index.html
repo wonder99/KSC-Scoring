@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KSC Darts League Administration</title>
-    <link rel="stylesheet" href="/admin/styles.css">
+    <link rel="stylesheet" href="/admin/styles.css?v=12">
 </head>
 <body>
     <main class="admin-shell">
@@ -120,7 +120,10 @@
                     <input type="hidden" name="submissionId">
                     <div class="submission-review-header">
                         <div>
-                            <strong id="submission-review-title">Submission</strong>
+                            <div class="submission-review-heading">
+                                <strong id="submission-review-title">Submission</strong>
+                                <span id="submission-review-team" class="submission-review-team"></span>
+                            </div>
                             <p id="submission-review-summary"></p>
                         </div>
                         <button type="button" id="cancel-submission-review">Close</button>
@@ -164,6 +167,6 @@
             </section>
         </section>
     </main>
-    <script src="/admin/admin.js"></script>
+    <script src="/admin/admin.js?v=12"></script>
 </body>
 </html>

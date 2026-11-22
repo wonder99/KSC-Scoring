@@ -17,6 +17,22 @@ function escapeHtml(value) {
         .replace(/'/g, '&#039;');
 }
 
+function formatShortDate(value) {
+    if (!value) return 'Unknown date';
+    const text = String(value);
+    const match = text.match(/^(\d{4}-\d{2}-\d{2})/);
+    return match ? match[1] : 'Unknown date';
+}
+
+function resetForm(formOrId) {
+    const form = typeof formOrId === 'string'
+        ? document.getElementById(formOrId)
+        : formOrId;
+    if (form && typeof form.reset === 'function') {
+        form.reset();
+    }
+}
+
 async function adminFetch(url, options = {}) {
     const response = await fetch(url, {
         ...options,
@@ -142,7 +158,7 @@ async function loadSubmissions() {
     document.getElementById('submission-list').innerHTML = payload.submissions.map(submission => `
         <article class="data-card">
             <strong>${escapeHtml(submission.source)}: ${escapeHtml(submission.status)}</strong>
-            <span>${escapeHtml(submission.match_date || 'Unknown date')} / Board ${escapeHtml(submission.board_number || '-')}</span>
+            <span>${escapeHtml(formatShortDate(submission.match_date))} / Board ${escapeHtml(submission.board_number || '-')}</span>
             <span>${escapeHtml(submission.home_team || '')} vs ${escapeHtml(submission.away_team || '')}</span>
             <div>
                 <span>${escapeHtml(submission.turn_count)} turns</span>
@@ -178,29 +194,127 @@ async function openSubmissionReview(submissionId) {
     const detail = await adminFetch(`/api/admin/submissions/${submissionId}`);
     const form = document.getElementById('submission-review-form');
     form.querySelector('[name="submissionId"]').value = String(submissionId);
+    const submissionTeam = detail.turns.find(turn => turn.team)?.team || '';
     document.getElementById('submission-review-title').textContent =
         `${detail.submission.source}: submission ${submissionId}`;
+    document.getElementById('submission-review-team').textContent =
+        submissionTeam ? `from ${submissionTeam}` : '';
     document.getElementById('submission-review-summary').textContent =
-        `${detail.submission.match_date || 'Unknown date'} / Board ${detail.submission.board_number || '-'} · ${detail.submission.home_team || ''} vs ${detail.submission.away_team || ''}`;
-    document.getElementById('submission-turn-editor').innerHTML =
-        detail.turns.map(turn => `
-            <div class="submission-turn-row"
-                 data-turn-id="${turn.id}"
-                 data-original-score="${turn.score}"
-                 data-original-bust="${turn.is_bust ? '1' : '0'}"
-                 data-original-checkout="${turn.checkout_remaining ?? ''}">
-                <strong>${escapeHtml(turn.player)} · Turn ${escapeHtml(turn.turn_number)} · ${escapeHtml(turn.team)}</strong>
-                <label>Score
-                    <input type="number" name="score" min="0" max="180" value="${escapeHtml(turn.score)}">
-                </label>
-                <label>Checkout
-                    <input type="number" name="checkout" min="0" max="170" value="${escapeHtml(turn.checkout_remaining ?? '')}">
-                </label>
-                <label>
-                    <input type="checkbox" name="bust" ${turn.is_bust ? 'checked' : ''}>
-                    Bust
-                </label>
-            </div>`).join('');
+        `${formatShortDate(detail.submission.match_date)} / Board ${detail.submission.board_number || '-'} · ${detail.submission.home_team || ''} vs ${detail.submission.away_team || ''}`;
+    const turnsByGame = new Map();
+    for (const turn of detail.turns) {
+        const gameNumber = turn.game_number || 1;
+        if (!turnsByGame.has(gameNumber)) turnsByGame.set(gameNumber, []);
+        turnsByGame.get(gameNumber).push(turn);
+    }
+    document.getElementById('submission-turn-editor').innerHTML = `
+        <div class="submission-turn-list" aria-label="Submission turns">
+            ${[...turnsByGame.entries()].map(([gameNumber, gameTurns]) => {
+                const winnerTeam = gameTurns.find(turn => turn.winner_team)?.winner_team;
+                let runningRemaining = 701;
+                const orderedTurns = [...gameTurns]
+                    .sort((left, right) =>
+                        (left.play_order ?? Number.MAX_SAFE_INTEGER) -
+                        (right.play_order ?? Number.MAX_SAFE_INTEGER) ||
+                        left.id - right.id
+                    )
+                    .map(turn => {
+                    const remainingBefore = turn.remaining_before ?? runningRemaining;
+                    const remainingAfter = turn.remaining_after ?? (
+                        turn.is_bust
+                            ? remainingBefore
+                            : Math.max(0, remainingBefore - Number(turn.score || 0))
+                    );
+                    runningRemaining = remainingAfter;
+                    return { ...turn, calculatedBefore: remainingBefore, calculatedAfter: remainingAfter };
+                });
+                const players = [];
+                const playerTurns = new Map();
+                for (const turn of orderedTurns) {
+                    if (!playerTurns.has(turn.player)) {
+                        players.push({ name: turn.player, team: turn.team });
+                        playerTurns.set(turn.player, []);
+                    }
+                    playerTurns.get(turn.player).push(turn);
+                }
+                const maxRounds = Math.max(
+                    1,
+                    ...[...playerTurns.values()].map(turns => turns.length)
+                );
+                const checkoutTurn = orderedTurns.find(turn =>
+                    turn.checkout_remaining === 0 ||
+                    (turn.calculatedAfter === 0 && !turn.is_bust)
+                );
+                const loserTeam = winnerTeam
+                    ? orderedTurns.find(turn => turn.team !== winnerTeam)?.team
+                    : null;
+                const winText = checkoutTurn
+                    ? `${checkoutTurn.player} won with a ${checkoutTurn.score} checkout.`
+                    : winnerTeam
+                        ? `${winnerTeam} won.`
+                        : null;
+                const lossText = loserTeam ? `${loserTeam} lost.` : null;
+                const outcomeHtml = winText || lossText
+                    ? `${winText ? `<span class="review-game-win">${escapeHtml(winText)}</span>` : ''}
+                       ${lossText ? `<span class="review-game-loss">${escapeHtml(lossText)}</span>` : ''}`
+                    : '<span>Game result unavailable.</span>';
+                return `
+                    <section class="submission-game">
+                        <h3>Game ${escapeHtml(gameNumber)}${winnerTeam ? ` · Winner: ${escapeHtml(winnerTeam)}` : ''}</h3>
+                        <div class="review-game-layout">
+                            <div class="review-table-wrap">
+                                <table class="review-game-table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Player</th>
+                                            ${Array.from({ length: maxRounds }, (_, index) =>
+                                                `<th scope="col">R${index + 1}</th>`
+                                            ).join('')}
+                                            <th scope="col" class="review-table-separator" aria-label="Separate score and remaining columns"></th>
+                                            ${Array.from({ length: maxRounds }, (_, index) =>
+                                                `<th scope="col">After R${index + 1}</th>`
+                                            ).join('')}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${players.map(player => `
+                                            <tr>
+                                                <th scope="row">
+                                                    <strong>${escapeHtml(player.name)}</strong>
+                                                </th>
+                                                ${Array.from({ length: maxRounds }, (_, index) => {
+                                                    const turn = playerTurns.get(player.name)[index];
+                                                    if (!turn) return '<td class="review-empty">—</td>';
+                                                    return `
+                                                        <td>
+                                                            <div class="review-turn-cell"
+                                                                 data-turn-id="${turn.id}"
+                                                                 data-original-score="${turn.score}"
+                                                                 data-original-bust="${turn.is_bust ? '1' : '0'}"
+                                                                 data-original-checkout="${turn.checkout_remaining ?? ''}">
+                                                                <input type="text" name="score" inputmode="numeric"
+                                                                       aria-label="${escapeHtml(player.name)} round ${index + 1} score"
+                                                                       value="${escapeHtml(turn.score)}">
+                                                            </div>
+                                                        </td>`;
+                                                }).join('')}
+                                                <td class="review-table-separator" aria-hidden="true"></td>
+                                                ${Array.from({ length: maxRounds }, (_, index) => {
+                                                    const turn = playerTurns.get(player.name)[index];
+                                                    if (!turn) return '<td class="review-empty">—</td>';
+                                                    return `<td class="countdown-cell">
+                                                        <strong>${escapeHtml(turn.calculatedAfter)}</strong>
+                                                    </td>`;
+                                                }).join('')}
+                                            </tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <p class="review-game-outcome">${outcomeHtml}</p>
+                    </section>`;
+            }).join('')}
+        </div>`;
     form.querySelector('[name="reason"]').value = '';
     form.classList.remove('hidden');
     form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -276,9 +390,7 @@ document.getElementById('season-form').addEventListener('submit', async event =>
                 active: form.get('active') === 'on'
             })
         });
-        if (event.currentTarget && typeof event.currentTarget.reset === 'function') {
-            event.currentTarget.reset();
-        }
+        resetForm(event.currentTarget);
         await refreshAll();
     } catch (error) { alert(error.message); }
 });
@@ -293,9 +405,7 @@ document.getElementById('team-form').addEventListener('submit', async event => {
                 name: form.get('name')
             })
         });
-        if (event.currentTarget && typeof event.currentTarget.reset === 'function') {
-            event.currentTarget.reset();
-        }
+        resetForm(event.currentTarget);
         await loadTeams();
     } catch (error) { alert(error.message); }
 });
@@ -314,9 +424,7 @@ document.getElementById('player-form').addEventListener('submit', async event =>
                 teamId: Number(form.get('teamId'))
             })
         });
-        if (event.currentTarget && typeof event.currentTarget.reset === 'function') {
-            event.currentTarget.reset();
-        }
+        resetForm(event.currentTarget);
         if (event.currentTarget && event.currentTarget.classList) {
             event.currentTarget.classList.add('hidden');
         }
@@ -333,7 +441,7 @@ document.getElementById('show-player-form').addEventListener('click', () => {
 
 document.getElementById('cancel-player-add').addEventListener('click', () => {
     const form = document.getElementById('player-form');
-    if (form && typeof form.reset === 'function') form.reset();
+    resetForm(form);
     if (form && form.classList) form.classList.add('hidden');
 });
 
@@ -349,9 +457,7 @@ document.getElementById('player-edit-form').addEventListener('submit', async eve
                 gender: form.get('gender')
             })
         });
-        if (event.currentTarget && typeof event.currentTarget.reset === 'function') {
-            event.currentTarget.reset();
-        }
+        resetForm(event.currentTarget);
         if (event.currentTarget && event.currentTarget.classList) {
             event.currentTarget.classList.add('hidden');
         }
@@ -361,7 +467,7 @@ document.getElementById('player-edit-form').addEventListener('submit', async eve
 
 document.getElementById('cancel-player-edit').addEventListener('click', () => {
     const form = document.getElementById('player-edit-form');
-    if (form && typeof form.reset === 'function') form.reset();
+    resetForm(form);
     if (form && form.classList) form.classList.add('hidden');
 });
 
@@ -377,17 +483,20 @@ document.getElementById('submission-review-form').addEventListener('submit', asy
         alert('Enter a revision reason.');
         return;
     }
-    const rows = [...document.querySelectorAll('.submission-turn-row')];
+    const rows = [...document.querySelectorAll('.review-turn-cell')];
     let changedCount = 0;
     try {
         for (const row of rows) {
-            const score = Number(row.querySelector('[name="score"]').value);
-            const checkoutText = row.querySelector('[name="checkout"]').value.trim();
-            const isBust = row.querySelector('[name="bust"]').checked;
+            const scoreText = row.querySelector('[name="score"]').value.trim();
+            if (!/^\d+$/.test(scoreText)) {
+                throw new Error('Turn scores must be whole numbers between 0 and 180.');
+            }
+            const score = Number(scoreText);
             const originalScore = Number(row.dataset.originalScore);
             const originalBust = row.dataset.originalBust === '1';
             const originalCheckout = row.dataset.originalCheckout;
-            const checkout = checkoutText === '' ? null : Number(checkoutText);
+            const isBust = originalBust;
+            const checkout = originalCheckout === '' ? null : Number(originalCheckout);
             if (score === originalScore &&
                 isBust === originalBust &&
                 (checkout === null ? '' : String(checkout)) === originalCheckout) {
@@ -415,9 +524,7 @@ document.getElementById('submission-review-form').addEventListener('submit', asy
             alert('No turn values changed.');
             return;
         }
-        if (event.currentTarget && typeof event.currentTarget.reset === 'function') {
-            event.currentTarget.reset();
-        }
+        resetForm(event.currentTarget);
         if (event.currentTarget && event.currentTarget.classList) {
             event.currentTarget.classList.add('hidden');
         }
@@ -438,7 +545,7 @@ async function setReviewedSubmissionStatus(status) {
             method: 'POST',
             body: JSON.stringify({ submissionId, status })
         });
-        if (form && typeof form.reset === 'function') form.reset();
+        resetForm(form);
         if (form && form.classList) form.classList.add('hidden');
         await loadSubmissions();
     } catch (error) { alert(error.message); }
@@ -466,9 +573,7 @@ document.getElementById('fixture-form').addEventListener('submit', async event =
                 awayTeamId: Number(form.get('awayTeamId'))
             })
         });
-        if (event.currentTarget && typeof event.currentTarget.reset === 'function') {
-            event.currentTarget.reset();
-        }
+        resetForm(event.currentTarget);
         if (event.currentTarget && event.currentTarget.classList) {
             event.currentTarget.classList.add('hidden');
         }
@@ -484,7 +589,7 @@ document.getElementById('show-fixture-form').addEventListener('click', () => {
 
 document.getElementById('cancel-fixture-add').addEventListener('click', () => {
     const form = document.getElementById('fixture-form');
-    if (form && typeof form.reset === 'function') form.reset();
+    resetForm(form);
     if (form && form.classList) form.classList.add('hidden');
 });
 
@@ -540,8 +645,8 @@ document.getElementById('backup-upload-form').addEventListener('submit', async e
 
 document.getElementById('backup-restore-form').addEventListener('submit', async event => {
     event.preventDefault();
-    const restoreForm = event.currentTarget;
-    const form = new FormData(event.currentTarget);
+    const restoreForm = document.getElementById('backup-restore-form');
+    const form = new FormData(restoreForm);
     const filename = String(form.get('backupFile') || '');
     const confirmation = String(form.get('confirmation') || '');
     if (!filename) {
@@ -563,9 +668,7 @@ document.getElementById('backup-restore-form').addEventListener('submit', async 
             body: JSON.stringify({ filename, confirmation })
         });
         status.textContent = `Restored ${filename}`;
-        if (restoreForm && typeof restoreForm.reset === 'function') {
-            restoreForm.reset();
-        }
+        resetForm(restoreForm);
         await refreshAll();
     } catch (error) {
         status.textContent = error.message;

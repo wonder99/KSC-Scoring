@@ -1426,17 +1426,24 @@ async function handleAdminSubmissionDetail(request, response, url, context) {
     const turns = await context.pool.query(
         `SELECT ts.id, ts.turn_number, ts.score, ts.is_bust,
                 ts.remaining_before, ts.remaining_after,
-                ts.checkout_remaining,
+                ts.checkout_remaining, ts.dart_scores, ts.play_order,
+                mg.game_number, mg.winner_team_id,
+                ts.team_id,
+                wt.name AS winner_team,
                 p.first_name || CASE
                     WHEN COALESCE(p.last_name, '') = '' THEN ''
                     ELSE ' ' || p.last_name
                 END AS player,
                 t.name AS team
          FROM turn_score ts
+         JOIN match_game mg ON mg.id = ts.match_game_id
+         LEFT JOIN team wt ON wt.id = mg.winner_team_id
          JOIN player p ON p.id = ts.player_id
          JOIN team t ON t.id = ts.team_id
          WHERE ts.submission_id = $1
-         ORDER BY ts.turn_number, player`,
+         ORDER BY mg.game_number,
+                  COALESCE(ts.play_order, ts.id),
+                  ts.id`,
         [Number(idMatch[1])]
     );
     sendJson(response, 200, {

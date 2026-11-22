@@ -47,10 +47,25 @@ function formatUploadTime(value) {
     return Number.isNaN(date.getTime()) ? String(value || '') : date.toLocaleString();
 }
 
+function formatMatchDate(value) {
+    if (!value) return '';
+    const date = new Date(`${String(value).slice(0, 10)}T12:00:00`);
+    return Number.isNaN(date.getTime())
+        ? String(value)
+        : date.toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+}
+
 function renderUploads(uploads) {
     list.replaceChildren();
     if (!uploads.length) {
-        list.textContent = 'No score uploads have been saved yet.';
+        const empty = document.createElement('p');
+        empty.className = 'uploads-empty';
+        empty.textContent = 'No score uploads have been saved yet.';
+        list.appendChild(empty);
         updateSelectionControls();
         return;
     }
@@ -78,7 +93,7 @@ function renderUploads(uploads) {
         selectionCell.appendChild(checkbox);
 
         for (const value of [
-            upload.matchDate,
+            formatMatchDate(upload.matchDate),
             upload.board,
             upload.team,
             upload.opponent,
