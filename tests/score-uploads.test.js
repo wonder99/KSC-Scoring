@@ -773,6 +773,31 @@ test('admin teams and players use compact no-limit presentation', () => {
     assert.match(styles, /\.player-card/);
 });
 
+test('player edits show saving and success status feedback', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const html = fs.readFileSync(
+        path.join(__dirname, '../admin/index.html'),
+        'utf8'
+    );
+    const script = fs.readFileSync(
+        path.join(__dirname, '../admin/admin.js'),
+        'utf8'
+    );
+    const styles = fs.readFileSync(
+        path.join(__dirname, '../admin/styles.css'),
+        'utf8'
+    );
+    assert.match(html, /id="player-status"/);
+    assert.match(script, /Saving player\.\.\./);
+    assert.match(script, /Player updated successfully\./);
+    assert.match(script, /resetForm\(editForm\)/);
+    assert.match(script, /editForm\.classList\.add\('hidden'\)/);
+    assert.match(script, /status\.className = 'admin-status error'/);
+    assert.match(styles, /\.admin-status\.success/);
+    assert.match(styles, /\.admin-status\.error/);
+});
+
 test('player add form is hidden until Add Player is pressed', () => {
     const fs = require('node:fs');
     const path = require('node:path');

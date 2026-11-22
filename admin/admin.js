@@ -525,7 +525,11 @@ document.getElementById('cancel-player-add').addEventListener('click', () => {
 
 document.getElementById('player-edit-form').addEventListener('submit', async event => {
     event.preventDefault();
+    const editForm = event.currentTarget;
     const form = new FormData(event.currentTarget);
+    const status = document.getElementById('player-status');
+    status.textContent = 'Saving player...';
+    status.className = 'admin-status';
     try {
         await adminFetch(`/api/admin/players/${form.get('playerId')}`, {
             method: 'PUT',
@@ -535,12 +539,20 @@ document.getElementById('player-edit-form').addEventListener('submit', async eve
                 gender: form.get('gender')
             })
         });
-        resetForm(event.currentTarget);
-        if (event.currentTarget && event.currentTarget.classList) {
-            event.currentTarget.classList.add('hidden');
-        }
+        resetForm(editForm);
+        editForm.classList.add('hidden');
         await loadPlayers();
-    } catch (error) { alert(error.message); }
+        status.textContent = 'Player updated successfully.';
+        status.className = 'admin-status success';
+        window.clearTimeout(status.successTimer);
+        status.successTimer = window.setTimeout(() => {
+            status.textContent = '';
+            status.className = 'admin-status';
+        }, 4000);
+    } catch (error) {
+        status.textContent = error.message;
+        status.className = 'admin-status error';
+    }
 });
 
 document.getElementById('cancel-player-edit').addEventListener('click', () => {

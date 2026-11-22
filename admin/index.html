@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KSC Darts League Administration</title>
-    <link rel="stylesheet" href="/admin/styles.css?v=18">
+    <link rel="stylesheet" href="/admin/styles.css?v=20">
 </head>
 <body>
     <main class="admin-shell">
@@ -61,6 +61,7 @@
 
             <section class="admin-panel" data-panel="players">
                 <h2>Players</h2>
+                <p id="player-status" class="admin-status" role="status" aria-live="polite"></p>
                 <button id="show-player-form" type="button">Add Player</button>
                 <form id="player-form" class="inline-form hidden">
                     <label>First name<input name="firstName" required></label>
@@ -167,6 +168,6 @@
             </section>
         </section>
     </main>
-    <script src="/admin/admin.js?v=18"></script>
+    <script src="/admin/admin.js?v=20"></script>
 </body>
 </html>
