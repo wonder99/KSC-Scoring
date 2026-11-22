@@ -220,6 +220,85 @@ async function loadFixtures() {
         </article>`).join('');
 }
 
+async function downloadScheduleWorkbook() {
+    const seasonId = getSelectedSeasonId();
+    const status = document.getElementById('schedule-xlsx-status');
+    if (!seasonId) {
+        status.textContent = 'Select a season before downloading.';
+        status.className = 'admin-status error';
+        return;
+    }
+    status.textContent = 'Preparing schedule workbook...';
+    status.className = 'admin-status';
+    try {
+        const response = await fetch(
+            `/api/admin/schedule/download.xlsx?season_id=${encodeURIComponent(seasonId)}`
+        );
+        if (!response.ok) {
+            const payload = await response.json().catch(() => ({}));
+            throw new Error(payload.error || 'Schedule workbook download failed.');
+        }
+        const workbook = await response.blob();
+        const objectUrl = URL.createObjectURL(workbook);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = 'schedule.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(objectUrl);
+        status.textContent = 'Schedule workbook downloaded.';
+        status.className = 'admin-status success';
+    } catch (error) {
+        status.textContent = error.message;
+        status.className = 'admin-status error';
+    }
+}
+
+async function uploadScheduleWorkbook(event) {
+    event.preventDefault();
+    const seasonId = getSelectedSeasonId();
+    const fileInput = document.getElementById('schedule-xlsx-file');
+    const file = fileInput.files && fileInput.files[0];
+    const status = document.getElementById('schedule-xlsx-status');
+    if (!seasonId) {
+        status.textContent = 'Select a season before uploading.';
+        status.className = 'admin-status error';
+        return;
+    }
+    if (!file) {
+        status.textContent = 'Choose an XLSX schedule workbook.';
+        status.className = 'admin-status error';
+        return;
+    }
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+        status.textContent = 'The selected file must use the .xlsx extension.';
+        status.className = 'admin-status error';
+        return;
+    }
+    status.textContent = 'Uploading schedule workbook...';
+    status.className = 'admin-status';
+    try {
+        await adminFetch(
+            `/api/admin/schedule/upload.xlsx?season_id=${encodeURIComponent(seasonId)}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                },
+                body: await file.arrayBuffer()
+            }
+        );
+        fileInput.value = '';
+        await loadFixtures();
+        status.textContent = 'Schedule workbook uploaded successfully.';
+        status.className = 'admin-status success';
+    } catch (error) {
+        status.textContent = error.message;
+        status.className = 'admin-status error';
+    }
+}
+
 async function loadSubmissions() {
     const seasonId = getSelectedSeasonId();
     const payload = await adminFetch(
@@ -682,6 +761,9 @@ document.getElementById('cancel-fixture-add').addEventListener('click', () => {
     resetForm(form);
     if (form && form.classList) form.classList.add('hidden');
 });
+
+document.getElementById('download-schedule-xlsx').addEventListener('click', downloadScheduleWorkbook);
+document.getElementById('schedule-xlsx-upload-form').addEventListener('submit', uploadScheduleWorkbook);
 
 document.getElementById('create-backup').addEventListener('click', async () => {
     const status = document.getElementById('backup-status');

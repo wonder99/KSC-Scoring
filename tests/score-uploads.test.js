@@ -729,6 +729,10 @@ test('admin uses Schedule and Match terminology for the schedule UI', () => {
     assert.match(html, />Schedule<\//);
     assert.match(html, /<h2>Schedule<\/h2>/);
     assert.match(html, /Add Match/);
+    assert.match(html, /download-schedule-xlsx/);
+    assert.match(html, /schedule-xlsx-upload-form/);
+    assert.match(script, /downloadScheduleWorkbook/);
+    assert.match(script, /uploadScheduleWorkbook/);
     assert.match(script, /match-card/);
     assert.match(script, /getLocalDateKey/);
     assert.match(script, /is-past/);
@@ -736,6 +740,48 @@ test('admin uses Schedule and Match terminology for the schedule UI', () => {
     assert.match(styles, /\.match-card\.is-past/);
     assert.match(styles, /opacity: 0\.55/);
     assert.doesNotMatch(script, />Fixtures<|Delete this fixture/);
+});
+
+test('schedule XLSX export fills missing week numbers from fixtures on the same date', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const server = fs.readFileSync(
+        path.join(__dirname, '../server.js'),
+        'utf8'
+    );
+    assert.match(server, /COALESCE\(\s*f\.week_number[\s\S]*SELECT MIN\(f2\.week_number\)/);
+    assert.match(server, /Match ID/);
+    assert.match(server, /Home Team/);
+    assert.match(server, /Away Team/);
+    assert.match(server, /A1:G1/);
+    assert.match(server, /headerRowNumber/);
+    assert.match(server, /KSC Darts League Schedule/);
+    assert.match(server, /match rows below/);
+    assert.match(server, /blank Match ID/);
+    assert.match(server, /FFA8E6C1/);
+    assert.match(server, /FF183425/);
+    assert.match(server, /match rows below/);
+    assert.match(server, /Removing a row deletes only matches/);
+    assert.match(server, /sheet\.addRow\(\[\s*fixture\.id/);
+});
+
+test('admin schedule workbook routes use XLSX support', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const server = fs.readFileSync(
+        path.join(__dirname, '../server.js'),
+        'utf8'
+    );
+    const manifest = fs.readFileSync(
+        path.join(__dirname, '../package.json'),
+        'utf8'
+    );
+    assert.match(server, /handleAdminScheduleWorkbook/);
+    assert.match(server, /download\.xlsx/);
+    assert.match(server, /upload\.xlsx/);
+    assert.match(server, /Match ID/);
+    assert.match(server, /application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet/);
+    assert.match(manifest, /exceljs/);
 });
 
 test('admin labels score submissions as Score Uploads', () => {

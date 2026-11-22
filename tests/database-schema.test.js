@@ -275,6 +275,16 @@ test('Gerald is the Aimless Wonders canonical player name', () => {
     assert.match(importer, /'Aimless Wonders': \{ Gerry: 'Gerald' \}/);
 });
 
+test('Ginger maps to Terry on the Avengers workbook roster', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const importer = fs.readFileSync(
+        path.join(__dirname, '../db/import-workbook-baselines.js'),
+        'utf8'
+    );
+    assert.match(importer, /'The Avengers': \{ Ginger: 'Terry' \}/);
+});
+
 test('general player merge requires two distinct IDs', async () => {
     const { mergePlayerRecords } = require('../db/merge-player-records');
     await assert.rejects(

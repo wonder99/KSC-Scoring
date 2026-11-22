@@ -84,6 +84,7 @@ function matchWorkbookPlayer(teamName, workbookName, roster) {
         'The Snipers': { Richard: 'Rick', Sly: 'Sylvain' },
         'Killer Bees': { Gerry: 'Jerry' },
         'Aimless Wonders': { Gerry: 'Gerald' },
+        'The Avengers': { Ginger: 'Terry' },
         'Just The Tip': { Joey: 'Joe' },
         'Flight Risk': { Jeremy: 'Jermey' },
         'The Keepers': { Kurtis: 'Kurt' }

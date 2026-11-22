@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KSC Darts League Administration</title>
-    <link rel="stylesheet" href="/admin/styles.css?v=20">
+    <link rel="stylesheet" href="/admin/styles.css?v=23">
 </head>
 <body>
     <main class="admin-shell">
@@ -99,6 +99,17 @@
 
             <section class="admin-panel" data-panel="fixtures">
                 <h2>Schedule</h2>
+                <div class="schedule-workbook-actions">
+                    <button id="download-schedule-xlsx" type="button">Download Schedule XLSX</button>
+                    <form id="schedule-xlsx-upload-form" class="schedule-xlsx-upload-form">
+                        <label>Upload Schedule XLSX
+                            <input id="schedule-xlsx-file" name="scheduleFile" type="file"
+                                   accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+                        </label>
+                        <button type="submit">Upload XLSX</button>
+                    </form>
+                </div>
+                <p id="schedule-xlsx-status" class="admin-status" role="status" aria-live="polite"></p>
                 <button id="show-fixture-form" type="button">Add Match</button>
                 <form id="fixture-form" class="inline-form hidden">
                     <label>Season<select name="seasonId" id="fixture-season" required></select></label>
@@ -168,6 +179,6 @@
             </section>
         </section>
     </main>
-    <script src="/admin/admin.js?v=20"></script>
+    <script src="/admin/admin.js?v=23"></script>
 </body>
 </html>

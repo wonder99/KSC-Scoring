@@ -4,12 +4,14 @@ const crypto = require('node:crypto');
 const fs = require('node:fs/promises');
 const http = require('node:http');
 const path = require('node:path');
+const ExcelJS = require('exceljs');
 
 const MAX_CSV_BYTES = 1024 * 1024;
 const MAX_JSON_BYTES = 64 * 1024;
 const MAX_EXPORT_UPLOADS = 100;
 const MAX_EXPORT_CSV_BYTES = 10 * 1024 * 1024;
 const MAX_BACKUP_UPLOAD_BYTES = 1024 * 1024 * 1024;
+const MAX_SCHEDULE_UPLOAD_BYTES = 20 * 1024 * 1024;
 const PUBLIC_FILES = new Set([
     'app.js',
     'dart_league_schedule.csv',
@@ -1089,6 +1091,316 @@ async function handleAdminFixtures(request, response, url, context) {
     sendJson(response, 200, { fixture: result.rows[0] });
 }
 
+async function handleAdminScheduleWorkbook(request, response, url, context) {
+    if (!isAdminAuthorized(request, context.adminApiKey, context.adminSessions)) {
+        throw new RequestError(401, 'A valid admin key is required.');
+    }
+
+    const seasonId = Number(url.searchParams.get('season_id'));
+    if (!Number.isInteger(seasonId) || seasonId < 1) {
+        throw new RequestError(400, 'season_id is required.');
+    }
+
+    const seasonResult = await context.pool.query(
+        'SELECT id, name FROM season WHERE id = $1',
+        [seasonId]
+    );
+    if (!seasonResult.rows.length) {
+        throw new RequestError(404, 'Season not found.');
+    }
+    const season = seasonResult.rows[0];
+
+    if (url.pathname.endsWith('/download.xlsx') && request.method === 'GET') {
+        const fixtureResult = await context.pool.query(
+            `SELECT f.id,
+                    COALESCE(
+                        f.week_number,
+                        (
+                            SELECT MIN(f2.week_number)
+                            FROM fixture f2
+                            WHERE f2.season_id = f.season_id
+                              AND f2.match_date = f.match_date
+                              AND f2.week_number IS NOT NULL
+                        )
+                    ) AS week_number,
+                    f.match_date, f.board_number,
+                    ht.name AS home_team, at.name AS away_team
+             FROM fixture f
+             JOIN team ht ON ht.id = f.home_team_id
+             JOIN team at ON at.id = f.away_team_id
+             WHERE f.season_id = $1
+             ORDER BY f.match_date, f.board_number, f.id`,
+            [seasonId]
+        );
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'KSC Darts League';
+        workbook.created = new Date();
+        const sheet = workbook.addWorksheet('Schedule');
+        sheet.mergeCells('A1:G1');
+        sheet.getCell('A1').value = 'KSC Darts League Schedule';
+        sheet.getCell('A1').font = { bold: true, size: 16 };
+        sheet.getCell('A1').alignment = { horizontal: 'center' };
+        sheet.mergeCells('A2:G2');
+        sheet.getCell('A2').value = 'Instructions: Edit the match rows below. Keep existing Match IDs to update rows.';
+        sheet.mergeCells('A3:G3');
+        sheet.getCell('A3').value = 'Use a blank Match ID to add a match. Do not rename the team or Season names.';
+        sheet.mergeCells('A4:G4');
+        sheet.getCell('A4').value = 'Removing a row deletes only matches that have no linked games.';
+        sheet.getColumn(1).width = 12;
+        sheet.getColumn(2).width = 14;
+        sheet.getColumn(3).width = 8;
+        sheet.getColumn(4).width = 12;
+        sheet.getColumn(5).width = 8;
+        sheet.getColumn(6).width = 24;
+        sheet.getColumn(7).width = 24;
+        sheet.addRow(['Match ID', 'Season', 'Week', 'Date', 'Board', 'Home Team', 'Away Team']);
+        for (const fixture of fixtureResult.rows) {
+            sheet.addRow([
+                fixture.id,
+                season.name,
+                fixture.week_number,
+                formatDatabaseDate(fixture.match_date),
+                fixture.board_number,
+                fixture.home_team,
+                fixture.away_team
+            ]);
+        }
+        sheet.views = [{ state: 'frozen', ySplit: 5 }];
+        sheet.autoFilter = {
+            from: 'A5',
+            to: `G${Math.max(1, sheet.rowCount)}`
+        };
+        sheet.getRow(5).font = { bold: true, color: { argb: 'FF183425' } };
+        sheet.getRow(5).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFA8E6C1' }
+        };
+        sheet.getColumn(4).numFmt = 'yyyy-mm-dd';
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        const filename = `schedule-${season.name.replace(/[^A-Za-z0-9_-]+/g, '-')}.xlsx`;
+        response.writeHead(200, {
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Length': buffer.length,
+            'Content-Disposition': `attachment; filename="${filename}"`,
+            'Cache-Control': 'no-store',
+            'X-Content-Type-Options': 'nosniff'
+        });
+        response.end(Buffer.from(buffer));
+        return;
+    }
+
+    if (url.pathname.endsWith('/upload.xlsx') && request.method === 'POST') {
+        const contentType = (request.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+        if (![
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/octet-stream'
+        ].includes(contentType)) {
+            throw new RequestError(415, 'Content-Type must be an XLSX workbook.');
+        }
+        const content = await readBinaryBody(
+            request,
+            MAX_SCHEDULE_UPLOAD_BYTES,
+            'The schedule workbook exceeds the 20 MB limit.'
+        );
+        if (!content.length) {
+            throw new RequestError(400, 'The schedule workbook is empty.');
+        }
+
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(content);
+        const sheet = workbook.getWorksheet('Schedule');
+        if (!sheet) {
+            throw new RequestError(400, 'The workbook must contain a Schedule worksheet.');
+        }
+        let headers = {};
+        let headerRowNumber = null;
+        sheet.eachRow((row, rowNumber) => {
+            if (headerRowNumber) return;
+            let rowHeaders = {};
+            row.eachCell((cell, columnNumber) => {
+                const name = String(cell.value ?? '').trim().toLowerCase();
+                rowHeaders[name] = columnNumber;
+            });
+            if ((rowHeaders['match id'] || rowHeaders['fixture id']) &&
+                rowHeaders['season'] &&
+                rowHeaders['week'] &&
+                rowHeaders['date'] &&
+                rowHeaders['board'] &&
+                rowHeaders['home team'] &&
+                rowHeaders['away team']) {
+                headerRowNumber = rowNumber;
+                headers = rowHeaders;
+            }
+        });
+        if (!headerRowNumber) {
+            throw new RequestError(400, 'Could not find the Schedule header row. Keep the Match ID, Season, Week, Date, Board, Home Team, and Away Team headers.');
+        }
+        const matchIdColumn = headers['match id'] || headers['fixture id'];
+        for (const required of ['season', 'week', 'date', 'board', 'home team', 'away team']) {
+            if (!headers[required]) {
+                throw new RequestError(400, `Schedule workbook is missing the "${required}" column.`);
+            }
+        }
+        if (!matchIdColumn) {
+            throw new RequestError(400, 'Schedule workbook is missing the "Match ID" column.');
+        }
+
+        const teamResult = await context.pool.query('SELECT id, name FROM team');
+        const teams = teamResult.rows;
+        const resolveTeam = name => {
+            const text = String(name ?? '').trim();
+            if (!text) return null;
+            const match = teams.find(team =>
+                team.name === text ||
+                team.name.replace(/^The\s+/i, '').trim().toLowerCase() === text.replace(/^The\s+/i, '').trim().toLowerCase()
+            );
+            return match || null;
+        };
+        const excelDateText = value => {
+            if (value instanceof Date && !Number.isNaN(value.getTime())) {
+                const year = value.getFullYear();
+                const month = String(value.getMonth() + 1).padStart(2, '0');
+                const day = String(value.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            if (typeof value === 'number') {
+                const date = new Date(Math.round((value - 25569) * 86400000));
+                return isValidDate(formatDatabaseDate(date)) ? formatDatabaseDate(date) : '';
+            }
+            const text = String(value ?? '').trim();
+            return isValidDate(text) ? text : '';
+        };
+
+        const parsedRows = [];
+        sheet.eachRow((row, rowNumber) => {
+            if (rowNumber <= headerRowNumber) return;
+            const fixtureIdText = row.getCell(matchIdColumn).text.trim();
+            const seasonText = row.getCell(headers.season).text.trim();
+            const weekText = row.getCell(headers.week).text.trim();
+            const dateText = excelDateText(row.getCell(headers.date).value);
+            const boardText = row.getCell(headers.board).text.trim();
+            const homeTeam = resolveTeam(row.getCell(headers['home team']).text);
+            const awayTeam = resolveTeam(row.getCell(headers['away team']).text);
+            if (!dateText && !boardText && !homeTeam && !awayTeam && !weekText && !fixtureIdText) {
+                return;
+            }
+            if (!isValidDate(dateText) || !boardText || !homeTeam || !awayTeam) {
+                throw new RequestError(400, `Schedule row ${rowNumber} has an invalid date, board, or team.`);
+            }
+            if (seasonText && seasonText !== season.name) {
+                throw new RequestError(400, `Schedule row ${rowNumber} has season "${seasonText}", which does not match "${season.name}".`);
+            }
+            if (homeTeam.id === awayTeam.id) {
+                throw new RequestError(400, `Schedule row ${rowNumber} has the same home and away team.`);
+            }
+            const week = weekText === '' ? null : Number(weekText);
+            if (week !== null && (!Number.isInteger(week) || week < 1)) {
+                throw new RequestError(400, `Schedule row ${rowNumber} has an invalid week.`);
+            }
+            const fixtureId = fixtureIdText === '' ? null : Number(fixtureIdText);
+            if (fixtureIdText !== '' && (!Number.isInteger(fixtureId) || fixtureId < 1)) {
+                throw new RequestError(400, `Schedule row ${rowNumber} has an invalid Match ID.`);
+            }
+            parsedRows.push({
+                fixtureId,
+                week,
+                date: dateText,
+                board: boardText,
+                homeTeamId: homeTeam.id,
+                awayTeamId: awayTeam.id
+            });
+        });
+        if (!parsedRows.length) {
+            throw new RequestError(400, 'The Schedule worksheet contains no fixture rows.');
+        }
+
+        const client = await context.pool.connect();
+        try {
+            await client.query('BEGIN');
+            const existingResult = await client.query(
+                'SELECT id FROM fixture WHERE season_id = $1',
+                [seasonId]
+            );
+            const existingIds = new Set(existingResult.rows.map(row => row.id));
+            const seenIds = new Set();
+            const seenKeys = new Set();
+
+            for (const row of parsedRows) {
+                if (row.fixtureId) {
+                    if (!existingIds.has(row.fixtureId)) {
+                        throw new RequestError(400, `Match ID ${row.fixtureId} does not belong to this season.`);
+                    }
+                    seenIds.add(row.fixtureId);
+                }
+                const key = `${row.date}\u0000${row.board}\u0000${row.homeTeamId}\u0000${row.awayTeamId}`;
+                if (seenKeys.has(key)) {
+                    throw new RequestError(400, `Duplicate fixture row for ${row.date}, board ${row.board}.`);
+                }
+                seenKeys.add(key);
+
+                if (row.fixtureId) {
+                    const updated = await client.query(
+                        `UPDATE fixture
+                         SET week_number=$1, match_date=$2::DATE, board_number=$3,
+                             home_team_id=$4, away_team_id=$5
+                         WHERE id=$6 AND season_id=$7
+                         RETURNING id`,
+                        [row.week, row.date, row.board, row.homeTeamId, row.awayTeamId,
+                         row.fixtureId, seasonId]
+                    );
+                    if (!updated.rows.length) {
+                        throw new RequestError(404, `Match ID ${row.fixtureId} was not found.`);
+                    }
+                } else {
+                    await client.query(
+                        `INSERT INTO fixture (
+                            season_id, week_number, match_date, board_number,
+                            home_team_id, away_team_id
+                         )
+                         VALUES ($1,$2,$3::DATE,$4,$5,$6)
+                         ON CONFLICT DO NOTHING`,
+                        [seasonId, row.week, row.date, row.board,
+                         row.homeTeamId, row.awayTeamId]
+                    );
+                }
+            }
+
+            for (const existingId of existingIds) {
+                if (seenIds.has(existingId)) continue;
+                const linked = await client.query(
+                    'SELECT id FROM match_game WHERE fixture_id = $1 LIMIT 1',
+                    [existingId]
+                );
+                if (linked.rows.length) {
+                    throw new RequestError(
+                        409,
+                        `Cannot remove Match ID ${existingId} because it already has linked games.`
+                    );
+                }
+                await client.query('DELETE FROM fixture WHERE id = $1 AND season_id = $2',
+                    [existingId, seasonId]);
+            }
+
+            await client.query('COMMIT');
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+
+        sendJson(response, 200, {
+            imported: parsedRows.length,
+            season: season.name
+        });
+        return;
+    }
+
+    throw new RequestError(405, 'Method not allowed.');
+}
+
 async function handleAdminBackups(request, response, url, context) {
     if (!isAdminAuthorized(request, context.adminApiKey, context.adminSessions)) {
         throw new RequestError(401, 'A valid admin key is required.');
@@ -1961,6 +2273,12 @@ function createServer({ pool, uploadApiKey, adminApiKey = process.env.ADMIN_API_
                    pathname === '/api/admin/players/merge' ||
                    /^\/api\/admin\/players\/\d+\/?$/.test(pathname)) {
             handler = handleAdminPlayers(request, response, url, context);
+        } else if (pathname === '/api/admin/schedule/download.xlsx' ||
+                   pathname === '/api/admin/schedule/upload.xlsx') {
+            handler = handleAdminScheduleWorkbook(request, response, url, context);
+        } else if (pathname === '/api/admin/schedule/download.xlsx' ||
+                   pathname === '/api/admin/schedule/upload.xlsx') {
+            handler = handleAdminScheduleWorkbook(request, response, url, context);
         } else if (pathname === '/api/admin/fixtures' ||
                    /^\/api\/admin\/fixtures\/\d+\/?$/.test(pathname)) {
             handler = handleAdminFixtures(request, response, url, context);

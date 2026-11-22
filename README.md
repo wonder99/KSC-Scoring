@@ -137,6 +137,8 @@ Open `/admin` and enter `ADMIN_API_KEY` to manage:
 - Submission status
 - Submission turn revisions with audit reasons
 
+On the Schedule tab, administrators can download the selected season as an XLSX workbook, edit it offline, and upload it back. Match ID values preserve existing rows. Removing a row deletes a match only if it has no linked games; linked matches are protected.
+
 Player edits preserve the existing player ID, so existing baselines and linked turn data remain attached. Merge operations require explicit canonical and duplicate player IDs. Rejected submissions do not affect public reports.
 
 ## Deploy and share the app
