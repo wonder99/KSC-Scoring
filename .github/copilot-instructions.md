@@ -38,5 +38,4 @@ When testing application changes, follow this methodology:
    - Checkout strategy text remains legible
    - Finished-game dialog shows proper layout (undo, submit buttons)
    - League key visibility works as expected (hidden until "Submit to League" is clicked)
-   - Uploads page links are properly configured (no link on first page)
 4. **Cross-Platform Testing**: Verify behavior on desktop, mobile, and iOS specifically

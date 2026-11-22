@@ -8,8 +8,6 @@ const ExcelJS = require('exceljs');
 
 const MAX_CSV_BYTES = 1024 * 1024;
 const MAX_JSON_BYTES = 64 * 1024;
-const MAX_EXPORT_UPLOADS = 100;
-const MAX_EXPORT_CSV_BYTES = 10 * 1024 * 1024;
 const MAX_BACKUP_UPLOAD_BYTES = 1024 * 1024 * 1024;
 const MAX_SCHEDULE_UPLOAD_BYTES = 20 * 1024 * 1024;
 const PUBLIC_FILES = new Set([
@@ -26,8 +24,6 @@ const PUBLIC_FILES = new Set([
     'results-csv.js',
     'styles.css',
     'team_lists.csv',
-    'uploads.html',
-    'uploads.js',
     'user-guide.html'
 ]);
 const CONTENT_TYPES = {
@@ -255,139 +251,6 @@ async function readJsonBody(request) {
     } catch {
         throw new RequestError(400, 'The request body must be valid JSON.');
     }
-}
-
-function validateUploadSelection(selection) {
-    if (!Array.isArray(selection) || selection.length === 0) {
-        throw new RequestError(400, 'Select at least one upload to export.');
-    }
-    if (selection.length > MAX_EXPORT_UPLOADS) {
-        throw new RequestError(400, `Select no more than ${MAX_EXPORT_UPLOADS} uploads at a time.`);
-    }
-
-    const keys = new Set();
-    return selection.map(item => {
-        if (!item || typeof item !== 'object' ||
-            !isValidDate(item.matchDate) ||
-            typeof item.board !== 'string' || !item.board.trim() ||
-            typeof item.team !== 'string' || !item.team.trim()) {
-            throw new RequestError(400, 'An upload selection contains invalid match details.');
-        }
-        const key = `${item.matchDate}\u0000${item.board}\u0000${item.team}`;
-        if (keys.has(key)) throw new RequestError(400, 'An upload was selected more than once.');
-        keys.add(key);
-        return { matchDate: item.matchDate, board: item.board, team: item.team };
-    });
-}
-
-async function handleUploadList(request, response, { pool, uploadApiKey }) {
-    if (!isAuthorized(request, uploadApiKey)) {
-        request.resume();
-        sendJson(response, 401, { error: 'A valid league upload key is required.' });
-        return;
-    }
-    if (request.method !== 'GET') {
-        request.resume();
-        sendJson(response, 405, { error: 'Method not allowed.' });
-        return;
-    }
-
-    const result = await pool.query(
-        `SELECT match_date, board, team, opponent, row_count, uploaded_at
-         FROM score_csv_uploads
-         ORDER BY match_date DESC, board, team`
-    );
-    sendJson(response, 200, {
-        uploads: result.rows.map(row => ({
-            matchDate: formatDatabaseDate(row.match_date),
-            board: row.board,
-            team: row.team,
-            opponent: row.opponent,
-            rowCount: row.row_count,
-            uploadedAt: row.uploaded_at
-        }))
-    });
-}
-
-async function handleUploadExport(request, response, { pool, uploadApiKey }) {
-    if (!isAuthorized(request, uploadApiKey)) {
-        request.resume();
-        sendJson(response, 401, { error: 'A valid league upload key is required.' });
-        return;
-    }
-    if (request.method !== 'POST') {
-        request.resume();
-        sendJson(response, 405, { error: 'Method not allowed.' });
-        return;
-    }
-    if ((request.headers['content-type'] || '').split(';')[0].trim().toLowerCase() !== 'application/json') {
-        request.resume();
-        sendJson(response, 415, { error: 'Content-Type must be application/json.' });
-        return;
-    }
-
-    const body = await readJsonBody(request);
-    const selection = validateUploadSelection(body && body.uploads);
-    const values = [];
-    const predicates = selection.map((upload, index) => {
-        const offset = index * 3;
-        values.push(upload.matchDate, upload.board, upload.team);
-        return `(match_date = $${offset + 1} AND board = $${offset + 2} AND team = $${offset + 3})`;
-    });
-    const result = await pool.query(
-        `SELECT match_date, board, team, csv_data
-         FROM score_csv_uploads
-         WHERE ${predicates.join(' OR ')}
-         ORDER BY match_date, board, team`,
-        values
-    );
-    if (result.rows.length !== selection.length) {
-        sendJson(response, 404, { error: 'One or more selected uploads could not be found.' });
-        return;
-    }
-
-    const totalCsvBytes = result.rows.reduce((total, row) => total + Buffer.byteLength(row.csv_data), 0);
-    if (totalCsvBytes > MAX_EXPORT_CSV_BYTES) {
-        throw new RequestError(413, 'The selected uploads exceed the 10 MB export limit.');
-    }
-    const parsedUploads = result.rows.map(upload => {
-        const rows = parseCsv(upload.csv_data).filter(row => !row.every(value => !value.trim()));
-        return { header: rows[0], rows: rows.slice(1) };
-    });
-    const roundCount = Math.max(0, ...parsedUploads.flatMap(upload =>
-        upload.header.filter(header => /^round_\d+$/.test(header))
-            .map(header => Number(header.slice('round_'.length)))
-    ));
-    const headers = [
-        'match_date', 'board', 'game', 'team', 'opponent', 'winner', 'player',
-        ...Array.from({ length: roundCount }, (_, index) => `round_${index + 1}`),
-        'Checkout'
-    ];
-
-    const csvRows = [headers];
-    for (const upload of parsedUploads) {
-        const columnIndexes = new Map(upload.header.map((header, index) => [header, index]));
-        for (const row of upload.rows) {
-            csvRows.push(headers.map(header => {
-                const index = columnIndexes.get(header);
-                const value = index === undefined ? '' : row[index] || '';
-                return value;
-            }));
-        }
-    }
-
-    const csv = csvRows
-        .map(row => row.map(serializeCsvCell).join(','))
-        .join('\r\n');
-    const file = Buffer.from(csv, 'utf8');
-    response.writeHead(200, {
-        'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Length': file.length,
-        'Content-Disposition': 'attachment; filename="701-score-uploads.csv"',
-        'Cache-Control': 'no-store',
-        'X-Content-Type-Options': 'nosniff'
-    });
-    response.end(file);
 }
 
 function serializeCsvCell(value) {
@@ -2119,82 +1982,6 @@ async function handleBrowserSubmission(request, response, context) {
     });
 }
 
-async function handleUpload(request, response, url, { pool, uploadApiKey }) {
-    if (!isAuthorized(request, uploadApiKey)) {
-        request.resume();
-        sendJson(response, 401, { error: 'A valid league upload key is required.' });
-        return;
-    }
-
-    if (request.method === 'POST') {
-        if ((request.headers['content-type'] || '').split(';')[0].trim().toLowerCase() !== 'text/csv') {
-            request.resume();
-            sendJson(response, 415, { error: 'Content-Type must be text/csv.' });
-            return;
-        }
-        const csvText = await readCsvBody(request);
-        const fixture = validateScoreCsv(csvText);
-        const { importScoreCsvUpload } = require('./db/import-score-csv');
-        let normalized;
-        try {
-            normalized = await importScoreCsvUpload(pool, csvText, fixture, parseCsv);
-        } catch (error) {
-            if (error.code === 'LEAGUE_IMPORT_CONFLICT') {
-                throw new RequestError(409, error.message);
-            }
-            throw error;
-        }
-        let uploadedAt;
-        if (normalized) {
-            uploadedAt = normalized.uploadedAt;
-        } else {
-            const result = await pool.query(
-                `INSERT INTO score_csv_uploads (match_date, board, team, opponent, csv_data, row_count)
-                 VALUES ($1, $2, $3, $4, $5, $6)
-                 ON CONFLICT (match_date, board, team)
-                 DO UPDATE SET opponent = EXCLUDED.opponent,
-                               csv_data = EXCLUDED.csv_data,
-                               row_count = EXCLUDED.row_count,
-                               uploaded_at = CURRENT_TIMESTAMP
-                 RETURNING uploaded_at`,
-                [fixture.matchDate, fixture.board, fixture.team, fixture.opponent, csvText, fixture.rowCount]
-            );
-            uploadedAt = result.rows[0].uploaded_at;
-        }
-        sendJson(response, 200, {
-            saved: true,
-            rowCount: fixture.rowCount,
-            uploadedAt
-        });
-        return;
-    }
-
-    const matchDate = url.searchParams.get('match_date') || '';
-    const board = url.searchParams.get('board') || '';
-    const team = url.searchParams.get('team') || '';
-    if (!matchDate || !board || !team) {
-        sendJson(response, 400, { error: 'Provide match_date, board, and team to download a saved CSV.' });
-        return;
-    }
-    const result = await pool.query(
-        'SELECT csv_data FROM score_csv_uploads WHERE match_date = $1 AND board = $2 AND team = $3',
-        [matchDate, board, team]
-    );
-    if (!result.rows.length) {
-        sendJson(response, 404, { error: 'No saved CSV was found for that match and team.' });
-        return;
-    }
-    const csv = result.rows[0].csv_data;
-    response.writeHead(200, {
-        'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Length': Buffer.byteLength(csv),
-        'Content-Disposition': 'attachment; filename="701-results.csv"',
-        'Cache-Control': 'no-store',
-        'X-Content-Type-Options': 'nosniff'
-    });
-    response.end(csv);
-}
-
 async function serveStatic(request, response, publicDir, pathname) {
     if (request.method !== 'GET' && request.method !== 'HEAD') {
         response.writeHead(405, { Allow: 'GET, HEAD' });
@@ -2211,10 +1998,8 @@ async function serveStatic(request, response, publicDir, pathname) {
     }
     const fileName = pathname === '/'
         ? 'index.html'
-        : pathname === '/uploads'
-            ? 'uploads.html'
-            : pathname === '/stats'
-                ? 'reports/index.html'
+        : pathname === '/stats'
+            ? 'reports/index.html'
             : pathname === '/reports'
                 ? 'reports/index.html'
                 : pathname === '/admin'
@@ -2254,12 +2039,6 @@ function createServer({ pool, uploadApiKey, adminApiKey = process.env.ADMIN_API_
         let handler;
         if (pathname === '/api/score-submissions') {
             handler = handleBrowserSubmission(request, response, context);
-        } else if (pathname === '/api/score-uploads') {
-            handler = handleUpload(request, response, url, context);
-        } else if (pathname === '/api/score-uploads/list') {
-            handler = handleUploadList(request, response, context);
-        } else if (pathname === '/api/score-uploads/export') {
-            handler = handleUploadExport(request, response, context);
         } else if (pathname === '/api/seasons') {
             handler = handleSeasons(request, response, context);
         } else if (pathname === '/api/admin/session') {

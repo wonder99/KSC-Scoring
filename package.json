@@ -2,7 +2,7 @@
   "name": "the-701-club",
   "version": "1.0.0",
   "private": true,
-  "description": "Browser-based 701 darts scorer with CSV result uploads",
+  "description": "Browser-based 701 darts league scorer",
   "scripts": {
     "start": "node server.js",
     "migrate": "node db/migrate.js",

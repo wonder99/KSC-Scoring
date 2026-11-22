@@ -128,9 +128,9 @@ Upsert rules must be explicit. A repeated submit should replace or create a revi
 ### Existing and new endpoints
 
 Keep:
-- `POST /api/upload`
-- `GET /api/uploads`
-- `GET /api/uploads/download`
+- `POST /api/score-submissions`
+- `GET /api/reports/*`
+- `/admin` schedule and submission administration
 - `POST /api/seasons`
 - `POST /api/teams`
 - `POST /api/players`

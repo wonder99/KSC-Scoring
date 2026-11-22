@@ -16,7 +16,7 @@ The hook requires Node.js and stages the updated version label in `index.html`.
 
 ## Run the app
 
-The Node.js server serves the scorer, reports, admin dashboard, uploads page, and API. Install dependencies and provide these environment variables:
+The Node.js server serves the scorer, reports, admin dashboard, and API. Install dependencies and provide these environment variables:
 
 - `DATABASE_URL` - PostgreSQL connection string
 - `UPLOAD_API_KEY` - key for score submissions and CSV uploads
@@ -38,7 +38,6 @@ Open <http://localhost:10000>.
 - Scorer: `/`
 - Public league stats: `/stats` (old `/reports` links redirect to `/stats`)
 - Admin dashboard: `/admin`
-- CSV uploads: `/uploads`
 - Player guide: `/user-guide.html`
 - Admin guide: `/admin/admin-guide.html`
 
@@ -110,7 +109,7 @@ When scoring with the dart grid, enter up to three darts per turn; Miss records 
 
 Checkout suggestions follow the recommended outs and alternatives in [Rick Smith's Doubling Out Charts](https://ricksmith.ca/Darts/dartsouts.htm), including the chart's unavailable three-dart finishes. During a dart-grid turn, the strategy updates for the remaining darts. Turn history appears below the scoring controls as four player rows, with each player's successive scores shown as positive values and added horizontally; scores of 95 or more are highlighted. If the opponent doubles out first, select the opponent-win button and confirm to finish the game as a loss.
 
-After each game, use **Submit to League** on the winner screen. The first press reveals the league upload key field. Enter the key and submit the results. The server stores normalized turns, lineups, winner information, and checkout data in PostgreSQL and also keeps a compatibility CSV copy. Open `/uploads` to browse and download saved CSV records.
+After each game, use **Submit to League** on the winner screen. The first press reveals the league upload key field. Enter the key and submit the results. The server stores normalized turns, lineups, winner information, and checkout data in PostgreSQL.
 
 The 2026-2027 season is baseline-protected through week 10 (November 18). The scorer rejects submissions for weeks through week 10 and allows new normalized submissions for scheduled matches after that cutoff.
 
@@ -150,8 +149,6 @@ To enable submissions, reports, and administration, deploy this repository to Re
 - **Environment Variables**: `DATABASE_URL`, `UPLOAD_API_KEY`, and `ADMIN_API_KEY`
 
 The upload key entered in the app must exactly match the service's `UPLOAD_API_KEY`. The admin key must match `ADMIN_API_KEY`. Keep these values in environment settings and do not place them in source files or browser code.
-
-Open `/uploads` on the Web Service URL to browse saved uploads. Enter the league upload key, select one or more match/team entries, and choose **Download selected as CSV**. The file contains the combined score rows from the selected uploads and can be read directly in VS Code.
 
 Match progress is saved in this browser using local storage and restored after a reload on the same device. It is not synchronized between devices or saved to an account. Submit completed matches before clearing browser site data or changing devices.
 
