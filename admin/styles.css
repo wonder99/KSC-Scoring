@@ -97,6 +97,17 @@ button { padding: 8px 12px; cursor: pointer; }
     min-height: 32px;
     padding: 5px 9px;
 }
+.match-card.is-past {
+    opacity: 0.55;
+}
+.match-card.is-past strong,
+.match-card.is-past span,
+.match-card.is-past .match-teams {
+    color: #9dafc1;
+}
+.match-card.is-past button {
+    opacity: 0.8;
+}
 .team-card {
     grid-template-columns: minmax(180px, 1fr) 90px auto;
     gap: 6px 10px;

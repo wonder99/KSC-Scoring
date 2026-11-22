@@ -24,6 +24,13 @@ function formatShortDate(value) {
     return match ? match[1] : 'Unknown date';
 }
 
+function getLocalDateKey(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 function recalculateSubmissionGame(game) {
     const remainingCells = [...game.querySelectorAll('.countdown-cell[data-turn-id]')];
     const scoreCells = [...game.querySelectorAll('.review-turn-cell[data-turn-id]')]
@@ -196,8 +203,10 @@ async function loadFixtures() {
         return;
     }
     const payload = await adminFetch(`/api/admin/fixtures?season_id=${encodeURIComponent(seasonId)}`);
+    const today = getLocalDateKey();
     document.getElementById('fixture-list').innerHTML = payload.fixtures.map(fixture => `
-        <article class="data-card match-card"
+        <article class="data-card match-card${formatShortDate(fixture.match_date) < today ? ' is-past' : ''}"
+            data-match-date="${escapeHtml(formatShortDate(fixture.match_date))}"
             data-fixture-season="${fixture.season_id}"
             data-home-team="${fixture.home_team_id}"
             data-away-team="${fixture.away_team_id}">

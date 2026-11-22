@@ -490,6 +490,10 @@ test('admin season rendering does not reference a fixture variable', () => {
         path.join(__dirname, '../admin/admin.js'),
         'utf8'
     );
+    const styles = fs.readFileSync(
+        path.join(__dirname, '../admin/styles.css'),
+        'utf8'
+    );
     assert.doesNotMatch(script, /fixture\.season_id.*season-list|season-list.*fixture\.season_id/i);
 });
 
@@ -696,10 +700,19 @@ test('admin uses Schedule and Match terminology for the schedule UI', () => {
         path.join(__dirname, '../admin/admin.js'),
         'utf8'
     );
+    const styles = fs.readFileSync(
+        path.join(__dirname, '../admin/styles.css'),
+        'utf8'
+    );
     assert.match(html, />Schedule<\//);
     assert.match(html, /<h2>Schedule<\/h2>/);
     assert.match(html, /Add Match/);
     assert.match(script, /match-card/);
+    assert.match(script, /getLocalDateKey/);
+    assert.match(script, /is-past/);
+    assert.match(script, /data-match-date/);
+    assert.match(styles, /\.match-card\.is-past/);
+    assert.match(styles, /opacity: 0\.55/);
     assert.doesNotMatch(script, />Fixtures<|Delete this fixture/);
 });
 
