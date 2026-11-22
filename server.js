@@ -1331,7 +1331,9 @@ async function handleAdminSubmissions(request, response, url, context) {
         try {
             await client.query('BEGIN');
             const before = await client.query(
-                'SELECT id, score, is_bust, checkout_remaining FROM turn_score WHERE id = $1',
+                `SELECT id, match_game_id, score, is_bust, checkout_remaining
+                 FROM turn_score
+                 WHERE id = $1`,
                 [turnId]
             );
             if (!before.rows.length) throw new RequestError(404, 'Turn not found.');
@@ -1381,13 +1383,54 @@ async function handleAdminSubmissions(request, response, url, context) {
                  SET score = $1, is_bust = $2,
                      checkout_remaining = $3
                  WHERE id = $4
-                 RETURNING id, score, is_bust, checkout_remaining`,
+                 RETURNING id, match_game_id, score, is_bust, checkout_remaining`,
                 [score, Boolean(isBust),
                  checkout === null || checkout === '' ? null : Number(checkout),
                  turnId]
             );
+            const gameTurns = await client.query(
+                `SELECT id, score, is_bust, checkout_remaining
+                 FROM turn_score
+                 WHERE match_game_id = $1
+                 ORDER BY COALESCE(play_order, id), id`,
+                [before.rows[0].match_game_id]
+            );
+            let remaining = 701;
+            for (const gameTurn of gameTurns.rows) {
+                const remainingBefore = remaining;
+                const remainingAfter = gameTurn.is_bust
+                    ? remainingBefore
+                    : Math.max(0, remainingBefore - Number(gameTurn.score));
+                let checkoutRemaining = gameTurn.checkout_remaining;
+                if (Number(gameTurn.id) === turnId) {
+                    checkoutRemaining = checkout === null || checkout === ''
+                        ? null
+                        : Number(checkout);
+                }
+                if (remainingAfter === 0 && !gameTurn.is_bust) {
+                    checkoutRemaining = 0;
+                } else if (checkoutRemaining === 0) {
+                    checkoutRemaining = null;
+                }
+                await client.query(
+                    `UPDATE turn_score
+                     SET remaining_before = $1,
+                         remaining_after = $2,
+                         checkout_remaining = $3
+                     WHERE id = $4`,
+                    [remainingBefore, remainingAfter, checkoutRemaining, gameTurn.id]
+                );
+                remaining = remainingAfter;
+            }
+            const recalculated = await client.query(
+                `SELECT id, match_game_id, score, is_bust, checkout_remaining,
+                        remaining_before, remaining_after
+                 FROM turn_score
+                 WHERE id = $1`,
+                [turnId]
+            );
             await client.query('COMMIT');
-            sendJson(response, 200, { turn: updated.rows[0], reason });
+            sendJson(response, 200, { turn: recalculated.rows[0], reason });
             return;
         } catch (error) {
             await client.query('ROLLBACK');

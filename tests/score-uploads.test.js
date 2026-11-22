@@ -612,6 +612,10 @@ test('submission review renders one unified game table', () => {
     assert.match(script, /review-turn-cell/);
     assert.match(script, /input type="text"/);
     assert.match(script, /inputmode="numeric"/);
+    assert.match(script, /function recalculateSubmissionGame/);
+    assert.match(script, /countdown-cell\[data-turn-id/);
+    assert.match(script, /scoreInput\.addEventListener\('input'/);
+    assert.match(script, /remainingAfter/);
     assert.match(script, /calculatedAfter/);
     assert.match(script, /won with a \${checkoutTurn\.score} checkout/);
     assert.match(script, /review-game-outcome/);
@@ -631,6 +635,19 @@ test('submission review renders one unified game table', () => {
     assert.match(styles, /\.review-game-win/);
     assert.match(styles, /\.review-game-loss/);
     assert.match(styles, /font-size: 1\.05rem/);
+});
+
+test('turn revisions recalculate the whole game countdown in the database', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const server = fs.readFileSync(
+        path.join(__dirname, '../server.js'),
+        'utf8'
+    );
+    assert.match(server, /ORDER BY COALESCE\(play_order, id\), id/);
+    assert.match(server, /SET remaining_before = \$1/);
+    assert.match(server, /remaining_after = \$2/);
+    assert.match(server, /let remaining = 701/);
 });
 
 test('admin uses Schedule and Match terminology for the schedule UI', () => {

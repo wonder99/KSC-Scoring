@@ -24,6 +24,67 @@ function formatShortDate(value) {
     return match ? match[1] : 'Unknown date';
 }
 
+function recalculateSubmissionGame(game) {
+    const remainingCells = [...game.querySelectorAll('.countdown-cell[data-turn-id]')];
+    const scoreCells = [...game.querySelectorAll('.review-turn-cell[data-turn-id]')]
+        .sort((left, right) =>
+            (left.dataset.playOrder === '' ? Number.MAX_SAFE_INTEGER : Number(left.dataset.playOrder)) -
+            (right.dataset.playOrder === '' ? Number.MAX_SAFE_INTEGER : Number(right.dataset.playOrder)) ||
+            Number(left.dataset.turnId) - Number(right.dataset.turnId)
+        );
+    let remaining = 701;
+    const results = [];
+    for (const cell of scoreCells) {
+        const input = cell.querySelector('[name="score"]');
+        const text = input.value.trim();
+        let score = Number(text);
+        if (!/^\d+$/.test(text) ||
+            !Number.isInteger(score) ||
+            score < 0 ||
+            score > 180) {
+            score = Number(cell.dataset.originalScore);
+        }
+        const isBust = cell.dataset.originalBust === '1';
+        const remainingAfter = isBust
+            ? remaining
+            : Math.max(0, remaining - score);
+        const countdownCell = remainingCells.find(item =>
+            item.dataset.turnId === cell.dataset.turnId
+        );
+        if (countdownCell) {
+            countdownCell.querySelector('strong').textContent = String(remainingAfter);
+        }
+        results.push({
+            player: cell.dataset.player,
+            team: cell.dataset.team,
+            score,
+            isBust,
+            remainingAfter
+        });
+        remaining = remainingAfter;
+    }
+    const outcome = game.querySelector('.review-game-outcome');
+    if (!outcome) return;
+    const winnerTeam = game.dataset.winnerTeam || '';
+    const checkout = results.find(turn => turn.remainingAfter === 0 && !turn.isBust);
+    const loserTeam = winnerTeam
+        ? results.find(turn => turn.team && turn.team !== winnerTeam)?.team
+        : null;
+    const winText = checkout
+        ? `${checkout.player} won with a ${checkout.score} checkout.`
+        : winnerTeam
+            ? `${winnerTeam} won.`
+            : null;
+    const lossText = loserTeam ? `${loserTeam} lost.` : null;
+    if (winText || lossText) {
+        outcome.innerHTML =
+            `${winText ? `<span class="review-game-win">${escapeHtml(winText)}</span>` : ''}` +
+            `${lossText ? `<span class="review-game-loss">${escapeHtml(lossText)}</span>` : ''}`;
+    } else {
+        outcome.innerHTML = '<span>Game result unavailable.</span>';
+    }
+}
+
 function resetForm(formOrId) {
     const form = typeof formOrId === 'string'
         ? document.getElementById(formOrId)
@@ -259,7 +320,7 @@ async function openSubmissionReview(submissionId) {
                        ${lossText ? `<span class="review-game-loss">${escapeHtml(lossText)}</span>` : ''}`
                     : '<span>Game result unavailable.</span>';
                 return `
-                    <section class="submission-game">
+                    <section class="submission-game" data-winner-team="${escapeHtml(winnerTeam || '')}">
                         <h3>Game ${escapeHtml(gameNumber)}${winnerTeam ? ` · Winner: ${escapeHtml(winnerTeam)}` : ''}</h3>
                         <div class="review-game-layout">
                             <div class="review-table-wrap">
@@ -289,6 +350,9 @@ async function openSubmissionReview(submissionId) {
                                                         <td>
                                                             <div class="review-turn-cell"
                                                                  data-turn-id="${turn.id}"
+                                                                 data-play-order="${turn.play_order ?? ''}"
+                                                                 data-player="${escapeHtml(turn.player)}"
+                                                                 data-team="${escapeHtml(turn.team)}"
                                                                  data-original-score="${turn.score}"
                                                                  data-original-bust="${turn.is_bust ? '1' : '0'}"
                                                                  data-original-checkout="${turn.checkout_remaining ?? ''}">
@@ -302,7 +366,7 @@ async function openSubmissionReview(submissionId) {
                                                 ${Array.from({ length: maxRounds }, (_, index) => {
                                                     const turn = playerTurns.get(player.name)[index];
                                                     if (!turn) return '<td class="review-empty">—</td>';
-                                                    return `<td class="countdown-cell">
+                                                    return `<td class="countdown-cell" data-turn-id="${turn.id}">
                                                         <strong>${escapeHtml(turn.calculatedAfter)}</strong>
                                                     </td>`;
                                                 }).join('')}
@@ -315,6 +379,11 @@ async function openSubmissionReview(submissionId) {
                     </section>`;
             }).join('')}
         </div>`;
+    for (const scoreInput of document.querySelectorAll('.submission-game [name="score"]')) {
+        scoreInput.addEventListener('input', () => {
+            recalculateSubmissionGame(scoreInput.closest('.submission-game'));
+        });
+    }
     form.querySelector('[name="reason"]').value = '';
     form.classList.remove('hidden');
     form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
