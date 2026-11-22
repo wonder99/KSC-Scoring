@@ -253,10 +253,14 @@ test('serves public standings for the active season', async () => {
 
         test('serves the public reports page', async () => {
             await withServer({ query: async () => ({ rows: [] }) }, async baseUrl => {
-                const response = await fetch(`${baseUrl}/reports`);
+                const response = await fetch(`${baseUrl}/stats`);
                 assert.equal(response.status, 200);
                 assert.match(response.headers.get('content-type'), /text\/html/);
                 assert.match(await response.text(), /League Stats/);
+
+                const redirected = await fetch(`${baseUrl}/reports`, { redirect: 'manual' });
+                assert.equal(redirected.status, 302);
+                assert.equal(redirected.headers.get('location'), '/stats');
             });
         });
 
@@ -269,6 +273,21 @@ test('serves public standings for the active season', async () => {
             );
             assert.match(styles, /th:first-child,\s*td:first-child\s*\{[\s\S]*position:\s*sticky/);
             assert.match(styles, /left:\s*0/);
+        });
+
+        test('League Stats tabs put Leaders after Standings', () => {
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const html = fs.readFileSync(
+                path.join(__dirname, '../reports/index.html'),
+                'utf8'
+            );
+            const standingsIndex = html.indexOf('data-report="standings"');
+            const leadersIndex = html.indexOf('data-report="leaders"');
+            const mensIndex = html.indexOf('data-report="mens"');
+            assert.ok(standingsIndex >= 0);
+            assert.ok(leadersIndex > standingsIndex);
+            assert.ok(mensIndex > leadersIndex);
         });
     });
 });

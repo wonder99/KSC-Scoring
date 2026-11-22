@@ -36,7 +36,7 @@ npm.cmd start
 Open <http://localhost:10000>.
 
 - Scorer: `/`
-- Public reports: `/reports`
+- Public league stats: `/stats` (old `/reports` links redirect to `/stats`)
 - Admin dashboard: `/admin`
 - CSV uploads: `/uploads`
 - Player guide: `/user-guide.html`
@@ -48,7 +48,7 @@ Static-only hosting cannot provide database submissions, reports, migrations, or
 
 Server startup creates the existing CSV upload table and applies forward-only PostgreSQL migrations from `migrations/`.
 Run migrations manually with `npm.cmd run migrate` after configuring `DATABASE_URL`.
-Public reports are available at `/reports`. They require no league upload or admin key.
+Public league stats are available at `/stats`. They require no league upload or admin key. `/reports` redirects to `/stats` for compatibility.
 Import the authoritative team roster CSV and workbook genders into the active season with:
 `npm.cmd run backfill:rosters -- team_lists.csv "C:\path\to\league-workbook.xlsx"`
 Import the schedule into the active season with:
@@ -115,7 +115,7 @@ The 2026-2027 season is baseline-protected through week 10 (November 18). The sc
 
 ## Public reports
 
-Open `/reports` to view:
+Open `/stats` to view:
 
 - Standings
 - Mens Overall, Average, 95+, and Outs
@@ -163,6 +163,7 @@ npm.cmd test
 ```
 
 The Node test suite covers CSV parsing, migration structure, browser submission validation, report routes, admin authorization, and compact UI terminology.
+Set `DATABASE_URL` before running the suite to include the reversible live integration test. It submits one post-week-10 browser score, verifies that player and team stats increase, and removes the test submission, game, turn, and compatibility CSV data afterward.
 
 ## Available npm commands
 

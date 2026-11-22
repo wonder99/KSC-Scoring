@@ -20,6 +20,8 @@ const {
 const { buildBackupFilename } = require('../db/backup');
 const { parseRestoreArguments } = require('../db/restore');
 const { normalizeUploadedBackupFilename } = require('../db/backup');
+const { createPool } = require('../db/connection');
+const { normalizeBrowserSubmission } = require('../db/import-browser-submission');
 
 test('core league migration contains no destructive table drops', () => {
     const migrationPath = path.join(__dirname, '../migrations/001_core_league_schema.sql');
@@ -254,4 +256,271 @@ test('general player merge requires two distinct IDs', async () => {
         }, 99, 99),
         /must be different/
     );
+});
+
+test('post-week-10 browser submission updates baseline-plus-future stats and is reversible', {
+    skip: !process.env.DATABASE_URL
+}, async () => {
+    const pool = createPool();
+    const sourceKey = '2026-11-25|1|The Keepers|7';
+    let submittedMatchGameId = null;
+
+    try {
+        const playerResult = await pool.query(
+            `SELECT p.id, tr.team_id
+             FROM player p
+             JOIN team_roster tr ON tr.player_id = p.id
+             JOIN team t ON t.id = tr.team_id
+             WHERE tr.season_id = (SELECT id FROM season WHERE active = TRUE LIMIT 1)
+               AND t.name = 'The Keepers'
+               AND lower(p.first_name) = 'paul'
+               AND lower(COALESCE(p.last_name, '')) = 'mcmahon'
+             LIMIT 1`
+        );
+        assert.equal(playerResult.rows.length, 1, 'Paul McMahon on The Keepers must exist');
+        const playerId = playerResult.rows[0].id;
+        const teamId = playerResult.rows[0].team_id;
+
+        const fixtureResult = await pool.query(
+            `SELECT f.id, f.season_id, f.week_number,
+                    ht.name AS home_team, at.name AS away_team
+             FROM fixture f
+             JOIN team ht ON ht.id = f.home_team_id
+             JOIN team at ON at.id = f.away_team_id
+             WHERE f.match_date = '2026-11-25'::DATE
+               AND f.board_number = '1'
+               AND f.season_id = (SELECT id FROM season WHERE active = TRUE LIMIT 1)
+               AND (
+                    (ht.name = 'The Keepers' AND at.name = 'Killer Bees')
+                 OR (at.name = 'The Keepers' AND ht.name = 'Killer Bees')
+               )
+             LIMIT 1`
+        );
+        assert.equal(fixtureResult.rows.length, 1, 'Week 11 fixture must exist');
+        assert.ok(fixtureResult.rows[0].week_number > 10);
+
+        const existingGame = await pool.query(
+            'SELECT id FROM match_game WHERE fixture_id = $1 AND game_number = 7',
+            [fixtureResult.rows[0].id]
+        );
+        assert.equal(existingGame.rows.length, 0, 'Live test game 7 must be unused');
+
+        const baseline = await pool.query(
+            `SELECT baseline_games, baseline_shots, baseline_score,
+                    baseline_ninetyfive_plus, baseline_outs
+             FROM player_season_baseline
+             WHERE season_id = $1
+               AND team_id = $2
+               AND player_id = $3`,
+            [fixtureResult.rows[0].season_id, teamId, playerId]
+        );
+        assert.equal(baseline.rows.length, 1);
+
+        const teamBaseline = await pool.query(
+            `SELECT baseline_wins, baseline_losses,
+                    baseline_shots, baseline_score
+             FROM team_season_baseline
+             WHERE season_id = $1
+               AND team_id = $2`,
+            [fixtureResult.rows[0].season_id, teamId]
+        );
+        assert.equal(teamBaseline.rows.length, 1);
+
+        const beforeFuture = await pool.query(
+            `SELECT
+                COUNT(DISTINCT ts.match_game_id)::INT AS gp,
+                COUNT(ts.id)::INT AS shots,
+                COALESCE(SUM(ts.score), 0)::INT AS score,
+                COUNT(*) FILTER (WHERE ts.score >= 95)::INT AS ninetyfive_plus
+             FROM turn_score ts
+             JOIN game_submission gs ON gs.id = ts.submission_id
+             JOIN match_game mg ON mg.id = ts.match_game_id
+             JOIN fixture f ON f.id = mg.fixture_id
+             WHERE gs.status = 'accepted'
+               AND f.season_id = $1
+               AND COALESCE(f.week_number, 999) > 10
+               AND ts.player_id = $2`,
+            [fixtureResult.rows[0].season_id, playerId]
+        );
+
+        const beforeTeamFuture = await pool.query(
+            `SELECT
+                COUNT(*) FILTER (
+                    WHERE mg.status = 'finished'
+                      AND mg.winner_team_id = $2
+                )::INT AS wins,
+                COUNT(*) FILTER (
+                    WHERE mg.status = 'finished'
+                      AND mg.winner_team_id IS NOT NULL
+                      AND mg.winner_team_id <> $2
+                )::INT AS losses,
+                COALESCE(SUM(ts.score), 0)::INT AS score,
+                COUNT(ts.id)::INT AS shots
+             FROM turn_score ts
+             JOIN game_submission gs ON gs.id = ts.submission_id
+             JOIN match_game mg ON mg.id = ts.match_game_id
+             JOIN fixture f ON f.id = mg.fixture_id
+             WHERE gs.status = 'accepted'
+               AND f.season_id = $1
+               AND COALESCE(f.week_number, 999) > 10
+               AND ts.team_id = $2`,
+            [fixtureResult.rows[0].season_id, teamId]
+        );
+
+        const payload = {
+            matchDate: '2026-11-25',
+            board: '1',
+            team: 'The Keepers',
+            opponent: 'Killer Bees',
+            games: [{
+                game: 7,
+                winner: 'The Keepers',
+                players: [{ name: 'Paul McMahon' }],
+                turns: [{
+                    player: 'Paul McMahon',
+                    score: 95,
+                    darts: [{ score: 95, label: '95' }],
+                    busted: false,
+                    remainingBefore: 701,
+                    remainingAfter: 606,
+                    checkoutRemaining: null
+                }]
+            }]
+        };
+
+        const submitted = await normalizeBrowserSubmission(
+            pool,
+            payload,
+            '',
+            1
+        );
+        assert.equal(submitted.gameCount, 1);
+        assert.equal(submitted.rowCount, 1);
+
+        const submittedGame = await pool.query(
+            `SELECT mg.id
+             FROM game_submission gs
+             JOIN match_game mg ON mg.id = gs.match_game_id
+             WHERE gs.source = 'browser'
+               AND gs.source_key = $1`,
+            [sourceKey]
+        );
+        assert.equal(submittedGame.rows.length, 1);
+        submittedMatchGameId = submittedGame.rows[0].id;
+
+        const afterFuture = await pool.query(
+            `SELECT
+                COUNT(DISTINCT ts.match_game_id)::INT AS gp,
+                COUNT(ts.id)::INT AS shots,
+                COALESCE(SUM(ts.score), 0)::INT AS score,
+                COUNT(*) FILTER (WHERE ts.score >= 95)::INT AS ninetyfive_plus
+             FROM turn_score ts
+             JOIN game_submission gs ON gs.id = ts.submission_id
+             JOIN match_game mg ON mg.id = ts.match_game_id
+             JOIN fixture f ON f.id = mg.fixture_id
+             WHERE gs.status = 'accepted'
+               AND f.season_id = $1
+               AND COALESCE(f.week_number, 999) > 10
+               AND ts.player_id = $2`,
+            [fixtureResult.rows[0].season_id, playerId]
+        );
+
+        const afterTeamFuture = await pool.query(
+            `SELECT
+                COUNT(*) FILTER (
+                    WHERE mg.status = 'finished'
+                      AND mg.winner_team_id = $2
+                )::INT AS wins,
+                COUNT(*) FILTER (
+                    WHERE mg.status = 'finished'
+                      AND mg.winner_team_id IS NOT NULL
+                      AND mg.winner_team_id <> $2
+                )::INT AS losses,
+                COALESCE(SUM(ts.score), 0)::INT AS score,
+                COUNT(ts.id)::INT AS shots
+             FROM turn_score ts
+             JOIN game_submission gs ON gs.id = ts.submission_id
+             JOIN match_game mg ON mg.id = ts.match_game_id
+             JOIN fixture f ON f.id = mg.fixture_id
+             WHERE gs.status = 'accepted'
+               AND f.season_id = $1
+               AND COALESCE(f.week_number, 999) > 10
+               AND ts.team_id = $2`,
+            [fixtureResult.rows[0].season_id, teamId]
+        );
+
+        assert.equal(
+            afterFuture.rows[0].shots,
+            beforeFuture.rows[0].shots + 1
+        );
+        assert.equal(
+            afterFuture.rows[0].score,
+            beforeFuture.rows[0].score + 95
+        );
+        assert.equal(
+            afterFuture.rows[0].ninetyfive_plus,
+            beforeFuture.rows[0].ninetyfive_plus + 1
+        );
+        assert.equal(
+            afterFuture.rows[0].gp,
+            beforeFuture.rows[0].gp + 1
+        );
+
+        const baselineRow = baseline.rows[0];
+        const combinedShots = Number(baselineRow.baseline_shots) + afterFuture.rows[0].shots;
+        const combinedScore = Number(baselineRow.baseline_score) + afterFuture.rows[0].score;
+        const combined95 = Number(baselineRow.baseline_ninetyfive_plus) + afterFuture.rows[0].ninetyfive_plus;
+        assert.equal(combinedShots, Number(baselineRow.baseline_shots) + beforeFuture.rows[0].shots + 1);
+        assert.equal(combinedScore, Number(baselineRow.baseline_score) + beforeFuture.rows[0].score + 95);
+        assert.equal(combined95, Number(baselineRow.baseline_ninetyfive_plus) + beforeFuture.rows[0].ninetyfive_plus + 1);
+
+        const teamBaselineRow = teamBaseline.rows[0];
+        assert.equal(
+            afterTeamFuture.rows[0].shots,
+            beforeTeamFuture.rows[0].shots + 1
+        );
+        assert.equal(
+            afterTeamFuture.rows[0].score,
+            beforeTeamFuture.rows[0].score + 95
+        );
+        assert.equal(
+            afterTeamFuture.rows[0].wins,
+            beforeTeamFuture.rows[0].wins + 1
+        );
+        assert.equal(
+            Number(teamBaselineRow.baseline_shots) + afterTeamFuture.rows[0].shots,
+            Number(teamBaselineRow.baseline_shots) + beforeTeamFuture.rows[0].shots + 1
+        );
+        assert.equal(
+            Number(teamBaselineRow.baseline_score) + afterTeamFuture.rows[0].score,
+            Number(teamBaselineRow.baseline_score) + beforeTeamFuture.rows[0].score + 95
+        );
+    } finally {
+        await pool.query(
+            `DELETE FROM game_submission
+             WHERE source = 'browser'
+               AND source_key = $1`,
+            [sourceKey]
+        );
+        if (submittedMatchGameId) {
+            await pool.query(
+                `DELETE FROM match_game mg
+                 WHERE mg.id = $1
+                   AND NOT EXISTS (
+                       SELECT 1
+                       FROM game_submission gs
+                       WHERE gs.match_game_id = mg.id
+                   )`,
+                [submittedMatchGameId]
+            );
+        }
+        await pool.query(
+            `DELETE FROM score_csv_uploads
+             WHERE match_date = '2026-11-25'::DATE
+               AND board = '1'
+               AND team = 'The Keepers'`,
+            []
+        );
+        await pool.end();
+    }
 });

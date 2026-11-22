@@ -1835,10 +1835,20 @@ async function serveStatic(request, response, publicDir, pathname) {
         response.end('Method not allowed.');
         return;
     }
+    if (pathname === '/reports') {
+        response.writeHead(302, {
+            Location: '/stats',
+            'Cache-Control': 'no-cache'
+        });
+        response.end();
+        return;
+    }
     const fileName = pathname === '/'
         ? 'index.html'
         : pathname === '/uploads'
             ? 'uploads.html'
+            : pathname === '/stats'
+                ? 'reports/index.html'
             : pathname === '/reports'
                 ? 'reports/index.html'
                 : pathname === '/admin'
