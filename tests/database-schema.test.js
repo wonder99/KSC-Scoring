@@ -424,16 +424,33 @@ test('post-week-10 browser submission updates baseline-plus-future stats and is 
         assert.equal(submitted.gameCount, 1);
         assert.equal(submitted.rowCount, 1);
 
+        const pendingStatus = await pool.query(
+            `SELECT status
+             FROM game_submission
+             WHERE source = 'browser'
+               AND source_key = $1`,
+            [sourceKey]
+        );
+        assert.equal(pendingStatus.rows[0]?.status, 'pending');
+
         const submittedGame = await pool.query(
             `SELECT mg.id
              FROM game_submission gs
              JOIN match_game mg ON mg.id = gs.match_game_id
              WHERE gs.source = 'browser'
-               AND gs.source_key = $1`,
+               AND gs.source_key LIKE $1`,
             [sourceKey]
         );
         assert.equal(submittedGame.rows.length, 1);
         submittedMatchGameId = submittedGame.rows[0].id;
+
+        await pool.query(
+            `UPDATE game_submission
+             SET status = 'accepted', accepted_at = CURRENT_TIMESTAMP
+             WHERE source = 'browser'
+               AND source_key = $1`,
+            [sourceKey]
+        );
 
         const afterFuture = await pool.query(
             `SELECT

@@ -273,6 +273,7 @@ test('serves public standings for the active season', async () => {
             );
             assert.match(styles, /th:first-child,\s*td:first-child\s*\{[\s\S]*position:\s*sticky/);
             assert.match(styles, /left:\s*0/);
+            assert.match(styles, /th\s*\{[\s\S]*position:\s*sticky[\s\S]*top:\s*0/);
         });
 
         test('League Stats tabs put Leaders after Standings', () => {
@@ -288,6 +289,25 @@ test('serves public standings for the active season', async () => {
             assert.ok(standingsIndex >= 0);
             assert.ok(leadersIndex > standingsIndex);
             assert.ok(mensIndex > leadersIndex);
+        });
+
+        test('League Stats tables support sortable headers', () => {
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const script = fs.readFileSync(
+                path.join(__dirname, '../reports/reports.js'),
+                'utf8'
+            );
+            const styles = fs.readFileSync(
+                path.join(__dirname, '../reports/styles.css'),
+                'utf8'
+            );
+            assert.match(script, /function sortReportTable/);
+            assert.match(script, /sort-header/);
+            assert.match(script, /aria-sort/);
+            assert.match(script, /reportContent\.addEventListener\('click'/);
+            assert.match(styles, /\.sort-header/);
+            assert.match(styles, /\.sort-indicator/);
         });
     });
 });
@@ -687,6 +707,8 @@ test('browser submissions resolve short names through the team roster', () => {
     assert.match(importer, /FROM team_roster tr/);
     assert.match(importer, /tr\.team_id = \$2/);
     assert.match(importer, /is not on this team's active roster/);
+    assert.match(importer, /VALUES \(\$1, \$2, 'browser', \$3, 'pending'/);
+    assert.match(importer, /\|pending\|/);
 });
 
 test('admin uses Schedule and Match terminology for the schedule UI', () => {

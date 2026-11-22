@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('node:crypto');
 const { canonicalTeamName } = require('./import-score-csv');
 
 function validateBrowserSubmission(payload) {
@@ -325,23 +326,38 @@ async function normalizeBrowserSubmission(pool, payload, compatibilityCsvText, c
                 );
             }
 
-            const sourceKey = [
+            const baseSourceKey = [
                 payload.matchDate, payload.board,
                 canonicalTeamName(payload.team), game.game
             ].join('|');
+            const existingBrowserSubmission = await client.query(
+                `SELECT status
+                 FROM game_submission
+                 WHERE source = 'browser'
+                   AND source_key = $1
+                 LIMIT 1`,
+                [baseSourceKey]
+            );
+            const contentHash = crypto.createHash('sha256')
+                .update(JSON.stringify(game))
+                .digest('hex')
+                .slice(0, 16);
+            const sourceKey = existingBrowserSubmission.rows[0]?.status === 'accepted'
+                ? `${baseSourceKey}|pending|${contentHash}`
+                : baseSourceKey;
             const submission = await client.query(
                 `INSERT INTO game_submission (
                     fixture_id, match_game_id, source, source_key, status,
                     raw_payload, accepted_at
                  )
-                 VALUES ($1, $2, 'browser', $3, 'accepted', $4::JSONB, CURRENT_TIMESTAMP)
+                 VALUES ($1, $2, 'browser', $3, 'pending', $4::JSONB, NULL)
                  ON CONFLICT (source, source_key)
                  DO UPDATE SET
                     fixture_id = EXCLUDED.fixture_id,
                     match_game_id = EXCLUDED.match_game_id,
-                    status = 'accepted',
+                    status = 'pending',
                     raw_payload = EXCLUDED.raw_payload,
-                    accepted_at = CURRENT_TIMESTAMP
+                    accepted_at = NULL
                  RETURNING id`,
                 [
                     fixture.id,
@@ -356,7 +372,7 @@ async function normalizeBrowserSubmission(pool, payload, compatibilityCsvText, c
                  SET status = 'superseded'
                  WHERE match_game_id = $1
                    AND id <> $2
-                   AND status = 'accepted'`,
+                   AND status = 'pending'`,
                 [matchGameId, submissionId]
             );
             await client.query(

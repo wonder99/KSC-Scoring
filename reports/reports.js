@@ -29,6 +29,58 @@ function seasonQuery() {
     return selectedSeason ? `?season_id=${encodeURIComponent(selectedSeason)}` : '';
 }
 
+function parseSortableValue(value) {
+    const text = String(value ?? '').trim();
+    const normalized = text.replace(/,/g, '');
+    if (/^-?\d+(?:\.\d+)?$/.test(normalized)) {
+        return { numeric: true, value: Number(normalized) };
+    }
+    return { numeric: false, value: text };
+}
+
+function sortReportTable(table, columnIndex) {
+    const header = table.querySelectorAll('thead th')[columnIndex];
+    if (!header) return;
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    const currentDirection = table.dataset.sortDirection || '';
+    const currentIndex = table.dataset.sortIndex;
+    const direction = currentIndex === String(columnIndex) && currentDirection === 'asc'
+        ? 'desc'
+        : 'asc';
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((left, right) => {
+        const leftValue = parseSortableValue(left.cells[columnIndex]?.textContent);
+        const rightValue = parseSortableValue(right.cells[columnIndex]?.textContent);
+        let comparison;
+        if (leftValue.numeric && rightValue.numeric) {
+            comparison = leftValue.value - rightValue.value;
+        } else {
+            comparison = String(leftValue.value).localeCompare(
+                String(rightValue.value),
+                undefined,
+                { sensitivity: 'base', numeric: true }
+            );
+        }
+        return direction === 'asc' ? comparison : -comparison;
+    });
+    rows.forEach(row => tbody.appendChild(row));
+    table.dataset.sortIndex = String(columnIndex);
+    table.dataset.sortDirection = direction;
+
+    table.querySelectorAll('thead th').forEach((th, index) => {
+        th.setAttribute('aria-sort', index === columnIndex
+            ? (direction === 'asc' ? 'ascending' : 'descending')
+            : 'none');
+        const indicator = th.querySelector('.sort-indicator');
+        if (indicator) {
+            indicator.textContent = index === columnIndex
+                ? (direction === 'asc' ? '▲' : '▼')
+                : '↕';
+        }
+    });
+}
+
 function renderTable(rows, columns) {
     if (!rows.length) {
         reportContent.innerHTML = '<p class="empty">No accepted results are available for this report.</p>';
@@ -39,7 +91,13 @@ function renderTable(rows, columns) {
         <div class="table-wrap">
             <table>
                 <thead>
-                    <tr>${columns.map(column => `<th>${escapeHtml(column.label)}</th>`).join('')}</tr>
+                    <tr>${columns.map((column, index) => `
+                        <th scope="col" aria-sort="none">
+                            <button type="button" class="sort-header" data-sort-index="${index}">
+                                ${escapeHtml(column.label)}
+                                <span class="sort-indicator" aria-hidden="true">↕</span>
+                            </button>
+                        </th>`).join('')}</tr>
                 </thead>
                 <tbody>
                     ${rows.map(row => `
@@ -124,7 +182,13 @@ function createTable(rows, columns) {
     return `
         <div class="table-wrap">
             <table>
-                <thead><tr>${columns.map(column => `<th>${escapeHtml(column.label)}</th>`).join('')}</tr></thead>
+                <thead><tr>${columns.map((column, index) => `
+                    <th scope="col" aria-sort="none">
+                        <button type="button" class="sort-header" data-sort-index="${index}">
+                            ${escapeHtml(column.label)}
+                            <span class="sort-indicator" aria-hidden="true">↕</span>
+                        </button>
+                    </th>`).join('')}</tr></thead>
                 <tbody>
                     ${rows.map(row => `<tr>${columns.map(column =>
                         `<td>${escapeHtml(row[column.key])}</td>`).join('')}</tr>`).join('')}
@@ -172,6 +236,14 @@ document.querySelectorAll('.subtab').forEach(button => {
         activeCategory = button.dataset.category;
         loadReport();
     });
+});
+
+reportContent.addEventListener('click', event => {
+    const sortButton = event.target.closest('.sort-header');
+    if (!sortButton) return;
+    const table = sortButton.closest('table');
+    if (!table) return;
+    sortReportTable(table, Number(sortButton.dataset.sortIndex));
 });
 
 initialize();
