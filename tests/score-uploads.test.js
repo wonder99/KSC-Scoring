@@ -593,6 +593,18 @@ test('browser roster preserves first and last names', () => {
     assert.match(app, /\[firstName, lastName\]\.filter\(Boolean\)\.join\(' '\)/);
 });
 
+test('scoring page displays only the active player first name', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const app = fs.readFileSync(
+        path.join(__dirname, '../app.js'),
+        'utf8'
+    );
+    assert.match(app, /function displayFirstName\(name\) \{/);
+    assert.match(app, /String\(name \|\| ''\)\.trim\(\)\.split\(\/\\s\+\//);
+    assert.match(app, /: displayFirstName\(state\.players\[state\.currentPlayer\]\.name\)/);
+});
+
 test('browser submissions resolve short names through the team roster', () => {
     const fs = require('node:fs');
     const path = require('node:path');

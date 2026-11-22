@@ -236,11 +236,15 @@ function parseCSV(text) {
 }
 
 function canonicalTeamName(name) {
-    return name.replace(/\s*\(\d+\)\s*$/, '').replace(/^the\s+/i, '').trim().toLowerCase();
+    return name.replace(/\s*\(\d+\)\s*$/, '').replace(/!$/, '').replace(/^the\s+/i, '').trim().toLowerCase();
 }
 
 function displayTeamName(name) {
-    return name.replace(/\s*\(\d+\)\s*$/, '').trim();
+    return name.replace(/\s*\(\d+\)\s*$/, '').replace(/!$/, '').trim();
+}
+
+function displayFirstName(name) {
+    return String(name || '').trim().split(/\s+/)[0] || '';
 }
 
 function getCookie(name) {
@@ -626,7 +630,7 @@ function renderGame() {
         : null;
     $('current-player-name').textContent = state.winner
         ? (finishedResult ? `${displayTeamName(finishedResult.winner)} won.` : '')
-        : state.players[state.currentPlayer].name;
+        : displayFirstName(state.players[state.currentPlayer].name);
     document.querySelector('.turn-label').hidden = state.winner;
     document.querySelector('.opponent-out-action').hidden = state.winner;
     renderDartInput();
