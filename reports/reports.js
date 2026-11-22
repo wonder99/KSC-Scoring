@@ -92,7 +92,7 @@ function renderTable(rows, columns) {
             <table>
                 <thead>
                     <tr>${columns.map((column, index) => `
-                        <th scope="col" aria-sort="none">
+                        <th scope="col" aria-sort="none"${column.numeric ? ' class="numeric"' : ''}>
                             <button type="button" class="sort-header" data-sort-index="${index}">
                                 ${escapeHtml(column.label)}
                                 <span class="sort-indicator" aria-hidden="true">↕</span>
@@ -101,7 +101,7 @@ function renderTable(rows, columns) {
                 </thead>
                 <tbody>
                     ${rows.map(row => `
-                        <tr>${columns.map(column => `<td>${escapeHtml(row[column.key])}</td>`).join('')}</tr>
+                        <tr>${columns.map(column => `<td${column.numeric ? ' class="numeric"' : ''}>${escapeHtml(row[column.key])}</td>`).join('')}</tr>
                     `).join('')}
                 </tbody>
             </table>
@@ -144,13 +144,14 @@ async function loadReport() {
                 overall: [
                     { key: 'player', label: 'Player' },
                     { key: 'team', label: 'Team' },
-                    { key: 'gp', label: 'GP' },
-                    { key: 'shots', label: 'Shots' },
-                    { key: 'score', label: 'Score' },
-                    { key: 'average', label: 'Avg.' },
-                    { key: '95+', label: '95+' },
-                    { key: 'outs', label: 'Outs' },
-                    { key: '50+Fin.', label: '50+Fin.' }
+                    { key: 'gp', label: 'GP', numeric: true },
+                    { key: 'shots', label: 'Shots', numeric: true },
+                    { key: 'score', label: 'Score', numeric: true },
+                    { key: 'average', label: 'Avg.', numeric: true },
+                    { key: '95+', label: '95+', numeric: true },
+                    { key: 'outs', label: 'Outs', numeric: true },
+                    { key: 'HM', label: 'Hon. Mentions', numeric: true },
+                    { key: '50+Fin.', label: '50+Fin.', numeric: true }
                 ],
                 avg: [
                     { key: 'player', label: 'Player' },
@@ -166,6 +167,11 @@ async function loadReport() {
                     { key: 'player', label: 'Player' },
                     { key: 'team', label: 'Team' },
                     { key: 'outs', label: 'Outs' }
+                ],
+                honourable: [
+                    { key: 'player', label: 'Player' },
+                    { key: 'team', label: 'Team' },
+                    { key: 'score', label: 'Score' }
                 ]
             };
             renderTable(payload.players, categoryColumns[activeCategory]);

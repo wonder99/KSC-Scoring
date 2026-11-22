@@ -381,14 +381,18 @@ async function handlePlayerReport(request, response, url, gender, reportName, { 
         'mens-avg': 'average DESC, pt.score DESC, player',
         'mens-95': 'pt.ninetyfive_plus DESC, average DESC, player',
         'mens-outs': 'pt.outs DESC, average DESC, player',
+        'mens-honourable': 'pt.honourable_mentions DESC, average DESC, player',
         'lady-avg': 'average DESC, pt.score DESC, player',
         'lady-95': 'pt.ninetyfive_plus DESC, average DESC, player',
-        'lady-outs': 'pt.outs DESC, average DESC, player'
+        'lady-outs': 'pt.outs DESC, average DESC, player',
+        'lady-honourable': 'pt.honourable_mentions DESC, average DESC, player'
     }[reportName] || 'average DESC, pt.score DESC, player';
     const reportFilter = reportName.endsWith('-95')
         ? 'AND pt.ninetyfive_plus > 0'
         : reportName.endsWith('-outs')
             ? 'AND pt.outs > 0'
+            : reportName.endsWith('-honourable')
+                ? 'AND pt.honourable_mentions > 0'
             : '';
     const result = await pool.query(
         `WITH future_totals AS (
@@ -402,6 +406,10 @@ async function handlePlayerReport(request, response, url, gender, reportName, { 
                    COUNT(*) FILTER (WHERE ts.score = 171) AS score_171,
                    COUNT(*) FILTER (WHERE ts.score = 180) AS score_180,
                    COUNT(*) FILTER (
+                        WHERE (COALESCE(tr.gender, p.gender) = 'M' AND ts.score >= 171)
+                           OR (COALESCE(tr.gender, p.gender) = 'F' AND ts.score >= 130)
+                   ) AS honourable_mentions,
+                   COUNT(*) FILTER (
                         WHERE ts.checkout_remaining IS NOT NULL
                           AND ts.checkout_remaining <= 50
                    ) AS fifty_plus_finishes
@@ -412,11 +420,20 @@ async function handlePlayerReport(request, response, url, gender, reportName, { 
             JOIN team_roster tr ON tr.season_id = f.season_id
                                AND tr.team_id = ts.team_id
                                AND tr.player_id = ts.player_id
+            JOIN player p ON p.id = ts.player_id
             JOIN game_submission gs ON gs.id = ts.submission_id
             WHERE f.season_id = $1
               AND gs.status = 'accepted'
               AND COALESCE(f.week_number, 999) > s.baseline_through_week
             GROUP BY tr.team_id, ts.player_id
+         ),
+         baseline_mentions AS (
+            SELECT team_id,
+                   player_id,
+                   COUNT(*) AS honourable_mentions
+            FROM honourable_mention
+            WHERE season_id = $1
+            GROUP BY team_id, player_id
          ),
          player_totals AS (
             SELECT tr.team_id,
@@ -429,6 +446,8 @@ async function handlePlayerReport(request, response, url, gender, reportName, { 
                    COALESCE(pb.baseline_outs, 0) + COALESCE(ft.outs, 0) AS outs,
                    COALESCE(pb.baseline_score_171, 0) + COALESCE(ft.score_171, 0) AS score_171,
                    COALESCE(pb.baseline_score_180, 0) + COALESCE(ft.score_180, 0) AS score_180,
+                   COALESCE(bm.honourable_mentions, 0)
+                       + COALESCE(ft.honourable_mentions, 0) AS honourable_mentions,
                    COALESCE(pb.baseline_fifty_plus_finishes, 0)
                        + COALESCE(ft.fifty_plus_finishes, 0) AS fifty_plus_finishes
             FROM team_roster tr
@@ -440,8 +459,15 @@ async function handlePlayerReport(request, response, url, gender, reportName, { 
             LEFT JOIN future_totals ft
               ON ft.team_id = tr.team_id
              AND ft.player_id = tr.player_id
+            LEFT JOIN baseline_mentions bm
+              ON bm.team_id = tr.team_id
+             AND bm.player_id = tr.player_id
             WHERE tr.season_id = $1
-              AND (pb.player_id IS NOT NULL OR ft.player_id IS NOT NULL)
+              AND (
+                    pb.player_id IS NOT NULL
+                 OR ft.player_id IS NOT NULL
+                 OR bm.player_id IS NOT NULL
+              )
          )
          SELECT BTRIM(p.first_name || CASE
                     WHEN COALESCE(p.last_name, '') = '' THEN ''
@@ -459,6 +485,7 @@ async function handlePlayerReport(request, response, url, gender, reportName, { 
                 pt.outs,
                 pt.score_171 AS "171",
                 pt.score_180 AS "180",
+                pt.honourable_mentions AS "HM",
                 pt.fifty_plus_finishes AS "50+Fin."
          FROM player_totals pt
          JOIN player p ON p.id = pt.player_id
@@ -498,6 +525,10 @@ async function handleMensOuts(request, response, url, context) {
     await handlePlayerReport(request, response, url, 'M', 'mens-outs', context);
 }
 
+async function handleMensHonourable(request, response, url, context) {
+    await handleHonourableMentionReport(request, response, url, 'M', context);
+}
+
 async function handleLadyAvg(request, response, url, context) {
     await handlePlayerReport(request, response, url, 'F', 'lady-avg', context);
 }
@@ -508,6 +539,73 @@ async function handleLady95(request, response, url, context) {
 
 async function handleLadyOuts(request, response, url, context) {
     await handlePlayerReport(request, response, url, 'F', 'lady-outs', context);
+}
+
+async function handleLadyHonourable(request, response, url, context) {
+    await handleHonourableMentionReport(request, response, url, 'F', context);
+}
+
+async function handleHonourableMentionReport(request, response, url, gender, { pool }) {
+    if (request.method !== 'GET') {
+        throw new RequestError(405, 'Method not allowed.');
+    }
+    const season = await resolveReportSeason(pool, url);
+    const minimumScore = gender === 'M' ? 171 : 130;
+    const result = await pool.query(
+        `WITH baseline_mentions AS (
+            SELECT BTRIM(p.first_name || CASE
+                        WHEN COALESCE(p.last_name, '') = '' THEN ''
+                        ELSE ' ' || p.last_name
+                    END) AS player,
+                    t.name AS team,
+                    hm.score
+            FROM honourable_mention hm
+            JOIN player p ON p.id = hm.player_id
+            JOIN team t ON t.id = hm.team_id
+            JOIN team_roster tr
+              ON tr.season_id = hm.season_id
+             AND tr.team_id = hm.team_id
+             AND tr.player_id = hm.player_id
+            WHERE hm.season_id = $1
+              AND COALESCE(tr.gender, p.gender) = $2
+              AND hm.score >= $3
+         ),
+         future_mentions AS (
+            SELECT BTRIM(p.first_name || CASE
+                        WHEN COALESCE(p.last_name, '') = '' THEN ''
+                        ELSE ' ' || p.last_name
+                    END) AS player,
+                    t.name AS team,
+                    ts.score
+            FROM turn_score ts
+            JOIN match_game mg ON mg.id = ts.match_game_id
+            JOIN fixture f ON f.id = mg.fixture_id
+            JOIN season s ON s.id = f.season_id
+            JOIN team_roster tr ON tr.season_id = f.season_id
+                               AND tr.team_id = ts.team_id
+                               AND tr.player_id = ts.player_id
+            JOIN player p ON p.id = ts.player_id
+            JOIN team t ON t.id = ts.team_id
+            JOIN game_submission gs ON gs.id = ts.submission_id
+            WHERE f.season_id = $1
+              AND gs.status = 'accepted'
+              AND COALESCE(f.week_number, 999) > s.baseline_through_week
+              AND COALESCE(tr.gender, p.gender) = $2
+              AND ts.score >= $3
+         )
+         SELECT player, team, score
+         FROM (
+            SELECT * FROM baseline_mentions
+            UNION
+            SELECT * FROM future_mentions
+         ) mentions
+         ORDER BY score DESC, player, team`,
+        [season.id, gender, minimumScore]
+    );
+    sendJson(response, 200, {
+        season: season.name,
+        players: result.rows
+    });
 }
 
 async function handleSeasons(request, response, { pool }) {
@@ -1700,7 +1798,8 @@ async function handleLeaders(request, response, url, context) {
                    COUNT(ts.id) AS shots,
                    SUM(ts.score) AS score,
                    COUNT(*) FILTER (WHERE ts.score >= 95) AS ninetyfive_plus,
-                   COUNT(*) FILTER (WHERE ts.checkout_remaining IS NOT NULL) AS outs
+                   COUNT(*) FILTER (WHERE ts.checkout_remaining IS NOT NULL) AS outs,
+                   COUNT(*) FILTER (WHERE ts.score >= 171) AS honourable_mentions
             FROM turn_score ts
             JOIN match_game mg ON mg.id = ts.match_game_id
             JOIN fixture f ON f.id = mg.fixture_id
@@ -1722,7 +1821,8 @@ async function handleLeaders(request, response, url, context) {
                    COALESCE(pb.baseline_shots, 0) + COALESCE(ft.shots, 0) AS shots,
                    COALESCE(pb.baseline_score, 0) + COALESCE(ft.score, 0) AS score,
                    COALESCE(pb.baseline_ninetyfive_plus, 0) + COALESCE(ft.ninetyfive_plus, 0) AS ninetyfive_plus,
-                   COALESCE(pb.baseline_outs, 0) + COALESCE(ft.outs, 0) AS outs
+                   COALESCE(pb.baseline_outs, 0) + COALESCE(ft.outs, 0) AS outs,
+                   COALESCE(ft.honourable_mentions, 0) AS honourable_mentions
             FROM team_roster tr
             JOIN player p ON p.id = tr.player_id
             LEFT JOIN player_season_baseline pb
@@ -1757,7 +1857,8 @@ async function handleLeaders(request, response, url, context) {
                    COUNT(ts.id) AS shots,
                    SUM(ts.score) AS score,
                    COUNT(*) FILTER (WHERE ts.score >= 95) AS ninetyfive_plus,
-                   COUNT(*) FILTER (WHERE ts.checkout_remaining IS NOT NULL) AS outs
+                   COUNT(*) FILTER (WHERE ts.checkout_remaining IS NOT NULL) AS outs,
+                   COUNT(*) FILTER (WHERE ts.score >= 130) AS honourable_mentions
             FROM turn_score ts
             JOIN match_game mg ON mg.id = ts.match_game_id
             JOIN fixture f ON f.id = mg.fixture_id
@@ -1779,7 +1880,8 @@ async function handleLeaders(request, response, url, context) {
                    COALESCE(pb.baseline_shots, 0) + COALESCE(ft.shots, 0) AS shots,
                    COALESCE(pb.baseline_score, 0) + COALESCE(ft.score, 0) AS score,
                    COALESCE(pb.baseline_ninetyfive_plus, 0) + COALESCE(ft.ninetyfive_plus, 0) AS ninetyfive_plus,
-                   COALESCE(pb.baseline_outs, 0) + COALESCE(ft.outs, 0) AS outs
+                   COALESCE(pb.baseline_outs, 0) + COALESCE(ft.outs, 0) AS outs,
+                   COALESCE(ft.honourable_mentions, 0) AS honourable_mentions
             FROM team_roster tr
             JOIN player p ON p.id = tr.player_id
             LEFT JOIN player_season_baseline pb
@@ -2083,6 +2185,8 @@ function createServer({ pool, uploadApiKey, adminApiKey = process.env.ADMIN_API_
             handler = handleMens95(request, response, url, context);
         } else if (pathname === '/api/reports/mens-outs') {
             handler = handleMensOuts(request, response, url, context);
+        } else if (pathname === '/api/reports/mens-honourable') {
+            handler = handleMensHonourable(request, response, url, context);
         } else if (pathname === '/api/reports/lady-overall') {
             handler = handleLadyOverall(request, response, url, context);
         } else if (pathname === '/api/reports/lady-avg') {
@@ -2091,6 +2195,8 @@ function createServer({ pool, uploadApiKey, adminApiKey = process.env.ADMIN_API_
             handler = handleLady95(request, response, url, context);
         } else if (pathname === '/api/reports/lady-outs') {
             handler = handleLadyOuts(request, response, url, context);
+        } else if (pathname === '/api/reports/lady-honourable') {
+            handler = handleLadyHonourable(request, response, url, context);
         } else if (pathname === '/api/reports/leaders') {
             handler = handleLeaders(request, response, url, context);
         } else if (/^\/api\/reports\/match\/\d+\/?$/.test(pathname)) {

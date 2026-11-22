@@ -10,6 +10,7 @@
     "backfill:rosters": "node db/backfill-team-list-rosters.js",
     "backfill:schedule": "node db/backfill-schedule.js",
     "backfill:baselines": "node db/import-workbook-baselines.js",
+    "backfill:honourable": "node db/import-honourable-mentions.js",
     "merge:keepers-duplicates": "node db/merge-keepers-player-duplicates.js",
     "backup": "node db/backup.js",
     "restore": "node db/restore.js",

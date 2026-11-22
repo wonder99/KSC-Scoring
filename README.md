@@ -120,6 +120,8 @@ Open `/stats` to view:
 - Standings
 - Mens Overall, Average, 95+, and Outs
 - Ladies Overall, Average, 95+, and Outs
+- Mens and Ladies Honourable Mentions showing player and score (men: 171+; ladies: 130+)
+- Mens and Ladies Overall reports include the Hon. Mentions count
 - League leaders
 - Team and player totals based on week 10 workbook baselines plus accepted post-cutoff submissions
 

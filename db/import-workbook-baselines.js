@@ -60,6 +60,43 @@ function extractWorkbookBaselines(workbookPath) {
     return JSON.parse(result.stdout);
 }
 
+function extractHonourableMentions(workbookPath) {
+    if (!workbookPath || !fs.existsSync(workbookPath)) {
+        throw new Error(`Workbook not found: ${workbookPath || '(missing)'}`);
+    }
+    const pythonCode = [
+        'import json, sys',
+        'import openpyxl',
+        'p=sys.argv[1]',
+        'w=openpyxl.load_workbook(p, data_only=True, read_only=True)',
+        'if "Leaders" not in w.sheetnames:',
+        '    print("[]");',
+        '    raise SystemExit',
+        's=w["Leaders"]',
+        'mentions=[]',
+        'for r in range(52,57):',
+        '    name=s.cell(r,1).value',
+        '    team=s.cell(r,2).value',
+        '    score=s.cell(r,3).value',
+        '    if name and team and isinstance(score,(int,float)):',
+        '        mentions.append({"gender":"M","name":str(name).strip(),"team":str(team).strip(),"score":int(score),"row":r})',
+        '    name=s.cell(r,5).value',
+        '    team=s.cell(r,6).value',
+        '    score=s.cell(r,7).value',
+        '    if name and team and isinstance(score,(int,float)):',
+        '        mentions.append({"gender":"F","name":str(name).strip(),"team":str(team).strip(),"score":int(score),"row":r})',
+        'print(json.dumps(mentions))'
+    ].join('\n');
+    const result = spawnSync('python', ['-c', pythonCode, workbookPath], {
+        encoding: 'utf8',
+        maxBuffer: 10 * 1024 * 1024
+    });
+    if (result.status !== 0) {
+        throw new Error(result.stderr || 'Workbook Honourable Mentions extraction failed.');
+    }
+    return JSON.parse(result.stdout);
+}
+
 function normalizedName(value) {
     return String(value)
         .trim()
@@ -127,16 +164,147 @@ async function findTeam(client, name) {
 }
 
 async function findPlayer(client, rosterRow) {
-    const result = await client.query(
-        `SELECT id FROM player
-         WHERE lower(first_name) = lower($1)
-           AND lower(COALESCE(last_name, '')) = lower($2)
-         ORDER BY id
-         LIMIT 1`,
-        [rosterRow.firstName, rosterRow.lastName]
-    );
-    if (result.rows.length) return result.rows[0];
+    const firstNames = [rosterRow.firstName];
+    if (rosterRow.teamName === 'Flight Risk' && rosterRow.firstName === 'Jermey') {
+        firstNames.push('Jeremy');
+    }
+
+    for (const firstName of firstNames) {
+        const result = await client.query(
+          `SELECT id FROM player
+             WHERE lower(first_name) = lower($1)
+               AND lower(COALESCE(last_name, '')) = lower($2)
+           ORDER BY id
+           LIMIT 1`,
+          [firstName, rosterRow.lastName]
+        );
+        if (result.rows.length) return result.rows[0];
+    }
     return null;
+}
+
+async function importHonourableMentionsWithClient(client, seasonId, csvPath, workbookPath) {
+    const roster = parseTeamListCsv(fs.readFileSync(csvPath, 'utf8'));
+    const mentions = extractHonourableMentions(workbookPath);
+    const unmatched = [];
+    let mentionRows = 0;
+
+    await client.query(
+        'DELETE FROM honourable_mention WHERE season_id = $1',
+        [seasonId]
+    );
+
+    for (const mention of mentions) {
+        if (
+          (mention.gender === 'M' && mention.score < 171) ||
+          (mention.gender === 'F' && mention.score < 130) ||
+          mention.score > 180
+        ) {
+          unmatched.push({
+              team: mention.team,
+              player: mention.name,
+              score: mention.score,
+              reason: 'score is outside the Honourable Mention threshold'
+          });
+          continue;
+        }
+
+        const team = await findTeam(client, mention.team);
+        if (!team) {
+          unmatched.push({
+              team: mention.team,
+              player: mention.name,
+              score: mention.score,
+              reason: 'team not found'
+          });
+          continue;
+        }
+
+        const rosterRow = matchWorkbookPlayer(
+          mention.team,
+          mention.name,
+          roster
+        );
+        if (!rosterRow) {
+          unmatched.push({
+              team: mention.team,
+              player: mention.name,
+              score: mention.score,
+              reason: 'no authoritative roster match'
+          });
+          continue;
+        }
+
+        const player = await findPlayer(client, rosterRow);
+        if (!player) {
+          unmatched.push({
+              team: mention.team,
+              player: mention.name,
+              score: mention.score,
+              reason: 'player not found'
+          });
+          continue;
+        }
+
+        await client.query(
+          `INSERT INTO honourable_mention (
+              season_id, team_id, player_id, score,
+              source_sheet, source_row, source_reference
+           )
+           VALUES ($1, $2, $3, $4, 'Leaders', $5, $6)
+           ON CONFLICT (season_id, team_id, player_id, score)
+           DO UPDATE SET
+              source_sheet = EXCLUDED.source_sheet,
+              source_row = EXCLUDED.source_row,
+              source_reference = EXCLUDED.source_reference,
+              imported_at = CURRENT_TIMESTAMP`,
+          [
+              seasonId,
+              team.id,
+              player.id,
+              mention.score,
+              mention.row,
+              `Leaders!${mention.gender === 'M' ? 'A' : 'E'}${mention.row}:${mention.gender === 'M' ? 'C' : 'G'}${mention.row}`
+          ]
+        );
+        mentionRows++;
+    }
+
+    return { mentionRows, unmatched };
+}
+
+async function importHonourableMentions(pool, csvPath, workbookPath) {
+    if (!pool || typeof pool.connect !== 'function') {
+        throw new TypeError('A PostgreSQL pool with transactions is required.');
+    }
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const seasonResult = await client.query(
+          'SELECT id, name FROM season WHERE active = TRUE LIMIT 1'
+        );
+        if (!seasonResult.rows.length) {
+          throw new Error('No active season exists.');
+        }
+        const season = seasonResult.rows[0];
+        const result = await importHonourableMentionsWithClient(
+          client,
+          season.id,
+          csvPath,
+          workbookPath
+        );
+        await client.query('COMMIT');
+        return {
+          season: season.name,
+          mentionRows: result.mentionRows,
+          unmatched: result.unmatched
+        };
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
 }
 
 async function importWorkbookBaselines(pool, csvPath, workbookPath, baselineWeek = 10) {
@@ -279,13 +447,20 @@ async function importWorkbookBaselines(pool, csvPath, workbookPath, baselineWeek
                 playerRows++;
             }
         }
+        const honourableResult = await importHonourableMentionsWithClient(
+            client,
+            season.id,
+            csvPath,
+            workbookPath
+        );
         await client.query('COMMIT');
         return {
             season: season.name,
             baselineThroughWeek: baselineWeek,
             teamRows,
             playerRows,
-            unmatched
+            mentionRows: honourableResult.mentionRows,
+            unmatched: unmatched.concat(honourableResult.unmatched)
         };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -308,7 +483,7 @@ if (require.main === module) {
             .then(async result => {
                 await pool.end();
                 console.log(
-                    `Imported ${result.playerRows} player baselines and ${result.teamRows} team baselines through week ${result.baselineThroughWeek} for ${result.season}.`
+                    `Imported ${result.playerRows} player baselines, ${result.teamRows} team baselines, and ${result.mentionRows} Honourable Mentions through week ${result.baselineThroughWeek} for ${result.season}.`
                 );
                 if (result.unmatched.length) {
                     console.error(JSON.stringify(result.unmatched, null, 2));
@@ -324,7 +499,9 @@ if (require.main === module) {
 
 module.exports = {
     extractWorkbookBaselines,
+    extractHonourableMentions,
     importWorkbookBaselines,
+    importHonourableMentions,
     matchWorkbookPlayer,
     parseTeamListCsv
 };

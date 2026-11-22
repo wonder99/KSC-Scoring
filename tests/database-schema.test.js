@@ -218,6 +218,35 @@ test('stat leader reports do not apply a row limit', () => {
     assert.match(server, /ORDER BY \$\{orderBy\}/);
 });
 
+test('honourable mention reports show player scores and overall reports include the count', () => {
+    const fs = require('node:fs');
+    const server = fs.readFileSync(
+        path.join(__dirname, '../server.js'),
+        'utf8'
+    );
+    const reportsScript = fs.readFileSync(
+        path.join(__dirname, '../reports/reports.js'),
+        'utf8'
+    );
+    const reportsHtml = fs.readFileSync(
+        path.join(__dirname, '../reports/index.html'),
+        'utf8'
+    );
+
+    assert.match(server, /COALESCE\(tr\.gender, p\.gender\) = 'M' AND ts\.score >= 171/);
+    assert.match(server, /COALESCE\(tr\.gender, p\.gender\) = 'F' AND ts\.score >= 130/);
+    assert.match(server, /ts\.score >= 171/);
+    assert.match(server, /ts\.score >= 130/);
+    assert.match(server, /gs\.status = 'accepted'/);
+    assert.match(server, /mens-honourable/);
+    assert.match(server, /lady-honourable/);
+    assert.match(server, /SELECT player, team, score/);
+    assert.match(reportsScript, /key: 'score', label: 'Score'/);
+    assert.match(reportsScript, /key: 'HM', label: 'Hon\. Mentions'/);
+    assert.match(reportsScript, /column\.numeric \? ' class="numeric"' : ''/);
+    assert.match(reportsHtml, /data-category="honourable">Honourable Mentions/);
+});
+
 test('backup filenames are deterministic and restore confirmation is explicit', () => {
     const now = new Date('2026-11-21T17:30:00.000Z');
     const filename = buildBackupFilename(now, 'C:\\backups');
