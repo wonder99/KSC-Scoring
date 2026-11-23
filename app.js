@@ -2,6 +2,8 @@ const STARTING_SCORE = 701;
 const SPARE_PLAYER_NAME = 'Spare';
 const PLAYER_COLORS = ['#3498db', '#e67e22', '#1abc9c', '#9b59b6'];
 const SELECTED_TEAM_COOKIE = 'selectedTeam';
+const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+let sessionExpiryTimeout = null;
 const state = {
     teams: new Map(),
     schedule: [],
@@ -29,7 +31,8 @@ const state = {
     activeGameIndex: 0,
     gameStarted: false,
     showWinnerDialog: false,
-    currentScreen: 'roster'
+    currentScreen: 'roster',
+    matchStartedAt: null
 };
 
 const $ = (id) => document.getElementById(id);
@@ -72,6 +75,7 @@ function initializeGameSlots() {
     state.showWinnerDialog = false;
     state.lastTurnSnapshot = null;
     state.currentScreen = 'roster';
+    state.matchStartedAt = null;
 }
 
 function setPersistenceStatus(message) {
@@ -104,6 +108,9 @@ function persistSession() {
     if (!state.matchKey) return;
     try {
         saveActiveGame();
+        if (!state.matchStartedAt && ['lineup', 'game'].includes(state.currentScreen)) {
+            state.matchStartedAt = Date.now();
+        }
         localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
             version: 1,
             matchDate: state.matchDate,
@@ -111,11 +118,13 @@ function persistSession() {
             teamName: state.teamName,
             opponent: state.opponent,
             matchKey: state.matchKey,
+            matchStartedAt: state.matchStartedAt,
             activeGameIndex: state.activeGameIndex,
             currentScreen: state.currentScreen,
             games: state.games
         }));
         setPersistenceStatus('');
+        scheduleSessionReset();
     } catch (error) {
         setPersistenceStatus(`Could not save this match in this browser: ${error.message}`);
     }
@@ -154,6 +163,18 @@ function restorePersistedSession() {
             !Number.isInteger(saved.activeGameIndex) || saved.activeGameIndex < 0 || saved.activeGameIndex > 6) {
             throw new Error('The saved match data is invalid.');
         }
+        const savedStartedAt = saved.matchStartedAt === undefined
+            ? Date.now()
+            : saved.matchStartedAt;
+        if (!Number.isInteger(savedStartedAt) || savedStartedAt > Date.now() + 5 * 60 * 1000) {
+            throw new Error('The saved match start time is invalid.');
+        }
+        if (Date.now() - savedStartedAt >= SESSION_MAX_AGE_MS) {
+            clearPersistedSession();
+            setPersistenceStatus('The saved match was older than 24 hours and was cleared.');
+            populateDates(false);
+            return false;
+        }
         const scheduledMatch = state.schedule.find(match =>
             match.date === saved.matchDate && match.teams.includes(saved.teamName)
         );
@@ -183,6 +204,7 @@ function restorePersistedSession() {
         selectMatch(false);
         state.games = savedGames;
         state.activeGameIndex = saved.activeGameIndex;
+        state.matchStartedAt = savedStartedAt;
         state.matchResults = savedGames
             .map(game => game.result)
             .filter(Boolean)
@@ -195,12 +217,14 @@ function restorePersistedSession() {
 
         if (state.gameStarted) {
             showGameScreen();
+            scheduleSessionReset();
         } else if (state.currentScreen === 'lineup') {
             showLineupScreen();
         } else {
             state.currentScreen = 'roster';
             $('roster-screen').classList.add('active');
             updateGameNavigation();
+            scheduleSessionReset();
             persistSession();
         }
         return true;
@@ -1099,11 +1123,50 @@ function startNextGame() {
 
 function clearPersistedSession() {
     try {
+        if (sessionExpiryTimeout) {
+            clearTimeout(sessionExpiryTimeout);
+            sessionExpiryTimeout = null;
+        }
+        state.matchStartedAt = null;
         localStorage.removeItem(SESSION_STORAGE_KEY);
         setPersistenceStatus('');
     } catch (error) {
         setPersistenceStatus(`Could not clear the saved match from this browser: ${error.message}`);
     }
+}
+
+function resetExpiredSession() {
+    clearPersistedSession();
+    state.matchKey = null;
+    state.matchDate = '';
+    state.board = '';
+    state.matchResults = [];
+    state.teamName = '';
+    state.opponent = '';
+    state.rosterPlayers = [];
+    state.currentScreen = 'roster';
+    initializeGameSlots();
+    clearSelectedTeamCookie();
+    $('match-date').value = '';
+    populateTeams(false);
+    $('opponent-name').textContent = 'Select a match day and team';
+    $('game-screen').classList.remove('active');
+    $('lineup-screen').classList.remove('active');
+    $('roster-screen').classList.add('active');
+    updateGameNavigation();
+    setPersistenceStatus('The saved match was older than 24 hours and was cleared.');
+}
+
+function scheduleSessionReset() {
+    if (!state.matchStartedAt) return;
+    if (sessionExpiryTimeout) clearTimeout(sessionExpiryTimeout);
+
+    const remainingMs = state.matchStartedAt + SESSION_MAX_AGE_MS - Date.now();
+    if (remainingMs <= 0) {
+        resetExpiredSession();
+        return;
+    }
+    sessionExpiryTimeout = setTimeout(resetExpiredSession, remainingMs);
 }
 
 function renderHistory() {
