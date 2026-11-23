@@ -4,6 +4,7 @@
   "private": true,
   "description": "Browser-based 701 darts league scorer",
   "scripts": {
+    "build": "node --check app.js && node --check server.js && node --check start-server.js && node --check db/connection.js",
     "start": "node server.js",
     "migrate": "node db/migrate.js",
     "backfill:scores": "node db/backfill.js",
@@ -21,6 +22,9 @@
     "node": ">=20"
   },
   "dependencies": {
+    "@neon/config": "^1.14.6",
+    "@neon/env": "^2.1.9",
+    "dotenv": "^18.0.10",
     "exceljs": "^4.4.0",
     "pg": "^8.16.3"
   }

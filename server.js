@@ -1,5 +1,7 @@
 'use strict';
 
+require('dotenv').config({ path: ['.env.local', '.env'] });
+
 const crypto = require('node:crypto');
 const fs = require('node:fs/promises');
 const http = require('node:http');
@@ -1456,7 +1458,7 @@ async function handleAdminBackups(request, response, url, context) {
         throw new RequestError(401, 'A valid admin key is required.');
     }
 
-    const backupDir = path.join(__dirname, 'backups');
+    const backupDir = context.backupDir;
     const {
         isValidBackupFilename,
         listDatabaseBackups,
@@ -1598,7 +1600,6 @@ async function handleAdminBackups(request, response, url, context) {
         const { restoreDatabaseBackup } = require('./db/restore');
         try {
             restoreDatabaseBackup({
-                databaseUrl: process.env.DATABASE_URL,
                 backupFile,
                 confirmed: true
             });
@@ -2212,7 +2213,10 @@ async function serveStatic(request, response, publicDir, pathname) {
     response.end(request.method === 'HEAD' ? undefined : content);
 }
 
-function createServer({ pool, uploadApiKey, adminApiKey = process.env.ADMIN_API_KEY || null, publicDir = __dirname }) {
+function createServer({
+    pool, uploadApiKey, adminApiKey = process.env.ADMIN_API_KEY || null,
+    publicDir = __dirname, backupDir = path.join(__dirname, 'backups')
+}) {
     if (!pool || typeof pool.query !== 'function') throw new TypeError('A PostgreSQL pool is required.');
     if (!uploadApiKey) throw new Error('UPLOAD_API_KEY must be configured.');
     const adminSessions = new Map();
@@ -2226,7 +2230,7 @@ function createServer({ pool, uploadApiKey, adminApiKey = process.env.ADMIN_API_
             return;
         }
         const pathname = decodeURIComponent(url.pathname);
-        const context = { pool, uploadApiKey, adminApiKey, adminSessions };
+        const context = { pool, uploadApiKey, adminApiKey, adminSessions, backupDir };
         let handler;
         if (pathname === '/api/score-submissions') {
             handler = handleBrowserSubmission(request, response, context);

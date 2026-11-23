@@ -4,6 +4,8 @@
 
 Replace the workbook as the operating record with a PostgreSQL-backed browser application while preserving the existing live scoring and CSV workflows during migration.
 
+For the implemented table relationships and the entity relationship diagram, see [Database Schema and Relationships](DATABASE_SCHEMA.md).
+
 The database will own:
 - seasons, teams, roster membership, fixtures, games, and lineups
 - raw submitted turns and game results

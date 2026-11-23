@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const { randomUUID } = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
@@ -368,14 +369,52 @@ test('general player merge requires two distinct IDs', async () => {
     );
 });
 
-test('post-week-10 browser submission updates baseline-plus-future stats and is reversible', {
-    skip: !process.env.DATABASE_URL
+test('post-week-10 browser submission updates baseline-plus-future stats in an isolated schema', {
+    skip: !process.env.TEST_DATABASE_URL
 }, async () => {
-    const pool = createPool();
+    const testHost = new URL(process.env.TEST_DATABASE_URL).hostname;
+    if (testHost.endsWith('.neon.tech') && testHost.includes('-pooler.')) {
+        throw new Error('TEST_DATABASE_URL must use a direct, unpooled Neon connection.');
+    }
+    const databasePool = createPool(process.env.TEST_DATABASE_URL);
+    let client;
+    let schemaCreated = false;
+    const schema = `test_701_${randomUUID().replace(/-/g, '')}`;
     const sourceKey = '2026-11-25|1|The Keepers|7';
-    let submittedMatchGameId = null;
 
     try {
+        client = await databasePool.connect();
+        const query = client.query.bind(client);
+        const pool = {
+            query,
+            async connect() {
+                return { query, release() {} };
+            }
+        };
+        await query(`CREATE SCHEMA "${schema}"`);
+        schemaCreated = true;
+        await query(`SET search_path TO "${schema}"`);
+        await runMigrations(pool);
+        await pool.query(`
+            INSERT INTO season (name, active, baseline_through_week)
+            VALUES ('Integration test season', TRUE, 10);
+            INSERT INTO team (name) VALUES ('The Keepers'), ('Killer Bees');
+            INSERT INTO player (first_name, last_name) VALUES ('Paul', 'McMahon');
+            INSERT INTO team_roster (season_id, team_id, player_id)
+            SELECT s.id, t.id, p.id FROM season s, team t, player p
+            WHERE t.name = 'The Keepers';
+            INSERT INTO fixture (season_id, week_number, match_date, board_number, home_team_id, away_team_id)
+            SELECT s.id, 11, '2026-11-25', '1', home.id, away.id
+            FROM season s, team home, team away
+            WHERE home.name = 'Killer Bees' AND away.name = 'The Keepers';
+            INSERT INTO player_season_baseline (
+                season_id, team_id, player_id, baseline_games, baseline_shots, baseline_score, baseline_ninetyfive_plus
+            )
+            SELECT s.id, t.id, p.id, 5, 20, 500, 2
+            FROM season s, team t, player p WHERE t.name = 'The Keepers';
+            INSERT INTO team_season_baseline (season_id, team_id, baseline_wins, baseline_shots, baseline_score)
+            SELECT s.id, t.id, 2, 20, 500 FROM season s, team t WHERE t.name = 'The Keepers';
+        `);
         const playerResult = await pool.query(
             `SELECT p.id, tr.team_id
              FROM player p
@@ -525,7 +564,6 @@ test('post-week-10 browser submission updates baseline-plus-future stats and is 
             [sourceKey]
         );
         assert.equal(submittedGame.rows.length, 1);
-        submittedMatchGameId = submittedGame.rows[0].id;
 
         await pool.query(
             `UPDATE game_submission
@@ -623,31 +661,14 @@ test('post-week-10 browser submission updates baseline-plus-future stats and is 
             Number(teamBaselineRow.baseline_score) + beforeTeamFuture.rows[0].score + 95
         );
     } finally {
-        await pool.query(
-            `DELETE FROM game_submission
-             WHERE source = 'browser'
-               AND source_key = $1`,
-            [sourceKey]
-        );
-        if (submittedMatchGameId) {
-            await pool.query(
-                `DELETE FROM match_game mg
-                 WHERE mg.id = $1
-                   AND NOT EXISTS (
-                       SELECT 1
-                       FROM game_submission gs
-                       WHERE gs.match_game_id = mg.id
-                   )`,
-                [submittedMatchGameId]
-            );
+        try {
+            if (schemaCreated) {
+                await client.query('RESET search_path');
+                await client.query(`DROP SCHEMA "${schema}" CASCADE`);
+            }
+        } finally {
+            if (client) client.release();
+            await databasePool.end();
         }
-        await pool.query(
-            `DELETE FROM score_csv_uploads
-             WHERE match_date = '2026-11-25'::DATE
-               AND board = '1'
-               AND team = 'The Keepers'`,
-            []
-        );
-        await pool.end();
     }
 });

@@ -1,5 +1,7 @@
 'use strict';
 
+require('dotenv').config({ path: ['.env.local', '.env'] });
+
 const { Pool } = require('pg');
 
 function createPool(databaseUrl = process.env.DATABASE_URL) {

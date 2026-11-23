@@ -3,6 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
+const { backupDatabaseUrl, postgresTool } = require('./postgres-tools');
 
 function parseRestoreArguments(args) {
     const confirm = args.find(arg => arg.startsWith('--confirm='));
@@ -36,11 +37,12 @@ function formatRestoreFailure(result) {
 }
 
 function restoreDatabaseBackup({
-    databaseUrl = process.env.DATABASE_URL,
+    databaseUrl,
     backupFile,
     confirmed = false
 } = {}) {
-    if (!databaseUrl) throw new Error('DATABASE_URL must be configured.');
+    databaseUrl = backupDatabaseUrl(databaseUrl);
+    if (!databaseUrl) throw new Error('DATABASE_URL_UNPOOLED or DATABASE_URL must be configured.');
     if (!backupFile) throw new Error('Provide --file=path/to/backup.dump.');
     if (!confirmed) {
         throw new Error('Restore requires --confirm=RESTORE.');
@@ -51,7 +53,7 @@ function restoreDatabaseBackup({
         throw new Error(`Backup file not found: ${resolvedFile}`);
     }
 
-    const result = spawnSync('pg_restore', [
+    const result = spawnSync(postgresTool('pg_restore'), [
         '--clean',
         '--if-exists',
         '--no-owner',
@@ -63,7 +65,7 @@ function restoreDatabaseBackup({
     if (result.error) {
         if (result.error.code === 'ENOENT') {
             throw new Error(
-                'pg_restore is not installed or not available on PATH in the server environment.'
+                'pg_restore is not installed or not available on PATH or in PG_BINDIR in the server environment.'
             );
         }
         throw result.error;

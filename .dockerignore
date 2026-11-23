@@ -1,0 +1,11 @@
+.git
+.github
+.githooks
+.vscode
+.env
+.env.*
+.neon
+node_modules
+backups
+run-server.bat
+npm-debug.log*

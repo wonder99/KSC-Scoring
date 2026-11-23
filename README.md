@@ -3,6 +3,7 @@
 A browser-based 701 darts scorer backed by PostgreSQL. The app supports live match scoring, normalized league submissions, public reports, CSV compatibility downloads, and authenticated league administration.
 
 See the [Player Guide](user-guide.html) for scoring instructions and the [Admin Guide](admin/admin-guide.html) for league management.
+See [Database Schema and Relationships](DATABASE_SCHEMA.md) for the PostgreSQL table and foreign-key diagram.
 
 ## App version
 
@@ -81,6 +82,24 @@ Administrators can also upload an existing `.dump` file in the Backups tab. Uplo
 
 Web backup creation and restore require `pg_dump` and `pg_restore` to be installed inside the running Node server environment. The local Windows machine and hosted container must both have PostgreSQL client tools on `PATH`.
 
+On Windows, if PostgreSQL is installed but its tools are not on `PATH`, configure the bin directory persistently and restart the local Node server (and the shell or editor launching it):
+
+```powershell
+setx PG_BINDIR "C:\Program Files\PostgreSQL\18\bin"
+```
+
+Alternatively, add `PG_BINDIR=C:\Program Files\PostgreSQL\18\bin` to the existing local `.env.local` used by the server, then restart it. For command-line `npm run backup` or `npm run restore`, set `$env:PG_BINDIR` in that shell or use the persistent setting above. An unset `PG_BINDIR` uses `PATH`.
+
+With `sslmode=verify-full`, PostgreSQL client tools also need a trusted CA bundle. Set `PGSSLROOTCERT` to a trusted PEM bundle if the tools report a missing root certificate; do not disable certificate verification.
+
+The included `Dockerfile` installs PostgreSQL 18 client tools in the runtime image. For the existing Render service, adding the Dockerfile alone does not change its runtime: in Render's **Settings → Build → Source**, select the existing repository and branch, switch the runtime to **Docker**, and deploy the revision containing the Dockerfile. Retain the service's environment variables and confirm `pg_dump --version` and `pg_restore --version` in the running image. Render's native runtime may already include client tools, so check the actual service runtime and PATH if the error persists. PostgreSQL client tools must be at least as new as the database server; upgrade the image's client version if the server is newer than 18. Use a sufficiently recent `pg_restore` when restoring these custom-format dumps elsewhere.
+
+For Neon, set `DATABASE_URL_UNPOOLED` to the direct connection string for the **same endpoint, branch, database, user, and port** as `DATABASE_URL` (obtain it from Neon Connect with connection pooling off). If both are configured, backup and restore reject a mismatch before running a tool. If the direct URL is absent, `DATABASE_URL` is used unless it is a pooled Neon URL, which requires a matching direct URL. Explicit `databaseUrl` arguments override both. Verify the target before restoring.
+
+The local server loads `.env.local`: if the launcher supplies a Render `DATABASE_URL` while `.env.local` supplies an unrelated Neon `DATABASE_URL_UNPOOLED`, backup and restore will refuse to run. Remove the unrelated direct variable from the local configuration, or configure it with the matching direct URL for the intended database; restart the server. Do not copy credentials into source control.
+
+Render's filesystem is ephemeral by default: download backups promptly and store them securely elsewhere. A paid Render persistent disk mounted at `/app/backups` can retain server-side files across restarts and deploys; it is not a substitute for an independent backup.
+
 Create a custom-format PostgreSQL backup:
 
 ```powershell
@@ -91,12 +110,19 @@ npm.cmd run backup
 Backups are written to `backups/league-YYYY-MM-DDTHH-mm-ss.dump`. Restore only after stopping the app and confirming that the target database is the intended environment:
 
 ```powershell
-$env:DATABASE_URL = "target-postgresql-connection-string"
+$env:DATABASE_URL_UNPOOLED = "target-direct-postgresql-connection-string"
 npm.cmd run restore -- --confirm=RESTORE --file=backups\league-YYYY-MM-DDTHH-mm-ss.dump
 ```
 
 Restores are destructive in the target database. `pg_dump` and `pg_restore` must be installed and available on `PATH`.
 Restore treats the common `pg_stat_statements` ownership warning as a partial-success warning when it is limited to two ignored extension operations. Other `pg_restore` errors remain failures and should be reviewed before relying on the restored database.
+
+To test a real backup and restore without touching the configured database, opt into the disposable local PostgreSQL cluster test (the directory must contain PostgreSQL server and client tools):
+
+```powershell
+$env:BACKUP_TEST_POSTGRES_BIN = "C:\Program Files\PostgreSQL\18\bin"
+node --test tests/database-backup.integration.test.js
+```
 
 ## Start a match
 
@@ -170,7 +196,7 @@ npm.cmd test
 ```
 
 The Node test suite covers CSV parsing, migration structure, browser submission validation, report routes, admin authorization, and compact UI terminology.
-Set `DATABASE_URL` before running the suite to include the reversible live integration test. It submits one post-week-10 browser score, verifies that player and team stats increase, and removes the test submission, game, turn, and compatibility CSV data afterward.
+To include the live integration test, set `TEST_DATABASE_URL` to a direct, unpooled connection to a dedicated test database or Neon test branch. The database user must be able to create and drop schemas. The test creates a uniquely named schema with synthetic league data, runs the migrations and submission, and drops that schema afterward; it does not use or alter the application's roster or submissions. Without `TEST_DATABASE_URL`, the test is skipped.
 
 ## Available npm commands
 

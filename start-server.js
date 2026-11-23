@@ -1,24 +1,13 @@
-// Simple script to set environment and start server
-const { exec } = require('child_process');
+const { spawn } = require('node:child_process');
 
-// Set environment variables
-process.env.DATABASE_URL = 'postgresql://postgres@localhost/the701club';
-process.env.UPLOAD_API_KEY = 'test-key-12345';
+require('dotenv').config({ path: ['.env.local', '.env'] });
 
-// Start the server
-const child = exec('node server.js', (error, stdout, stderr) => {
-    if (error) {
-        console.error(`Server error: ${error}`);
-        return;
-    }
-    console.log(stdout);
-    console.error(stderr);
+const child = spawn(process.execPath, ['server.js'], {
+    cwd: __dirname,
+    env: process.env,
+    stdio: 'inherit'
 });
 
-child.stdout.on('data', (data) => {
-    console.log(data);
-});
-
-child.stderr.on('data', (data) => {
-    console.error(data);
+child.on('error', (error) => {
+    console.error(`Server error: ${error.message}`);
 });

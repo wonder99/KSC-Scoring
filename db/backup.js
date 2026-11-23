@@ -3,6 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
+const { backupDatabaseUrl, postgresTool } = require('./postgres-tools');
 
 function buildBackupFilename(now = new Date(), backupDir = path.join(__dirname, '..', 'backups')) {
     const timestamp = now.toISOString()
@@ -12,15 +13,16 @@ function buildBackupFilename(now = new Date(), backupDir = path.join(__dirname, 
 }
 
 function createDatabaseBackup({
-    databaseUrl = process.env.DATABASE_URL,
+    databaseUrl,
     backupDir = path.join(__dirname, '..', 'backups'),
     now = new Date()
 } = {}) {
-    if (!databaseUrl) throw new Error('DATABASE_URL must be configured.');
+    databaseUrl = backupDatabaseUrl(databaseUrl);
+    if (!databaseUrl) throw new Error('DATABASE_URL_UNPOOLED or DATABASE_URL must be configured.');
 
     fs.mkdirSync(backupDir, { recursive: true });
     const backupFile = buildBackupFilename(now, backupDir);
-    const result = spawnSync('pg_dump', [
+    const result = spawnSync(postgresTool('pg_dump'), [
         '--format=custom',
         '--no-owner',
         '--no-privileges',
@@ -31,7 +33,7 @@ function createDatabaseBackup({
     if (result.error) {
         if (result.error.code === 'ENOENT') {
             throw new Error(
-                'pg_dump is not installed or not available on PATH in the server environment.'
+                'pg_dump is not installed or not available on PATH or in PG_BINDIR in the server environment.'
             );
         }
         throw result.error;
