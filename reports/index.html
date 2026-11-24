@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KSC Darts League Stats</title>
-    <link rel="stylesheet" href="/reports/styles.css?v=6">
+    <link rel="stylesheet" href="/reports/styles.css?v=16">
 </head>
 <body>
     <main class="reports-shell">
@@ -23,6 +23,7 @@
             <select id="season-select" disabled>
                 <option>Loading seasons...</option>
             </select>
+            <button id="print-leaders" class="print-button" type="button" hidden>Print Leaders PDF</button>
         </section>
 
         <nav class="tabs" aria-label="Report type">
@@ -35,15 +36,15 @@
         <nav id="subtabs" class="subtabs hidden" aria-label="Stats category">
             <button class="subtab active" type="button" data-category="overall">Overall</button>
             <button class="subtab" type="button" data-category="avg">Average</button>
-            <button class="subtab" type="button" data-category="95">95+</button>
+            <button class="subtab" type="button" data-category="95">Most 95s or higher</button>
             <button class="subtab" type="button" data-category="outs">Outs</button>
             <button class="subtab" type="button" data-category="honourable">Honourable Mentions</button>
-            <button class="subtab" type="button" data-category="finishes">50+ Finishes</button>
+            <button class="subtab" type="button" data-category="finishes">High Finish (50+)</button>
         </nav>
 
         <p id="report-status" class="status" role="status" aria-live="polite">Loading report...</p>
         <section id="report-content" class="report-content"></section>
     </main>
-    <script src="/reports/reports.js?v=6"></script>
+    <script src="/reports/reports.js?v=16"></script>
 </body>
 </html>

@@ -267,7 +267,24 @@ test('high finish reports list individual 50+ finishes', () => {
     assert.match(server, /lady-finishes/);
     assert.match(server, /ts\.checkout_remaining = 0[\s\S]*?ts\.score >= 50/);
     assert.match(reportsScript, /key: 'score', label: 'Finish', numeric: true/);
-    assert.match(reportsHtml, /data-category="finishes">50\+ Finishes/);
+    assert.match(reportsHtml, /data-category="finishes">High Finish \(50\+\)/);
+});
+
+test('Leaders page includes mens and ladies Honourable Mentions and High Finishes', () => {
+    const fs = require('node:fs');
+    const reportsScript = fs.readFileSync(
+        path.join(__dirname, '../reports/reports.js'),
+        'utf8'
+    );
+
+    assert.match(reportsScript, /\/api\/reports\/mens-honourable/);
+    assert.match(reportsScript, /\/api\/reports\/lady-honourable/);
+    assert.match(reportsScript, /\/api\/reports\/mens-finishes/);
+    assert.match(reportsScript, /\/api\/reports\/lady-finishes/);
+    assert.match(reportsScript, /title: 'Honourable Mentions'/);
+    assert.match(reportsScript, /title: 'High Finish \(50\+\)'/);
+    assert.match(reportsScript, /title: 'Most 95s or higher'/);
+    assert.match(reportsScript, /slice\(0, 10\)/);
 });
 
 test('weekly high-finish imports read W1-W10 and rows 51-53', () => {

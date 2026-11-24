@@ -9,6 +9,7 @@ const seasonSelect = document.getElementById('season-select');
 const reportStatus = document.getElementById('report-status');
 const reportContent = document.getElementById('report-content');
 const subtabs = document.getElementById('subtabs');
+const printLeadersButton = document.getElementById('print-leaders');
 
 function escapeHtml(value) {
     return String(value ?? '')
@@ -119,32 +120,110 @@ async function loadReport() {
             if (loadSequence !== reportLoadSequence) return;
             renderTable(payload.standings, [
                 { key: 'team', label: 'Team' },
-                { key: 'wins', label: 'Wins' },
-                { key: 'losses', label: 'Losses' },
-                { key: 'games', label: 'Games' },
-                { key: 'average', label: 'Avg.' }
+                { key: 'wins', label: 'Wins', numeric: true },
+                { key: 'losses', label: 'Losses', numeric: true },
+                { key: 'games', label: 'Games', numeric: true },
+                { key: 'average', label: 'Avg.', numeric: true }
             ]);
         } else if (activeReport === 'leaders') {
-            const payload = await fetchJson(`/api/reports/leaders${seasonQuery()}`);
+            const [
+                payload,
+                mensHonourable,
+                ladiesHonourable,
+                mensFinishes,
+                ladiesFinishes
+            ] = await Promise.all([
+                fetchJson(`/api/reports/leaders${seasonQuery()}`),
+                fetchJson(`/api/reports/mens-honourable${seasonQuery()}`),
+                fetchJson(`/api/reports/lady-honourable${seasonQuery()}`),
+                fetchJson(`/api/reports/mens-finishes${seasonQuery()}`),
+                fetchJson(`/api/reports/lady-finishes${seasonQuery()}`)
+            ]);
             if (loadSequence !== reportLoadSequence) return;
-            const columns = [
-                { key: 'player', label: 'Player' },
-                { key: 'team', label: 'Team' },
-                { key: 'average', label: 'Avg.' },
-                { key: '95+', label: '95+' },
-                { key: 'outs', label: 'Outs' }
+            const statTables = [
+                {
+                    title: 'Average',
+                    key: 'average',
+                    mensRows: payload.mens,
+                    ladiesRows: payload.ladies,
+                    columns: [
+                        { key: 'player', label: 'Player' },
+                        { key: 'team', label: 'Team' },
+                        { key: 'average', label: 'Avg.', numeric: true }
+                    ]
+                },
+                {
+                    title: 'Most 95s or higher',
+                    key: '95+',
+                    mensRows: payload.mens,
+                    ladiesRows: payload.ladies,
+                    columns: [
+                        { key: 'player', label: 'Player' },
+                        { key: 'team', label: 'Team' },
+                        { key: '95+', label: '95s or higher', numeric: true }
+                    ]
+                },
+                {
+                    title: 'Most Finishes',
+                    key: 'outs',
+                    mensRows: payload.mens,
+                    ladiesRows: payload.ladies,
+                    columns: [
+                        { key: 'player', label: 'Player' },
+                        { key: 'team', label: 'Team' },
+                        { key: 'outs', label: 'Most Finishes', numeric: true }
+                    ]
+                },
+                {
+                    title: 'High Finish (50+)',
+                    key: 'score',
+                    mensRows: mensFinishes.players,
+                    ladiesRows: ladiesFinishes.players,
+                    columns: [
+                        { key: 'player', label: 'Player' },
+                        { key: 'team', label: 'Team' },
+                        { key: 'score', label: 'Finish', numeric: true }
+                    ]
+                },
+                {
+                    title: 'Honourable Mentions',
+                    key: 'score',
+                    mensRows: mensHonourable.players,
+                    ladiesRows: ladiesHonourable.players,
+                    columns: [
+                        { key: 'player', label: 'Player' },
+                        { key: 'team', label: 'Team' },
+                        { key: 'score', label: 'Score', numeric: true }
+                    ]
+                }
             ];
+            const topRows = (rows, key) => [...rows]
+                .sort((left, right) => Number(right[key] || 0) - Number(left[key] || 0))
+                .slice(0, 10);
+
             reportContent.innerHTML = `
-                <div class="leader-grid">
-                    <section><h2>Mens</h2>${createTable(payload.mens, columns)}</section>
-                    <section><h2>Ladies</h2>${createTable(payload.ladies, columns)}</section>
+                <div class="print-leader-headings" aria-hidden="true">
+                    <span>Men's Side</span>
+                    <span>Ladies' Side</span>
+                </div>
+                <div class="leader-stats">
+                    ${statTables.map(stat => `
+                        <section class="leader-stat">
+                            <h2>${escapeHtml(stat.title)}</h2>
+                            <div class="leader-grid">
+                                <section>
+                                    <h3>Mens</h3>
+                                    ${createTable(topRows(stat.mensRows, stat.key), stat.columns)}
+                                </section>
+                                <section>
+                                    <h3>Ladies</h3>
+                                    ${createTable(topRows(stat.ladiesRows, stat.key), stat.columns)}
+                                </section>
+                            </div>
+                        </section>
+                    `).join('')}
                 </div>`;
         } else {
-            const gender = activeReport === 'mens' ? 'mens' : 'lady';
-            const payload = await fetchJson(
-                `/api/reports/${gender}-${activeCategory}${seasonQuery()}`
-            );
-            if (loadSequence !== reportLoadSequence) return;
             const categoryColumns = {
                 overall: [
                     { key: 'player', label: 'Player' },
@@ -184,6 +263,12 @@ async function loadReport() {
                     { key: 'score', label: 'Finish', numeric: true }
                 ]
             };
+
+            const gender = activeReport === 'mens' ? 'mens' : 'lady';
+            const payload = await fetchJson(
+                `/api/reports/${gender}-${activeCategory}${seasonQuery()}`
+            );
+            if (loadSequence !== reportLoadSequence) return;
             renderTable(payload.players, categoryColumns[activeCategory]);
         }
         reportStatus.textContent = '';
@@ -200,7 +285,7 @@ function createTable(rows, columns) {
         <div class="table-wrap">
             <table>
                 <thead><tr>${columns.map((column, index) => `
-                    <th scope="col" aria-sort="none">
+                    <th scope="col" aria-sort="none"${column.numeric ? ' class="numeric"' : ''}>
                         <button type="button" class="sort-header" data-sort-index="${index}">
                             ${escapeHtml(column.label)}
                             <span class="sort-indicator" aria-hidden="true">↕</span>
@@ -208,7 +293,7 @@ function createTable(rows, columns) {
                     </th>`).join('')}</tr></thead>
                 <tbody>
                     ${rows.map(row => `<tr>${columns.map(column =>
-                        `<td>${escapeHtml(row[column.key])}</td>`).join('')}</tr>`).join('')}
+                        `<td${column.numeric ? ' class="numeric"' : ''}>${escapeHtml(row[column.key])}</td>`).join('')}</tr>`).join('')}
                 </tbody>
             </table>
         </div>`;
@@ -242,9 +327,12 @@ document.querySelectorAll('.tab').forEach(button => {
         button.classList.add('active');
         activeReport = button.dataset.report;
         subtabs.classList.toggle('hidden', !['mens', 'ladies'].includes(activeReport));
+        printLeadersButton.hidden = activeReport !== 'leaders';
         loadReport();
     });
 });
+
+printLeadersButton.addEventListener('click', () => window.print());
 
 document.querySelectorAll('.subtab').forEach(button => {
     button.addEventListener('click', () => {

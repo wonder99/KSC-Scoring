@@ -64,12 +64,24 @@ body {
 
 select,
 .tab,
-.subtab {
+.subtab,
+.print-button {
     min-height: 42px;
     border: 1px solid var(--border);
     border-radius: 8px;
     background: var(--card);
     color: var(--text);
+}
+
+.print-button {
+    margin-left: auto;
+    padding: 8px 14px;
+    cursor: pointer;
+}
+
+.print-button:hover,
+.print-button:focus-visible {
+    border-color: var(--accent);
 }
 
 select {
@@ -135,7 +147,7 @@ th:first-child {
 
 th,
 td {
-    padding: 10px 12px;
+    padding: 7px 12px;
     border-bottom: 1px solid var(--border);
     text-align: left;
 }
@@ -196,6 +208,33 @@ tbody tr:last-child td {
     flex: 1 1 0;
 }
 
+.leader-stats {
+    display: grid;
+    gap: 24px;
+}
+
+.leader-stat h2 {
+    margin: 0 0 12px;
+    color: var(--text);
+    font-size: 1.1rem;
+}
+
+.leader-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+}
+
+.leader-grid h3 {
+    margin: 0 0 8px;
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.print-leader-headings {
+    display: none;
+}
+
 .empty {
     color: var(--muted);
 }
@@ -207,6 +246,10 @@ tbody tr:last-child td {
         flex-direction: column;
     }
 
+    .leader-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .tabs {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -215,5 +258,113 @@ tbody tr:last-child td {
     th,
     td {
         padding: 9px 10px;
+    }
+}
+
+@media print {
+    @page {
+        size: portrait;
+        margin: 6mm;
+    }
+
+    body {
+        background: #fff;
+        color: #000;
+    }
+
+    .reports-shell {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .reports-header {
+        margin-bottom: 1mm;
+    }
+
+    .reports-header h1 {
+        margin: 0;
+        font-size: 14pt;
+        line-height: 1;
+    }
+
+    .reports-header nav,
+    .eyebrow,
+    .controls,
+    .tabs,
+    .subtabs,
+    .status,
+    .print-button {
+        display: none !important;
+    }
+
+    .leader-stats {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 3mm 5mm;
+    }
+
+    .leader-stat {
+        break-inside: avoid;
+    }
+
+    .leader-stat h2 {
+        margin: 0 0 1mm;
+        font-size: 9pt;
+    }
+
+    .leader-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 3mm;
+    }
+
+    .leader-grid h3 {
+        display: none;
+    }
+
+    .print-leader-headings {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 3mm;
+        margin-bottom: 2mm;
+        font-size: 8pt;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .table-wrap,
+    table,
+    th,
+    td,
+    th:first-child,
+    td:first-child {
+        background: #fff;
+        color: #000;
+    }
+
+    .table-wrap {
+        border-color: #777;
+    }
+
+    th,
+    td {
+        padding: 2px 4px;
+        border-bottom-color: #bbb;
+        font-size: 7pt;
+        line-height: 1;
+    }
+
+    th {
+        position: static;
+        box-shadow: none;
+    }
+
+    th:first-child,
+    td:first-child {
+        position: static;
+        box-shadow: none;
+    }
+
+    .sort-indicator {
+        display: none;
     }
 }

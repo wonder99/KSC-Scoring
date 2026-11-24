@@ -211,6 +211,30 @@ test('serves public standings for the active season', async () => {
             assert.ok(mensIndex > leadersIndex);
         });
 
+        test('Leaders report has a PDF print control and one-page portrait styles', () => {
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const html = fs.readFileSync(
+                path.join(__dirname, '../reports/index.html'),
+                'utf8'
+            );
+            const script = fs.readFileSync(
+                path.join(__dirname, '../reports/reports.js'),
+                'utf8'
+            );
+            const styles = fs.readFileSync(
+                path.join(__dirname, '../reports/styles.css'),
+                'utf8'
+            );
+
+            assert.match(html, /id="print-leaders"/);
+            assert.match(script, /printLeadersButton\.addEventListener\('click', \(\) => window\.print\(\)\)/);
+            assert.match(script, /Men's Side/);
+            assert.match(script, /Ladies' Side/);
+            assert.match(styles, /@media print/);
+            assert.match(styles, /@page[\s\S]*size:\s*portrait/);
+        });
+
         test('League Stats tables support sortable headers', () => {
             const fs = require('node:fs');
             const path = require('node:path');
