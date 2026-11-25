@@ -1,6 +1,9 @@
 ---
 deployment:
   tasks:
-    - /bin/mkdir -p "$HOME/ksc-scoring-app"
-    - /bin/cp -R admin db migrations reports "$HOME/ksc-scoring-app/"
-    - /bin/cp app.js dart_league_schedule.csv index.html package-lock.json package.json passenger-server.js results-csv.js server.js start-server.js styles.css team_lists.csv user-guide.html "$HOME/ksc-scoring-app/"
+    - /bin/mkdir -p "$HOME/ksc-scoring-app/site"
+    - /bin/cp -R db migrations "$HOME/ksc-scoring-app/"
+    - /bin/cp -R admin reports "$HOME/ksc-scoring-app/site/"
+    - /bin/cp app.js dart_league_schedule.csv index.html results-csv.js styles.css team_lists.csv user-guide.html "$HOME/ksc-scoring-app/site/"
+    - /bin/cp dart_league_schedule.csv package-lock.json package.json server.js start-server.js team_lists.csv "$HOME/ksc-scoring-app/"
+    - /bin/cp passenger-server.js "$HOME/ksc-scoring-app/app.js"

@@ -2339,7 +2339,7 @@ async function initializeDatabase(pool) {
     return runMigrations(pool);
 }
 
-async function startServer() {
+async function startServer({ publicDir = __dirname } = {}) {
     const databaseUrl = process.env.DATABASE_URL;
     const uploadApiKey = process.env.UPLOAD_API_KEY;
     const adminApiKey = process.env.ADMIN_API_KEY || null;
@@ -2360,7 +2360,7 @@ async function startServer() {
     
     await initializeDatabase(pool);
 
-    const server = createServer({ pool, uploadApiKey, adminApiKey });
+    const server = createServer({ pool, uploadApiKey, adminApiKey, publicDir });
     const port = Number(process.env.PORT) || 10000;
     await new Promise((resolve, reject) => {
         server.once('error', reject);

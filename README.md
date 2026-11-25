@@ -186,9 +186,9 @@ The upload key entered in the app must exactly match the service's `UPLOAD_API_K
 
 ### cPanel Git deployment
 
-The checked-in `.cpanel.yml` copies the application into `~/ksc-scoring-app`, outside the public web directory. Configure the cPanel Git checkout separately and select the intended branch. After committing and pushing changes, use **Update from Remote** and **Deploy HEAD Commit**. The deployment copies application files without deleting existing backups or environment files; it does not install dependencies or restart the app.
+The checked-in `.cpanel.yml` copies the application into `~/ksc-scoring-app`, outside the public web directory. It installs the Passenger entry point as `app.js` and copies browser files, including the scorer's own `app.js`, into `site/`. Configure the cPanel Git checkout separately and select the intended branch. After committing and pushing changes, use **Update from Remote** and **Deploy HEAD Commit**. The deployment copies application files without deleting existing backups or environment files; it does not install dependencies or restart the app.
 
-In **Setup Node.js App**, select the application directory, use Node.js 22 or newer, and set the startup file to `passenger-server.js`. Configure the environment variables, run **NPM Install**, and restart the app. Verify startup and routing on the hosting provider before switching the public domain. Server startup applies migrations, so use a separate test database for initial verification.
+In cPanel's Node.js application manager, select the application directory, use Node.js 22 or newer, and use the default `app.js` startup file. Configure the environment variables, install dependencies, and restart the app. Verify startup and routing on the hosting provider before switching the public domain. Server startup applies migrations, so use a separate test database for initial verification.
 
 The cPanel server needs `pg_dump` and `pg_restore` for its in-app database backup and restore actions. If those tools are unavailable, create and restore PostgreSQL backups from a separate computer with compatible PostgreSQL client tools.
 
