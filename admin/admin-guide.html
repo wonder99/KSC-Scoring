@@ -132,10 +132,12 @@
         <section>
             <h2>Score Uploads</h2>
             <ul>
-                <li><strong>Review turns:</strong> opens normalized turn rows and lets the organizer revise a score with a required reason.</li>
-                <li><strong>Accept:</strong> include an accepted submission in public reports.</li>
-                <li><strong>Reject:</strong> remove that submission from public reports while preserving the audit record.</li>
-                <li>A repeated browser or CSV submission supersedes earlier accepted data for the same match game.</li>
+                <li><strong>Review turns:</strong> opens all games in a browser upload and lets the organizer revise a score with a required reason.</li>
+                <li>Each browser upload remains available for review, even when it conflicts with another upload or an accepted result.</li>
+                <li><strong>Accept upload:</strong> accept all its games together. This replaces earlier accepted scores for the same team and games, while keeping the opposing team's accepted scores.</li>
+                <li>The most recently accepted upload determines the winner for each game. Rejecting it restores the winner from another accepted upload, if available.</li>
+                <li><strong>Reject:</strong> remove the upload from public reports while preserving it for review. A mixed status means only some games have since been replaced.</li>
+                <li>Older uploads created before match-level review remain separate game records.</li>
             </ul>
         </section>
 

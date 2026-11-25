@@ -142,6 +142,14 @@ async function mergeTeamAlias(client, exactTeam) {
             [exactTeam.id, sourceId]
         );
         await client.query(
+            'UPDATE game_submission SET submitted_team_id = $1 WHERE submitted_team_id = $2',
+            [exactTeam.id, sourceId]
+        );
+        await client.query(
+            'UPDATE game_submission SET winner_team_id = $1 WHERE winner_team_id = $2',
+            [exactTeam.id, sourceId]
+        );
+        await client.query(
             `DELETE FROM team_game source_row
              WHERE source_row.team_id = $1
                AND EXISTS (
@@ -176,6 +184,7 @@ async function mergeTeamAlias(client, exactTeam) {
                AND EXISTS (
                    SELECT 1 FROM turn_score exact_row
                    WHERE exact_row.match_game_id = source_row.match_game_id
+                     AND exact_row.submission_id IS NOT DISTINCT FROM source_row.submission_id
                      AND exact_row.player_id = source_row.player_id
                      AND exact_row.turn_number = source_row.turn_number
                      AND exact_row.team_id = $2

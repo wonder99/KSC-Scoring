@@ -69,7 +69,9 @@ Existing `score_csv_uploads` records can be reconciled after migrations with `np
 - The active 2026-2027 season is baseline protected through week 10, ending November 18.
 - Week 10 and earlier submissions are rejected so workbook totals cannot be overwritten.
 - Player names are canonicalized against `team_lists.csv`; the admin dashboard can edit or merge records.
-- Browser submissions write normalized turns, lineups, game results, and a compatibility CSV record.
+- Browser uploads retain each team's turns, lineups, and winners separately until an administrator reviews the whole upload.
+- Accepting an upload replaces that team's previously accepted scores for the included games, but preserves the opposing team's accepted scores. The most recently accepted upload determines each game's winner; rejecting it restores the winner from another accepted upload, if available.
+- A compatibility CSV record is written when a browser upload is accepted.
 - Public reports combine workbook baselines with accepted post-baseline submissions.
 - Admin users can manage seasons, teams, players, schedule matches, submissions, turn revisions, and rejection/acceptance status.
 - The player and admin guides describe browser and league workflows.

@@ -641,7 +641,7 @@ test('browser submissions resolve short names through the team roster', () => {
     assert.match(importer, /tr\.team_id = \$2/);
     assert.match(importer, /is not on this team's active roster/);
     assert.match(importer, /VALUES \(\$1, \$2, 'browser', \$3, 'pending'/);
-    assert.match(importer, /\|pending\|/);
+    assert.match(importer, /crypto\.randomUUID\(\)/);
 });
 
 test('admin uses Schedule and Match terminology for the schedule UI', () => {
@@ -880,17 +880,25 @@ test('updates a player through the authenticated admin API', async () => {
 });
 
 test('changes submission status through the authenticated admin API', async () => {
+    const client = {
+        async query(sql) {
+            if (/SELECT fixture_id, upload_id/.test(sql)) {
+                return { rows: [{ fixture_id: 1, upload_id: null }] };
+            }
+            if (/SELECT id, match_game_id, submitted_team_id/.test(sql)) {
+                return { rows: [{ id: 42, match_game_id: 7, submitted_team_id: 1 }] };
+            }
+            if (/UPDATE game_submission[\s\S]*RETURNING/.test(sql)) {
+                return { rows: [{ id: 42, status: 'rejected', accepted_at: null }] };
+            }
+            return { rows: [] };
+        },
+        release() {}
+    };
     await withServer({
-        query: async (sql, values) => {
-            assert.match(sql, /UPDATE game_submission/);
-            assert.deepEqual(values, ['rejected', 42]);
-            return {
-                rows: [{
-                    id: 42,
-                    status: 'rejected',
-                    accepted_at: null
-                }]
-            };
+        query: client.query,
+        async connect() {
+            return client;
         }
     }, async baseUrl => {
         const response = await fetch(`${baseUrl}/api/admin/submissions`, {

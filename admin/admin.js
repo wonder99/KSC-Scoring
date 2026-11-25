@@ -309,12 +309,13 @@ async function loadSubmissions() {
             <strong>${escapeHtml(submission.source)}: ${escapeHtml(submission.status)}</strong>
             <span>${escapeHtml(formatShortDate(submission.match_date))} / Board ${escapeHtml(submission.board_number || '-')}</span>
             <span>${escapeHtml(submission.home_team || '')} vs ${escapeHtml(submission.away_team || '')}</span>
+            <span>From: ${escapeHtml(submission.submitted_team || 'Unknown team')}</span>
             <div>
                 <span>${escapeHtml(submission.turn_count)} turns</span>
                 <button type="button" data-review-submission="${submission.id}">Review turns</button>
                 ${submission.status === 'accepted'
-                    ? `<button type="button" data-reject-submission="${submission.id}">Reject</button>`
-                    : `<button type="button" data-accept-submission="${submission.id}">Accept</button>`
+                    ? `<button type="button" data-reject-submission="${submission.id}">Reject upload</button>`
+                    : `<button type="button" data-accept-submission="${submission.id}">Accept upload</button>`
                 }
             </div>
         </article>`).join('');
@@ -343,23 +344,28 @@ async function openSubmissionReview(submissionId) {
     const detail = await adminFetch(`/api/admin/submissions/${submissionId}`);
     const form = document.getElementById('submission-review-form');
     form.querySelector('[name="submissionId"]').value = String(submissionId);
-    const submissionTeam = detail.turns.find(turn => turn.team)?.team || '';
+    const submissionTeam = detail.games.find(game => game.team)?.team ||
+        detail.turns.find(turn => turn.team)?.team || '';
     document.getElementById('submission-review-title').textContent =
-        `${detail.submission.source}: submission ${submissionId}`;
+        `${detail.submission.source}: upload ${submissionId}`;
     document.getElementById('submission-review-team').textContent =
         submissionTeam ? `from ${submissionTeam}` : '';
     document.getElementById('submission-review-summary').textContent =
         `${formatShortDate(detail.submission.match_date)} / Board ${detail.submission.board_number || '-'} · ${detail.submission.home_team || ''} vs ${detail.submission.away_team || ''}`;
     const turnsByGame = new Map();
+    for (const game of detail.games) {
+        turnsByGame.set(game.game_number, { ...game, turns: [] });
+    }
     for (const turn of detail.turns) {
         const gameNumber = turn.game_number || 1;
-        if (!turnsByGame.has(gameNumber)) turnsByGame.set(gameNumber, []);
-        turnsByGame.get(gameNumber).push(turn);
+        if (!turnsByGame.has(gameNumber)) turnsByGame.set(gameNumber, { turns: [], players: [] });
+        turnsByGame.get(gameNumber).turns.push(turn);
     }
     document.getElementById('submission-turn-editor').innerHTML = `
         <div class="submission-turn-list" aria-label="Submission turns">
-            ${[...turnsByGame.entries()].map(([gameNumber, gameTurns]) => {
-                const winnerTeam = gameTurns.find(turn => turn.winner_team)?.winner_team;
+            ${[...turnsByGame.entries()].map(([gameNumber, game]) => {
+                const gameTurns = game.turns;
+                const winnerTeam = game.winner_team || gameTurns.find(turn => turn.winner_team)?.winner_team;
                 let runningRemaining = 701;
                 const orderedTurns = [...gameTurns]
                     .sort((left, right) =>
@@ -385,6 +391,12 @@ async function openSubmissionReview(submissionId) {
                         playerTurns.set(turn.player, []);
                     }
                     playerTurns.get(turn.player).push(turn);
+                }
+                for (const player of game.players) {
+                    if (!playerTurns.has(player)) {
+                        players.push({ name: player, team: game.team });
+                        playerTurns.set(player, []);
+                    }
                 }
                 const maxRounds = Math.max(
                     1,
@@ -709,6 +721,9 @@ async function setReviewedSubmissionStatus(status) {
         !confirm('Reject this submission? Its turns will not affect public reports.')) {
         return;
     }
+    if (status === 'accepted' && !confirm(
+        'Accept this upload? It replaces earlier accepted scores for this team in these games, and its winners will be used in reports.'
+    )) return;
     try {
         await adminFetch('/api/admin/submissions', {
             method: 'POST',
@@ -940,7 +955,9 @@ document.addEventListener('click', async event => {
         } catch (error) { alert(error.message); }
     }
     const acceptSubmission = event.target.closest('[data-accept-submission]');
-    if (acceptSubmission) {
+    if (acceptSubmission && confirm(
+        'Accept this upload? It replaces earlier accepted scores for this team in these games, and its winners will be used in reports.'
+    )) {
         try {
             await adminFetch('/api/admin/submissions', {
                 method: 'POST',

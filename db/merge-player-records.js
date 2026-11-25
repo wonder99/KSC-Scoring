@@ -91,6 +91,7 @@ async function mergePlayerRecords(client, canonicalId, duplicateId) {
                SELECT 1
                FROM turn_score canonical
                WHERE canonical.match_game_id = duplicate.match_game_id
+                 AND canonical.submission_id IS NOT DISTINCT FROM duplicate.submission_id
                  AND canonical.team_id = duplicate.team_id
                  AND canonical.player_id = $2
                  AND canonical.turn_number = duplicate.turn_number
@@ -115,6 +116,20 @@ async function mergePlayerRecords(client, canonicalId, duplicateId) {
     );
     await client.query(
         'UPDATE game_player_score SET player_id = $1 WHERE player_id = $2',
+        [canonicalId, duplicateId]
+    );
+    await client.query(
+        `DELETE FROM submission_player duplicate
+         WHERE duplicate.player_id = $1
+           AND EXISTS (
+               SELECT 1 FROM submission_player canonical
+               WHERE canonical.submission_id = duplicate.submission_id
+                 AND canonical.player_id = $2
+           )`,
+        [duplicateId, canonicalId]
+    );
+    await client.query(
+        'UPDATE submission_player SET player_id = $1 WHERE player_id = $2',
         [canonicalId, duplicateId]
     );
     await client.query(

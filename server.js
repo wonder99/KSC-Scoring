@@ -295,7 +295,7 @@ async function handleReportStandings(request, response, url, { pool }) {
     const season = await resolveReportSeason(pool, url);
     const result = await pool.query(
         `WITH game_results AS (
-            SELECT mg.winner_team_id,
+            SELECT DISTINCT mg.id, mg.winner_team_id,
                    CASE WHEN mg.winner_team_id = f.home_team_id
                         THEN f.away_team_id
                         WHEN mg.winner_team_id = f.away_team_id
@@ -1629,19 +1629,25 @@ async function handleAdminSubmissions(request, response, url, context) {
         const values = seasonId ? [Number(seasonId)] : [];
         const where = seasonId ? 'WHERE f.season_id = $1' : '';
         const result = await context.pool.query(
-            `SELECT gs.id, gs.source, gs.source_key, gs.status,
-                    gs.submitted_at, gs.accepted_at,
+            `SELECT MIN(gs.id) AS id, gs.source,
+                    CASE WHEN COUNT(DISTINCT gs.status) = 1 THEN MIN(gs.status)
+                         ELSE 'mixed' END AS status,
+                    MIN(gs.submitted_at) AS submitted_at,
+                    MAX(gs.accepted_at) AS accepted_at,
                     f.id AS fixture_id, f.match_date, f.board_number,
                     ht.name AS home_team, at.name AS away_team,
+                    st.name AS submitted_team,
                     COUNT(ts.id) AS turn_count
              FROM game_submission gs
              LEFT JOIN fixture f ON f.id = gs.fixture_id
              LEFT JOIN team ht ON ht.id = f.home_team_id
              LEFT JOIN team at ON at.id = f.away_team_id
+             LEFT JOIN team st ON st.id = gs.submitted_team_id
              LEFT JOIN turn_score ts ON ts.submission_id = gs.id
              ${where}
-             GROUP BY gs.id, f.id, ht.name, at.name
-             ORDER BY gs.submitted_at DESC`,
+             GROUP BY COALESCE(gs.upload_id::text, 'legacy:' || gs.id::text),
+                      gs.source, f.id, ht.name, at.name, st.name
+             ORDER BY MIN(gs.submitted_at) DESC`,
             values
         );
         sendJson(response, 200, { submissions: result.rows });
@@ -1663,21 +1669,20 @@ async function handleAdminSubmissions(request, response, url, context) {
             !['accepted', 'rejected', 'superseded'].includes(status)) {
             throw new RequestError(400, 'submissionId and a valid status are required.');
         }
-        const result = await context.pool.query(
-            `UPDATE game_submission
-             SET status = $1,
-                 accepted_at = CASE WHEN $1 = 'accepted'
-                                    THEN COALESCE(accepted_at, CURRENT_TIMESTAMP)
-                                    ELSE accepted_at
-                               END
-             WHERE id = $2
-             RETURNING id, status, accepted_at`,
-            [status, submissionId]
-        );
-        if (!result.rows.length) {
+        const { setSubmissionStatus } = require('./db/review-submission');
+        let submission;
+        try {
+            submission = await setSubmissionStatus(context.pool, submissionId, status);
+        } catch (error) {
+            if (error.code === 'INVALID_SUBMISSION_REVIEW') {
+                throw new RequestError(409, error.message);
+            }
+            throw error;
+        }
+        if (!submission) {
             throw new RequestError(404, 'Submission not found.');
         }
-        sendJson(response, 200, { submission: result.rows[0] });
+        sendJson(response, 200, { submission });
         return;
     }
     const turnId = Number(body.turnId ?? body.turn_id);
@@ -1694,7 +1699,7 @@ async function handleAdminSubmissions(request, response, url, context) {
         try {
             await client.query('BEGIN');
             const before = await client.query(
-                `SELECT id, match_game_id, score, is_bust, checkout_remaining
+                `SELECT id, submission_id, match_game_id, score, is_bust, checkout_remaining
                  FROM turn_score
                  WHERE id = $1`,
                 [turnId]
@@ -1754,9 +1759,9 @@ async function handleAdminSubmissions(request, response, url, context) {
             const gameTurns = await client.query(
                 `SELECT id, score, is_bust, checkout_remaining
                  FROM turn_score
-                 WHERE match_game_id = $1
+                 WHERE submission_id IS NOT DISTINCT FROM $1 AND match_game_id = $2
                  ORDER BY COALESCE(play_order, id), id`,
-                [before.rows[0].match_game_id]
+                [before.rows[0].submission_id, before.rows[0].match_game_id]
             );
             let remaining = 701;
             for (const gameTurn of gameTurns.rows) {
@@ -1829,11 +1834,30 @@ async function handleAdminSubmissionDetail(request, response, url, context) {
     if (!submissionResult.rows.length) {
         throw new RequestError(404, 'Submission not found.');
     }
+    const games = await context.pool.query(
+        `SELECT mg.game_number, wt.name AS winner_team, st.name AS team,
+                COALESCE(array_agg(
+                    BTRIM(p.first_name || ' ' || COALESCE(p.last_name, ''))
+                    ORDER BY p.id
+                ) FILTER (WHERE p.id IS NOT NULL), ARRAY[]::text[]) AS players
+         FROM game_submission gs
+         JOIN match_game mg ON mg.id = gs.match_game_id
+         LEFT JOIN team wt ON wt.id = COALESCE(gs.winner_team_id, mg.winner_team_id)
+         LEFT JOIN team st ON st.id = gs.submitted_team_id
+         LEFT JOIN submission_player sp ON sp.submission_id = gs.id
+         LEFT JOIN player p ON p.id = sp.player_id
+         WHERE gs.id = $1 OR gs.upload_id = (
+             SELECT upload_id FROM game_submission WHERE id = $1
+         )
+         GROUP BY gs.id, mg.game_number, wt.name, st.name
+         ORDER BY mg.game_number`,
+        [Number(idMatch[1])]
+    );
     const turns = await context.pool.query(
         `SELECT ts.id, ts.turn_number, ts.score, ts.is_bust,
                 ts.remaining_before, ts.remaining_after,
                 ts.checkout_remaining, ts.dart_scores, ts.play_order,
-                mg.game_number, mg.winner_team_id,
+                mg.game_number, gs.winner_team_id,
                 ts.team_id,
                 wt.name AS winner_team,
                 p.first_name || CASE
@@ -1843,10 +1867,13 @@ async function handleAdminSubmissionDetail(request, response, url, context) {
                 t.name AS team
          FROM turn_score ts
          JOIN match_game mg ON mg.id = ts.match_game_id
-         LEFT JOIN team wt ON wt.id = mg.winner_team_id
+         JOIN game_submission gs ON gs.id = ts.submission_id
+         LEFT JOIN team wt ON wt.id = COALESCE(gs.winner_team_id, mg.winner_team_id)
          JOIN player p ON p.id = ts.player_id
          JOIN team t ON t.id = ts.team_id
-         WHERE ts.submission_id = $1
+         WHERE gs.id = $1 OR gs.upload_id = (
+             SELECT upload_id FROM game_submission WHERE id = $1
+         )
          ORDER BY mg.game_number,
                   COALESCE(ts.play_order, ts.id),
                   ts.id`,
@@ -1854,6 +1881,7 @@ async function handleAdminSubmissionDetail(request, response, url, context) {
     );
     sendJson(response, 200, {
         submission: submissionResult.rows[0],
+        games: games.rows,
         turns: turns.rows
     });
 }
@@ -2029,7 +2057,7 @@ async function handleMatchReport(request, response, url, { pool }) {
     }
     const fixture = fixtureResult.rows[0];
     const games = await pool.query(
-        `SELECT mg.id, mg.game_number, mg.status,
+        `SELECT DISTINCT mg.id, mg.game_number, mg.status,
                 wt.name AS winner_team,
                 BTRIM(fp.first_name || CASE
                     WHEN COALESCE(fp.last_name, '') = '' THEN ''

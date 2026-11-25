@@ -27,6 +27,9 @@ const {
 const { normalizeUploadedBackupFilename } = require('../db/backup');
 const { createPool } = require('../db/connection');
 const { normalizeBrowserSubmission } = require('../db/import-browser-submission');
+const { setSubmissionStatus } = require('../db/review-submission');
+const { createServer } = require('../server');
+const { mergePlayerRecords } = require('../db/merge-player-records');
 
 test('core league migration contains no destructive table drops', () => {
     const migrationPath = path.join(__dirname, '../migrations/001_core_league_schema.sql');
@@ -386,6 +389,83 @@ test('general player merge requires two distinct IDs', async () => {
     );
 });
 
+test('match upload migration preserves existing accepted turns and permits competing turns', {
+    skip: !process.env.TEST_DATABASE_URL
+}, async () => {
+    const testHost = new URL(process.env.TEST_DATABASE_URL).hostname;
+    if (testHost.endsWith('.neon.tech') && testHost.includes('-pooler.')) {
+        throw new Error('TEST_DATABASE_URL must use a direct, unpooled Neon connection.');
+    }
+    const databasePool = createPool(process.env.TEST_DATABASE_URL);
+    const schema = `test_701_${randomUUID().replace(/-/g, '')}`;
+    let client;
+    let schemaCreated = false;
+    try {
+        client = await databasePool.connect();
+        await client.query(`CREATE SCHEMA "${schema}"`);
+        schemaCreated = true;
+        await client.query(`SET search_path TO "${schema}"`);
+        const files = fs.readdirSync(path.join(__dirname, '../migrations'))
+            .filter(name => /^00[1-6]_.*\.sql$/.test(name))
+            .sort();
+        for (const file of files) {
+            await client.query(fs.readFileSync(path.join(__dirname, '../migrations', file), 'utf8'));
+        }
+        await client.query(`
+            INSERT INTO season (name, active) VALUES ('Test', TRUE);
+            INSERT INTO team (name) VALUES ('Alpha'), ('Beta');
+            INSERT INTO player (first_name, last_name) VALUES ('Test', 'Player');
+            INSERT INTO fixture (season_id, match_date, board_number, home_team_id, away_team_id)
+            SELECT s.id, '2026-11-25', '1', a.id, b.id
+            FROM season s, team a, team b WHERE a.name = 'Alpha' AND b.name = 'Beta';
+            INSERT INTO match_game (fixture_id, game_number, winner_team_id, status)
+            SELECT f.id, 1, t.id, 'finished' FROM fixture f, team t WHERE t.name = 'Alpha';
+            INSERT INTO game_submission (fixture_id, match_game_id, source, source_key, status, accepted_at)
+            SELECT f.id, mg.id, 'browser', '2026-11-25|1|Alpha|1', 'accepted', CURRENT_TIMESTAMP
+            FROM fixture f JOIN match_game mg ON mg.fixture_id = f.id;
+            INSERT INTO turn_score (submission_id, match_game_id, team_id, player_id, turn_number, score)
+            SELECT gs.id, mg.id, t.id, p.id, 1, 95
+            FROM game_submission gs JOIN match_game mg ON mg.id = gs.match_game_id, team t, player p
+            WHERE t.name = 'Alpha';
+            INSERT INTO game_player_score (match_game_id, team_id, player_id)
+            SELECT mg.id, t.id, p.id FROM match_game mg, team t, player p WHERE t.name = 'Alpha';
+        `);
+        await client.query(fs.readFileSync(
+            path.join(__dirname, '../migrations/007_review_match_uploads.sql'), 'utf8'
+        ));
+        const legacy = await client.query(`
+            SELECT gs.id, gs.submitted_team_id, gs.winner_team_id, ts.score, sp.player_id
+            FROM game_submission gs JOIN turn_score ts ON ts.submission_id = gs.id
+            JOIN submission_player sp ON sp.submission_id = gs.id
+        `);
+        assert.equal(legacy.rows[0].submitted_team_id, legacy.rows[0].winner_team_id);
+        assert.equal(legacy.rows[0].score, 95);
+        await client.query(`
+            INSERT INTO game_submission (fixture_id, match_game_id, source, source_key, status)
+            SELECT fixture_id, match_game_id, 'browser', 'competing', 'pending'
+            FROM game_submission WHERE id = $1
+        `, [legacy.rows[0].id]);
+        await client.query(`
+            INSERT INTO turn_score (submission_id, match_game_id, team_id, player_id, turn_number, score)
+            SELECT new.id, ts.match_game_id, ts.team_id, ts.player_id, ts.turn_number, 60
+            FROM game_submission new, turn_score ts
+            WHERE new.source_key = 'competing' AND ts.submission_id = $1
+        `, [legacy.rows[0].id]);
+        const scores = await client.query('SELECT score FROM turn_score ORDER BY score');
+        assert.deepEqual(scores.rows.map(row => row.score), [60, 95]);
+    } finally {
+        try {
+            if (schemaCreated) {
+                await client.query('RESET search_path');
+                await client.query(`DROP SCHEMA "${schema}" CASCADE`);
+            }
+        } finally {
+            if (client) client.release();
+            await databasePool.end();
+        }
+    }
+});
+
 test('post-week-10 browser submission updates baseline-plus-future stats in an isolated schema', {
     skip: !process.env.TEST_DATABASE_URL
 }, async () => {
@@ -413,6 +493,12 @@ test('post-week-10 browser submission updates baseline-plus-future stats in an i
         await query(`SET search_path TO "${schema}"`);
         await runMigrations(pool);
         await pool.query(`
+            CREATE TABLE score_csv_uploads (
+                match_date DATE NOT NULL, board TEXT NOT NULL, team TEXT NOT NULL,
+                opponent TEXT NOT NULL, csv_data TEXT NOT NULL, row_count INTEGER NOT NULL,
+                uploaded_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (match_date, board, team)
+            );
             INSERT INTO season (name, active, baseline_through_week)
             VALUES ('Integration test season', TRUE, 10);
             INSERT INTO team (name) VALUES ('The Keepers'), ('Killer Bees');
@@ -564,11 +650,11 @@ test('post-week-10 browser submission updates baseline-plus-future stats in an i
         assert.equal(submitted.rowCount, 1);
 
         const pendingStatus = await pool.query(
-            `SELECT status
+            `SELECT id, status
              FROM game_submission
              WHERE source = 'browser'
-               AND source_key = $1`,
-            [sourceKey]
+               AND source_key LIKE $1`,
+            [`${sourceKey}|%`]
         );
         assert.equal(pendingStatus.rows[0]?.status, 'pending');
 
@@ -578,17 +664,11 @@ test('post-week-10 browser submission updates baseline-plus-future stats in an i
              JOIN match_game mg ON mg.id = gs.match_game_id
              WHERE gs.source = 'browser'
                AND gs.source_key LIKE $1`,
-            [sourceKey]
+            [`${sourceKey}|%`]
         );
         assert.equal(submittedGame.rows.length, 1);
 
-        await pool.query(
-            `UPDATE game_submission
-             SET status = 'accepted', accepted_at = CURRENT_TIMESTAMP
-             WHERE source = 'browser'
-               AND source_key = $1`,
-            [sourceKey]
-        );
+        await setSubmissionStatus(pool, pendingStatus.rows[0].id, 'accepted');
 
         const afterFuture = await pool.query(
             `SELECT
@@ -677,6 +757,161 @@ test('post-week-10 browser submission updates baseline-plus-future stats in an i
             Number(teamBaselineRow.baseline_score) + afterTeamFuture.rows[0].score,
             Number(teamBaselineRow.baseline_score) + beforeTeamFuture.rows[0].score + 95
         );
+
+        const replacement = structuredClone(payload);
+        replacement.games[0].winner = 'Killer Bees';
+        replacement.games[0].turns[0].score = 60;
+        replacement.games[0].turns[0].remainingAfter = 641;
+        replacement.games.unshift({ ...structuredClone(replacement.games[0]), game: 6 });
+        await normalizeBrowserSubmission(pool, replacement, 'replacement csv', 2);
+        const thirdUpload = structuredClone(replacement);
+        thirdUpload.games.unshift({ ...structuredClone(replacement.games[0]), game: 5, turns: [] });
+        await normalizeBrowserSubmission(pool, thirdUpload, 'another csv', 3);
+        const uploads = await pool.query(
+            `SELECT upload_id, MIN(id) AS id, COUNT(*)::int AS games
+             FROM game_submission WHERE upload_id IS NOT NULL
+             GROUP BY upload_id ORDER BY MIN(id)`
+        );
+        assert.deepEqual(uploads.rows.map(row => row.games), [1, 2, 3]);
+        const beforeReview = await pool.query(
+            `SELECT gs.status, mg.winner_team_id, ts.score
+             FROM game_submission gs JOIN match_game mg ON mg.id = gs.match_game_id
+             JOIN turn_score ts ON ts.submission_id = gs.id
+             WHERE gs.id = $1`,
+            [pendingStatus.rows[0].id]
+        );
+        assert.equal(beforeReview.rows[0].status, 'accepted');
+        assert.equal(beforeReview.rows[0].score, 95);
+        assert.equal(beforeReview.rows[0].winner_team_id, teamId);
+
+        const server = createServer({ pool, adminApiKey: 'test-admin-key', uploadApiKey: 'test-key' });
+        await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+        try {
+            const base = `http://127.0.0.1:${server.address().port}`;
+            const headers = { Authorization: 'Bearer test-admin-key' };
+            const list = await (await fetch(`${base}/api/admin/submissions`, { headers })).json();
+            assert.equal(list.submissions.length, 3);
+            const detail = await (await fetch(`${base}/api/admin/submissions/${uploads.rows[1].id}`, { headers })).json();
+            assert.deepEqual(detail.turns.map(turn => turn.game_number), [6, 7]);
+            assert.ok(detail.turns.every(turn => turn.winner_team === 'Killer Bees'));
+            const third = await (await fetch(`${base}/api/admin/submissions/${uploads.rows[2].id}`, { headers })).json();
+            assert.deepEqual(third.games.map(game => game.game_number), [5, 6, 7]);
+            assert.deepEqual(third.games[0].players, ['Paul McMahon']);
+            assert.equal(third.games[0].winner_team, 'Killer Bees');
+            const revision = await fetch(`${base}/api/admin/submissions`, {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ turnId: third.turns[1].id, score: 75, reason: 'Correct pending upload' })
+            });
+            assert.equal(revision.status, 200);
+            const unchanged = await pool.query('SELECT score FROM turn_score WHERE submission_id = $1', [pendingStatus.rows[0].id]);
+            assert.equal(unchanged.rows[0].score, 95);
+            const accept = await fetch(`${base}/api/admin/submissions`, {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ submissionId: uploads.rows[1].id, status: 'accepted' })
+            });
+            assert.equal(accept.status, 200);
+        } finally {
+            await new Promise(resolve => server.close(resolve));
+        }
+        const states = await pool.query(
+            `SELECT upload_id, status, COUNT(*)::int AS games
+             FROM game_submission WHERE upload_id IS NOT NULL
+             GROUP BY upload_id, status ORDER BY MIN(id)`
+        );
+        assert.deepEqual(states.rows.map(row => [row.status, row.games]), [
+            ['superseded', 1], ['accepted', 2], ['pending', 3]
+        ]);
+        const acceptedScores = await pool.query(
+            `SELECT ts.score, t.name AS winner
+             FROM game_submission gs
+             JOIN turn_score ts ON ts.submission_id = gs.id
+             JOIN match_game mg ON mg.id = gs.match_game_id
+             JOIN team t ON t.id = mg.winner_team_id
+             WHERE gs.upload_id = $1 ORDER BY mg.game_number`,
+            [uploads.rows[1].upload_id]
+        );
+        assert.deepEqual(acceptedScores.rows.map(row => [row.score, row.winner]), [
+            [60, 'Killer Bees'], [60, 'Killer Bees']
+        ]);
+
+        await pool.query(`
+            INSERT INTO player (first_name, last_name) VALUES ('Jane', 'Smith');
+            INSERT INTO team_roster (season_id, team_id, player_id)
+            SELECT s.id, t.id, p.id FROM season s, team t, player p
+            WHERE t.name = 'Killer Bees' AND p.first_name = 'Jane';
+        `);
+        const otherTeam = structuredClone(replacement);
+        otherTeam.team = 'Killer Bees';
+        otherTeam.opponent = 'The Keepers';
+        for (const game of otherTeam.games) {
+            game.winner = 'The Keepers';
+            game.players[0].name = 'Jane Smith';
+            game.turns[0].player = 'Jane Smith';
+        }
+        await normalizeBrowserSubmission(pool, otherTeam, 'opponent csv', 2);
+        const opponentUpload = await pool.query(
+            `SELECT MIN(id) AS id FROM game_submission
+             WHERE upload_id IS NOT NULL AND submitted_team_id <> $1`,
+            [teamId]
+        );
+        await setSubmissionStatus(pool, opponentUpload.rows[0].id, 'accepted');
+        const bothTeams = await pool.query(
+            `SELECT mg.game_number, COUNT(*)::int AS accepted,
+                    MIN(mg.winner_team_id) AS winner
+             FROM game_submission gs JOIN match_game mg ON mg.id = gs.match_game_id
+             WHERE gs.status = 'accepted' GROUP BY mg.game_number ORDER BY mg.game_number`
+        );
+        assert.deepEqual(bothTeams.rows.map(row => [row.accepted, row.winner]), [[2, teamId], [2, teamId]]);
+        const reports = createServer({ pool, adminApiKey: 'test-admin-key', uploadApiKey: 'test-key' });
+        await new Promise(resolve => reports.listen(0, '127.0.0.1', resolve));
+        try {
+            const base = `http://127.0.0.1:${reports.address().port}`;
+            const standings = await (await fetch(`${base}/api/reports/standings`)).json();
+            assert.equal(Number(standings.standings.find(row => row.team === 'The Keepers').wins), 4);
+            const match = await (await fetch(`${base}/api/reports/match/${fixtureResult.rows[0].id}`)).json();
+            assert.equal(match.games.length, 2);
+            assert.equal(match.scores.length, 4);
+        } finally {
+            await new Promise(resolve => reports.close(resolve));
+        }
+        await setSubmissionStatus(pool, opponentUpload.rows[0].id, 'rejected');
+        const restored = await pool.query(
+            `SELECT mg.game_number, t.name AS winner
+             FROM match_game mg JOIN team t ON t.id = mg.winner_team_id
+             ORDER BY mg.game_number`
+        );
+        assert.deepEqual(restored.rows.map(row => row.winner), ['Killer Bees', 'Killer Bees']);
+
+        const duplicate = await pool.query(
+            `INSERT INTO player (first_name, last_name) VALUES ('Paul', 'Alias') RETURNING id`
+        );
+        await pool.query(
+            `UPDATE turn_score SET player_id = $1 WHERE submission_id IN
+             (SELECT id FROM game_submission WHERE upload_id = $2)`,
+            [duplicate.rows[0].id, uploads.rows[2].upload_id]
+        );
+        await pool.query(
+            `UPDATE submission_player SET player_id = $1 WHERE submission_id IN
+             (SELECT id FROM game_submission WHERE upload_id = $2)`,
+            [duplicate.rows[0].id, uploads.rows[2].upload_id]
+        );
+        await mergePlayerRecords(client, playerId, duplicate.rows[0].id);
+        const merged = await pool.query(
+            `SELECT COUNT(*)::int AS turns
+             FROM turn_score ts JOIN game_submission gs ON gs.id = ts.submission_id
+             WHERE gs.upload_id = $1 AND ts.player_id = $2`,
+            [uploads.rows[2].upload_id, playerId]
+        );
+        assert.equal(merged.rows[0].turns, 2);
+        await setSubmissionStatus(pool, uploads.rows[2].id, 'accepted');
+        const lineups = await pool.query(
+            `SELECT COUNT(*)::int AS players FROM game_player_score
+             WHERE team_id = $1 AND player_id = $2`,
+            [teamId, playerId]
+        );
+        assert.equal(lineups.rows[0].players, 3);
     } finally {
         try {
             if (schemaCreated) {

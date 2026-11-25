@@ -200,6 +200,7 @@ async function normalizeScoreCsvUpload(client, csvText, fixture, uploadedAt, par
         teamId: team.id,
         opponentId: opponent.id
     });
+    await client.query('SELECT id FROM fixture WHERE id = $1 FOR UPDATE', [reconciledFixture.id]);
 
     const groupedGames = new Map();
     for (const rawRow of parsed.slice(1)) {
@@ -277,22 +278,26 @@ async function normalizeScoreCsvUpload(client, csvText, fixture, uploadedAt, par
         const submission = await client.query(
             `INSERT INTO game_submission (
                 fixture_id, match_game_id, source, source_key, status,
-                raw_payload, accepted_at
+               raw_payload, accepted_at, submitted_team_id, winner_team_id
              )
-             VALUES ($1, $2, 'csv', $3, 'accepted', $4::JSONB, CURRENT_TIMESTAMP)
+            VALUES ($1, $2, 'csv', $3, 'accepted', $4::JSONB, CURRENT_TIMESTAMP, $5, $6)
              ON CONFLICT (source, source_key)
              DO UPDATE SET
                 fixture_id = EXCLUDED.fixture_id,
                 match_game_id = EXCLUDED.match_game_id,
                 status = 'accepted',
                 raw_payload = EXCLUDED.raw_payload,
-                accepted_at = CURRENT_TIMESTAMP
+                accepted_at = CURRENT_TIMESTAMP,
+                submitted_team_id = EXCLUDED.submitted_team_id,
+                winner_team_id = EXCLUDED.winner_team_id
              RETURNING id`,
             [
                 reconciledFixture.id,
                 matchGameId,
                 sourceKey,
-                JSON.stringify(game.rows)
+                JSON.stringify(game.rows),
+                team.id,
+                winnerTeamId
             ]
         );
         const submissionId = submission.rows[0].id;
@@ -301,12 +306,17 @@ async function normalizeScoreCsvUpload(client, csvText, fixture, uploadedAt, par
              SET status = 'superseded'
              WHERE match_game_id = $1
                AND id <> $2
+               AND submitted_team_id = $3
                AND status = 'accepted'`,
-            [matchGameId, submissionId]
+            [matchGameId, submissionId, team.id]
         );
 
         await client.query(
             'DELETE FROM turn_score WHERE submission_id = $1',
+            [submissionId]
+        );
+        await client.query(
+            'DELETE FROM submission_player WHERE submission_id = $1',
             [submissionId]
         );
 
@@ -315,6 +325,11 @@ async function normalizeScoreCsvUpload(client, csvText, fixture, uploadedAt, par
             const player = await findOrCreatePlayer(client, playerName);
             const playerTeamId = team.id;
             await ensureRoster(client, season.id, playerTeamId, player.id);
+            await client.query(
+                `INSERT INTO submission_player (submission_id, player_id)
+                 VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+                [submissionId, player.id]
+            );
             await client.query(
                 `INSERT INTO game_player_score (
                     match_game_id, team_id, player_id
@@ -342,7 +357,7 @@ async function normalizeScoreCsvUpload(client, csvText, fixture, uploadedAt, par
                      )
                      VALUES ($1, $2, $3, $4, $5, $6, $7)
                      ON CONFLICT (
-                        match_game_id, team_id, player_id, turn_number
+                        submission_id, match_game_id, team_id, player_id, turn_number
                      )
                      DO UPDATE SET
                         submission_id = EXCLUDED.submission_id,

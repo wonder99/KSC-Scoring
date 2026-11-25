@@ -269,12 +269,25 @@ async function normalizeBrowserSubmission(pool, payload, compatibilityCsvText, c
 
     const client = await pool.connect();
     let rowCount = 0;
+    const uploadId = crypto.randomUUID();
     try {
         await client.query('BEGIN');
         const season = await ensureSeason(client, payload.matchDate);
         const team = await findOrCreateTeam(client, payload.team);
         const opponent = await findOrCreateTeam(client, payload.opponent);
         const fixture = await ensureFixture(client, season.id, payload, team, opponent);
+        await client.query('SELECT id FROM fixture WHERE id = $1 FOR UPDATE', [fixture.id]);
+        const upload = await client.query(
+            `INSERT INTO score_submission_upload
+                (id, match_date, board, team, opponent, csv_data, row_count)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             RETURNING submitted_at`,
+            [
+                uploadId, payload.matchDate, payload.board, payload.team,
+                payload.opponent, compatibilityCsvText || null,
+                Number.isInteger(compatibilityRowCount) ? compatibilityRowCount : 0
+            ]
+        );
 
         for (const game of payload.games) {
             const winnerName = canonicalTeamName(game.winner);
@@ -287,102 +300,39 @@ async function normalizeBrowserSubmission(pool, payload, compatibilityCsvText, c
                 throw new Error(`Game ${game.game} has an unknown winner.`);
             }
 
-            const existing = await client.query(
-                `SELECT winner_team_id FROM match_game
-                 WHERE fixture_id = $1 AND game_number = $2`,
-                [fixture.id, game.game]
-            );
-            if (existing.rows.length &&
-                existing.rows[0].winner_team_id &&
-                Number(existing.rows[0].winner_team_id) !== Number(winnerTeamId)) {
-                throw new Error(`Game ${game.game} conflicts with an earlier winner submission.`);
-            }
-
             const gameResult = await client.query(
-                `INSERT INTO match_game (
-                    fixture_id, game_number, winner_team_id, status
-                 )
-                 VALUES ($1, $2, $3, 'finished')
+                `INSERT INTO match_game (fixture_id, game_number)
+                 VALUES ($1, $2)
                  ON CONFLICT (fixture_id, game_number)
-                 DO UPDATE SET
-                    winner_team_id = EXCLUDED.winner_team_id,
-                    status = 'finished',
-                    updated_at = CURRENT_TIMESTAMP
+                 DO UPDATE SET game_number = EXCLUDED.game_number
                  RETURNING id`,
-                [fixture.id, game.game, winnerTeamId]
+                [fixture.id, game.game]
             );
             const matchGameId = gameResult.rows[0].id;
 
-            for (const side of [
-                { teamId: team.id, isWinner: winnerTeamId === team.id },
-                { teamId: opponent.id, isWinner: winnerTeamId === opponent.id }
-            ]) {
-                await client.query(
-                    `INSERT INTO team_game (match_game_id, team_id, is_winner)
-                     VALUES ($1, $2, $3)
-                     ON CONFLICT (match_game_id, team_id)
-                     DO UPDATE SET is_winner = EXCLUDED.is_winner`,
-                    [matchGameId, side.teamId, side.isWinner]
-                );
-            }
-
-            const baseSourceKey = [
+            const sourceKey = [
                 payload.matchDate, payload.board,
-                canonicalTeamName(payload.team), game.game
+                canonicalTeamName(payload.team), game.game, uploadId
             ].join('|');
-            const existingBrowserSubmission = await client.query(
-                `SELECT status
-                 FROM game_submission
-                 WHERE source = 'browser'
-                   AND source_key = $1
-                 LIMIT 1`,
-                [baseSourceKey]
-            );
-            const contentHash = crypto.createHash('sha256')
-                .update(JSON.stringify(game))
-                .digest('hex')
-                .slice(0, 16);
-            const sourceKey = existingBrowserSubmission.rows[0]?.status === 'accepted'
-                ? `${baseSourceKey}|pending|${contentHash}`
-                : baseSourceKey;
             const submission = await client.query(
                 `INSERT INTO game_submission (
                     fixture_id, match_game_id, source, source_key, status,
-                    raw_payload, accepted_at
+                    raw_payload, accepted_at, upload_id, submitted_team_id,
+                    winner_team_id
                  )
-                 VALUES ($1, $2, 'browser', $3, 'pending', $4::JSONB, NULL)
-                 ON CONFLICT (source, source_key)
-                 DO UPDATE SET
-                    fixture_id = EXCLUDED.fixture_id,
-                    match_game_id = EXCLUDED.match_game_id,
-                    status = 'pending',
-                    raw_payload = EXCLUDED.raw_payload,
-                    accepted_at = NULL
+                 VALUES ($1, $2, 'browser', $3, 'pending', $4::JSONB, NULL, $5, $6, $7)
                  RETURNING id`,
                 [
                     fixture.id,
                     matchGameId,
                     sourceKey,
-                    JSON.stringify(game)
+                    JSON.stringify(game),
+                    uploadId,
+                    team.id,
+                    winnerTeamId
                 ]
             );
             const submissionId = submission.rows[0].id;
-            await client.query(
-                `UPDATE game_submission
-                 SET status = 'superseded'
-                 WHERE match_game_id = $1
-                   AND id <> $2
-                   AND status = 'pending'`,
-                [matchGameId, submissionId]
-            );
-            await client.query(
-                'DELETE FROM turn_score WHERE submission_id = $1',
-                [submissionId]
-            );
-            await client.query(
-                'DELETE FROM game_player_score WHERE match_game_id = $1 AND team_id = $2',
-                [matchGameId, team.id]
-            );
 
             for (const playerData of game.players) {
                 const canonicalName = await resolveRosterPlayerName(
@@ -401,13 +351,9 @@ async function normalizeBrowserSubmission(pool, payload, compatibilityCsvText, c
                     );
                 }
                 await client.query(
-                    `INSERT INTO game_player_score (
-                        match_game_id, team_id, player_id
-                     )
-                     VALUES ($1, $2, $3)
-                     ON CONFLICT (match_game_id, team_id, player_id)
-                     DO UPDATE SET is_lineup_player = TRUE`,
-                    [matchGameId, team.id, player.id]
+                    `INSERT INTO submission_player (submission_id, player_id)
+                     VALUES ($1, $2)`,
+                    [submissionId, player.id]
                 );
             }
 
@@ -434,18 +380,7 @@ async function normalizeBrowserSubmission(pool, payload, compatibilityCsvText, c
                         remaining_before, remaining_after, checkout_remaining
                      )
                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8::JSONB, $9, $10, $11, $12)
-                     ON CONFLICT (
-                        match_game_id, team_id, player_id, turn_number
-                     )
-                     DO UPDATE SET
-                        submission_id = EXCLUDED.submission_id,
-                        play_order = EXCLUDED.play_order,
-                        score = EXCLUDED.score,
-                        dart_scores = EXCLUDED.dart_scores,
-                        is_bust = EXCLUDED.is_bust,
-                        remaining_before = EXCLUDED.remaining_before,
-                        remaining_after = EXCLUDED.remaining_after,
-                        checkout_remaining = EXCLUDED.checkout_remaining`,
+                     `,
                     [
                         submissionId,
                         matchGameId,
@@ -466,40 +401,12 @@ async function normalizeBrowserSubmission(pool, payload, compatibilityCsvText, c
             }
         }
 
-        let uploadedAt = null;
-        if (typeof compatibilityCsvText === 'string' && compatibilityCsvText.length) {
-            const csvResult = await client.query(
-                `INSERT INTO score_csv_uploads (
-                    match_date, board, team, opponent, csv_data, row_count
-                 )
-                 VALUES ($1, $2, $3, $4, $5, $6)
-                 ON CONFLICT (match_date, board, team)
-                 DO UPDATE SET
-                    opponent = EXCLUDED.opponent,
-                    csv_data = EXCLUDED.csv_data,
-                    row_count = EXCLUDED.row_count,
-                    uploaded_at = CURRENT_TIMESTAMP
-                 RETURNING uploaded_at`,
-                [
-                    payload.matchDate,
-                    payload.board,
-                    payload.team,
-                    payload.opponent,
-                    compatibilityCsvText,
-                    Number.isInteger(compatibilityRowCount)
-                        ? compatibilityRowCount
-                        : rowCount
-                ]
-            );
-            uploadedAt = csvResult.rows[0].uploaded_at;
-        }
-
         await client.query('COMMIT');
         return {
             fixtureId: fixture.id,
             gameCount: payload.games.length,
             rowCount,
-            uploadedAt
+            uploadedAt: upload.rows[0].submitted_at
         };
     } catch (error) {
         await client.query('ROLLBACK');
