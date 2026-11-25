@@ -166,10 +166,13 @@ function restorePersistedSession() {
         const savedStartedAt = saved.matchStartedAt === undefined
             ? Date.now()
             : saved.matchStartedAt;
-        if (!Number.isInteger(savedStartedAt) || savedStartedAt > Date.now() + 5 * 60 * 1000) {
+        const unstartedRoster = savedStartedAt === null && saved.currentScreen === 'roster' &&
+            saved.games.every(game => game && game.started === false);
+        if (!unstartedRoster &&
+            (!Number.isInteger(savedStartedAt) || savedStartedAt > Date.now() + 5 * 60 * 1000)) {
             throw new Error('The saved match start time is invalid.');
         }
-        if (Date.now() - savedStartedAt >= SESSION_MAX_AGE_MS) {
+        if (savedStartedAt !== null && Date.now() - savedStartedAt >= SESSION_MAX_AGE_MS) {
             clearPersistedSession();
             setPersistenceStatus('The saved match was older than 24 hours and was cleared.');
             populateDates(false);
