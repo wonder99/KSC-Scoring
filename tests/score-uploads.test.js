@@ -885,8 +885,8 @@ test('changes submission status through the authenticated admin API', async () =
             if (/SELECT fixture_id, upload_id/.test(sql)) {
                 return { rows: [{ fixture_id: 1, upload_id: null }] };
             }
-            if (/SELECT id, match_game_id, submitted_team_id/.test(sql)) {
-                return { rows: [{ id: 42, match_game_id: 7, submitted_team_id: 1 }] };
+            if (/SELECT id, fixture_id, match_game_id, submitted_team_id/.test(sql)) {
+                return { rows: [{ id: 42, fixture_id: 1, match_game_id: 7, submitted_team_id: 1 }] };
             }
             if (/UPDATE game_submission[\s\S]*RETURNING/.test(sql)) {
                 return { rows: [{ id: 42, status: 'rejected', accepted_at: null }] };
@@ -915,6 +915,45 @@ test('changes submission status through the authenticated admin API', async () =
         assert.equal(response.status, 200);
         assert.equal((await response.json()).submission.status, 'rejected');
     });
+});
+
+test('upload list only offers deletion for rejected uploads', async () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const vm = require('node:vm');
+    const source = fs.readFileSync(path.join(__dirname, '../admin/admin.js'), 'utf8');
+    const handlers = source.indexOf("\ndocument.getElementById('unlock-admin').addEventListener");
+    assert.notEqual(handlers, -1);
+    const elements = new Map();
+    const document = {
+        getElementById(id) {
+            if (!elements.has(id)) elements.set(id, { value: '', innerHTML: '' });
+            return elements.get(id);
+        }
+    };
+    const submissions = ['pending', 'accepted', 'rejected', 'mixed'].map((status, index) => ({
+        id: index + 1,
+        status,
+        source: 'browser',
+        match_date: '2026-11-25',
+        board_number: '1',
+        home_team: '<Keepers>',
+        away_team: 'Bees',
+        submitted_team: 'Keepers',
+        turn_count: 7
+    }));
+    const context = vm.createContext({
+        document,
+        fetch: async () => ({ ok: true, json: async () => ({ submissions }) })
+    });
+    vm.runInContext(source.slice(0, handlers), context);
+    await vm.runInContext('loadSubmissions()', context);
+    const html = elements.get('submission-list').innerHTML;
+    assert.deepEqual([...html.matchAll(/data-delete-submission="(\d+)"/g)].map(match => match[1]), ['3']);
+    assert.match(html, /data-reject-submission="1"/);
+    assert.match(html, /data-reject-submission="4"/);
+    assert.match(html, /&lt;Keepers&gt;/);
+    assert.doesNotMatch(html, /<Keepers>/);
 });
 
 test('creates a fixture through the authenticated admin API', async () => {

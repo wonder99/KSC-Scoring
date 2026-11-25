@@ -72,6 +72,7 @@ Existing `score_csv_uploads` records can be reconciled after migrations with `np
 - Browser uploads retain each team's turns, lineups, and winners separately until an administrator reviews the whole upload.
 - Accepting an upload replaces that team's previously accepted scores for the included games, but preserves the opposing team's accepted scores. The most recently accepted upload determines each game's winner; rejecting it restores the winner from another accepted upload, if available.
 - A compatibility CSV record is written when a browser upload is accepted.
+- Administrators can permanently delete fully rejected uploads. Shared game records and older CSV copies that cannot safely be attributed to an upload are preserved.
 - Public reports combine workbook baselines with accepted post-baseline submissions.
 - Admin users can manage seasons, teams, players, schedule matches, submissions, turn revisions, and rejection/acceptance status.
 - The player and admin guides describe browser and league workflows.

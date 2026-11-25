@@ -1701,7 +1701,7 @@ async function handleAdminSubmissions(request, response, url, context) {
             const before = await client.query(
                 `SELECT id, submission_id, match_game_id, score, is_bust, checkout_remaining
                  FROM turn_score
-                 WHERE id = $1`,
+                 WHERE id = $1 FOR UPDATE`,
                 [turnId]
             );
             if (!before.rows.length) throw new RequestError(404, 'Turn not found.');
@@ -1814,11 +1814,26 @@ async function handleAdminSubmissionDetail(request, response, url, context) {
     if (!isAdminAuthorized(request, context.adminApiKey, context.adminSessions)) {
         throw new RequestError(401, 'A valid admin key is required.');
     }
+    const idMatch = /^\/api\/admin\/submissions\/(\d+)\/?$/.exec(url.pathname);
+    if (!idMatch) throw new RequestError(400, 'A valid submission id is required.');
+    if (request.method === 'DELETE') {
+        const { deleteRejectedSubmission } = require('./db/review-submission');
+        let result;
+        try {
+            result = await deleteRejectedSubmission(context.pool, Number(idMatch[1]));
+        } catch (error) {
+            if (error.code === 'INVALID_SUBMISSION_REVIEW') {
+                throw new RequestError(409, error.message);
+            }
+            throw error;
+        }
+        if (!result) throw new RequestError(404, 'Submission not found.');
+        sendJson(response, 200, { deleted: true });
+        return;
+    }
     if (request.method !== 'GET') {
         throw new RequestError(405, 'Method not allowed.');
     }
-    const idMatch = /^\/api\/admin\/submissions\/(\d+)\/?$/.exec(url.pathname);
-    if (!idMatch) throw new RequestError(400, 'A valid submission id is required.');
     const submissionResult = await context.pool.query(
         `SELECT gs.id, gs.source, gs.source_key, gs.status,
                 gs.raw_payload, gs.submitted_at, gs.accepted_at,

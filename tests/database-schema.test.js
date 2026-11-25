@@ -912,6 +912,112 @@ test('post-week-10 browser submission updates baseline-plus-future stats in an i
             [teamId, playerId]
         );
         assert.equal(lineups.rows[0].players, 3);
+
+        const disposable = structuredClone(otherTeam);
+        disposable.games[0].game = 3;
+        disposable.games[1].game = 4;
+        await normalizeBrowserSubmission(pool, disposable, 'disposable csv', 2);
+        const disposableRows = await pool.query(
+            `SELECT id, upload_id, match_game_id FROM game_submission
+             WHERE raw_payload->>'game' IN ('3', '4') ORDER BY id`
+        );
+        assert.equal(disposableRows.rows.length, 2);
+        const disposableId = disposableRows.rows[0].id;
+        const disposableUploadId = disposableRows.rows[0].upload_id;
+        const gameIds = disposableRows.rows.map(row => row.match_game_id);
+        const deletionServer = createServer({ pool, adminApiKey: 'test-admin-key', uploadApiKey: 'test-key' });
+        await new Promise(resolve => deletionServer.listen(0, '127.0.0.1', resolve));
+        try {
+            const base = `http://127.0.0.1:${deletionServer.address().port}`;
+            const headers = { Authorization: 'Bearer test-admin-key' };
+            const remove = id => fetch(`${base}/api/admin/submissions/${id}`, { method: 'DELETE', headers });
+            assert.equal((await fetch(`${base}/api/admin/submissions/${disposableId}`, { method: 'DELETE' })).status, 401);
+            assert.equal((await remove(disposableId)).status, 409);
+            assert.equal((await remove(uploads.rows[2].id)).status, 409);
+            assert.equal((await remove(pendingStatus.rows[0].id)).status, 409);
+            await pool.query('UPDATE game_submission SET status = $1 WHERE id = $2', ['rejected', disposableId]);
+            assert.equal((await remove(disposableId)).status, 409);
+            const stillPresent = await pool.query('SELECT COUNT(*)::int AS count FROM game_submission WHERE upload_id = $1', [disposableUploadId]);
+            assert.equal(stillPresent.rows[0].count, 2);
+            await setSubmissionStatus(pool, disposableId, 'rejected');
+            await pool.query(
+                `INSERT INTO score_revision (target_type, target_id, reason)
+                 SELECT 'turn_score', id, 'test' FROM turn_score
+                 WHERE submission_id = $1 LIMIT 1`,
+                [disposableId]
+            );
+            await pool.query(
+                `INSERT INTO score_csv_uploads (match_date, board, team, opponent, csv_data, row_count)
+                 SELECT match_date, board, team, opponent, csv_data, row_count
+                 FROM score_submission_upload WHERE id = $1`,
+                [disposableUploadId]
+            );
+            const deleted = await remove(disposableId);
+            assert.equal(deleted.status, 200);
+            assert.deepEqual(await deleted.json(), { deleted: true });
+            assert.equal((await remove(disposableId)).status, 404);
+            const cleanup = await pool.query(
+                `SELECT
+                    (SELECT COUNT(*)::int FROM game_submission WHERE upload_id = $1) AS submissions,
+                    (SELECT COUNT(*)::int FROM score_submission_upload WHERE id = $1) AS uploads,
+                    (SELECT COUNT(*)::int FROM turn_score WHERE match_game_id = ANY($2::int[])) AS turns,
+                    (SELECT COUNT(*)::int FROM match_game WHERE id = ANY($2::int[])) AS games,
+                    (SELECT COUNT(*)::int FROM score_revision WHERE reason = 'test') AS revisions,
+                    (SELECT COUNT(*)::int FROM score_csv_uploads WHERE csv_data = 'disposable csv') AS csv`,
+                [disposableUploadId, gameIds]
+            );
+            assert.deepEqual(cleanup.rows[0], { submissions: 0, uploads: 0, turns: 0, games: 0, revisions: 0, csv: 0 });
+
+            assert.equal((await remove(opponentUpload.rows[0].id)).status, 200);
+            const preserved = await pool.query(
+                `SELECT COUNT(DISTINCT mg.id)::int AS games,
+                        COUNT(ts.id)::int AS turns
+                 FROM match_game mg
+                 JOIN game_submission gs ON gs.match_game_id = mg.id AND gs.status = 'accepted'
+                 JOIN turn_score ts ON ts.submission_id = gs.id
+                 WHERE mg.game_number IN (6, 7)`
+            );
+            assert.deepEqual(preserved.rows[0], { games: 2, turns: 2 });
+            const legacy = await pool.query(
+                `INSERT INTO game_submission
+                    (fixture_id, match_game_id, source, source_key, status, submitted_team_id)
+                 SELECT fixture_id, id, 'browser', 'legacy-delete-test', 'rejected', $1
+                 FROM match_game WHERE fixture_id = $2 AND game_number = 6
+                 RETURNING id`,
+                [teamId, fixtureResult.rows[0].id]
+            );
+            assert.equal((await remove(legacy.rows[0].id)).status, 200);
+            const legacyPreserved = await pool.query(
+                `SELECT COUNT(*)::int AS count FROM score_csv_uploads WHERE csv_data = 'another csv'`
+            );
+            assert.equal(legacyPreserved.rows[0].count, 1);
+            await normalizeBrowserSubmission(pool, otherTeam, 'shared csv', 2);
+            await normalizeBrowserSubmission(pool, otherTeam, 'shared csv', 2);
+            const sharedUploads = await pool.query(
+                `SELECT u.id, MIN(gs.id) AS submission_id
+                 FROM score_submission_upload u
+                 JOIN game_submission gs ON gs.upload_id = u.id
+                 WHERE u.csv_data = 'shared csv' GROUP BY u.id ORDER BY MIN(gs.id)`
+            );
+            assert.equal(sharedUploads.rows.length, 2);
+            for (const upload of sharedUploads.rows) {
+                await setSubmissionStatus(pool, upload.submission_id, 'rejected');
+            }
+            await pool.query(
+                `INSERT INTO score_csv_uploads (match_date, board, team, opponent, csv_data, row_count)
+                 SELECT match_date, board, team, opponent, csv_data, row_count
+                 FROM score_submission_upload WHERE id = $1`,
+                [sharedUploads.rows[0].id]
+            );
+            assert.equal((await remove(sharedUploads.rows[0].submission_id)).status, 200);
+            let sharedCsv = await pool.query(`SELECT COUNT(*)::int AS count FROM score_csv_uploads WHERE csv_data = 'shared csv'`);
+            assert.equal(sharedCsv.rows[0].count, 1);
+            assert.equal((await remove(sharedUploads.rows[1].submission_id)).status, 200);
+            sharedCsv = await pool.query(`SELECT COUNT(*)::int AS count FROM score_csv_uploads WHERE csv_data = 'shared csv'`);
+            assert.equal(sharedCsv.rows[0].count, 0);
+        } finally {
+            await new Promise(resolve => deletionServer.close(resolve));
+        }
     } finally {
         try {
             if (schemaCreated) {

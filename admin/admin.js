@@ -304,21 +304,33 @@ async function loadSubmissions() {
     const payload = await adminFetch(
         `/api/admin/submissions${seasonId ? `?season_id=${encodeURIComponent(seasonId)}` : ''}`
     );
-    document.getElementById('submission-list').innerHTML = payload.submissions.map(submission => `
-        <article class="data-card">
-            <strong>${escapeHtml(submission.source)}: ${escapeHtml(submission.status)}</strong>
-            <span>${escapeHtml(formatShortDate(submission.match_date))} / Board ${escapeHtml(submission.board_number || '-')}</span>
-            <span>${escapeHtml(submission.home_team || '')} vs ${escapeHtml(submission.away_team || '')}</span>
-            <span>From: ${escapeHtml(submission.submitted_team || 'Unknown team')}</span>
-            <div>
-                <span>${escapeHtml(submission.turn_count)} turns</span>
-                <button type="button" data-review-submission="${submission.id}">Review turns</button>
-                ${submission.status === 'accepted'
-                    ? `<button type="button" data-reject-submission="${submission.id}">Reject upload</button>`
-                    : `<button type="button" data-accept-submission="${submission.id}">Accept upload</button>`
-                }
-            </div>
-        </article>`).join('');
+    document.getElementById('submission-list').innerHTML = payload.submissions.length
+        ? `<div class="upload-table-wrap">
+            <table class="upload-table">
+                <thead><tr><th scope="col">Date / board</th><th scope="col">Match</th>
+                    <th scope="col">From</th><th scope="col">Status</th>
+                    <th scope="col">Turns</th><th scope="col">Actions</th></tr></thead>
+                <tbody>${payload.submissions.map(submission => `
+                    <tr>
+                        <td data-label="Date / board"><div>${escapeHtml(formatShortDate(submission.match_date))} · Board ${escapeHtml(submission.board_number || '-')}</div></td>
+                        <td data-label="Match">${escapeHtml(submission.home_team || '')} vs ${escapeHtml(submission.away_team || '')}</td>
+                        <td data-label="From">${escapeHtml(submission.submitted_team || 'Unknown team')}</td>
+                        <td data-label="Status"><div><strong>${escapeHtml(submission.status)}</strong> <span>${escapeHtml(submission.source)}</span></div></td>
+                        <td data-label="Turns">${escapeHtml(submission.turn_count)}</td>
+                        <td data-label="Actions"><div class="upload-actions">
+                            <button type="button" data-review-submission="${submission.id}">Review turns</button>
+                            ${submission.status !== 'accepted'
+                                ? `<button type="button" data-accept-submission="${submission.id}">Accept</button>` : ''}
+                            ${submission.status !== 'rejected'
+                                ? `<button type="button" data-reject-submission="${submission.id}">Reject</button>` : ''}
+                            ${submission.status === 'rejected'
+                                ? `<button type="button" class="danger-button" data-delete-submission="${submission.id}">Delete</button>`
+                                : ''}
+                        </div></td>
+                    </tr>`).join('')}</tbody>
+            </table>
+        </div>`
+        : '<p class="empty">No score uploads found for the selected season.</p>';
 }
 
 async function loadBackups() {
@@ -939,6 +951,23 @@ document.addEventListener('click', async event => {
     if (reviewSubmission) {
         try {
             await openSubmissionReview(reviewSubmission.dataset.reviewSubmission);
+        } catch (error) { alert(error.message); }
+    }
+    const deleteSubmission = event.target.closest('[data-delete-submission]');
+    if (deleteSubmission && confirm(
+        'Permanently delete this rejected upload and its saved scores? Shared game records and older CSV copies may be retained.'
+    )) {
+        try {
+            await adminFetch(`/api/admin/submissions/${deleteSubmission.dataset.deleteSubmission}`, {
+                method: 'DELETE'
+            });
+            const form = document.getElementById('submission-review-form');
+            if (Number(form.querySelector('[name="submissionId"]').value) ===
+                Number(deleteSubmission.dataset.deleteSubmission)) {
+                resetForm(form);
+                form.classList.add('hidden');
+            }
+            await loadSubmissions();
         } catch (error) { alert(error.message); }
     }
     const rejectSubmission = event.target.closest('[data-reject-submission]');
