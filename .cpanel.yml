@@ -1,0 +1,6 @@
+---
+deployment:
+  tasks:
+    - /bin/mkdir -p "$HOME/ksc-scoring-app"
+    - /bin/cp -R admin db migrations reports "$HOME/ksc-scoring-app/"
+    - /bin/cp app.js dart_league_schedule.csv index.html package-lock.json package.json passenger-server.js results-csv.js server.js start-server.js styles.css team_lists.csv user-guide.html "$HOME/ksc-scoring-app/"

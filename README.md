@@ -184,6 +184,14 @@ To enable submissions, reports, and administration, deploy this repository to Re
 
 The upload key entered in the app must exactly match the service's `UPLOAD_API_KEY`. The admin key must match `ADMIN_API_KEY`. Keep these values in environment settings and do not place them in source files or browser code.
 
+### cPanel Git deployment
+
+The checked-in `.cpanel.yml` copies the application into `~/ksc-scoring-app`, outside the public web directory. Configure the cPanel Git checkout separately and select the intended branch. After committing and pushing changes, use **Update from Remote** and **Deploy HEAD Commit**. The deployment copies application files without deleting existing backups or environment files; it does not install dependencies or restart the app.
+
+In **Setup Node.js App**, select the application directory, use Node.js 22 or newer, and set the startup file to `passenger-server.js`. Configure the environment variables, run **NPM Install**, and restart the app. Verify startup and routing on the hosting provider before switching the public domain. Server startup applies migrations, so use a separate test database for initial verification.
+
+The cPanel server needs `pg_dump` and `pg_restore` for its in-app database backup and restore actions. If those tools are unavailable, create and restore PostgreSQL backups from a separate computer with compatible PostgreSQL client tools.
+
 Match progress is saved in this browser using local storage and restored after a reload on the same device. It is not synchronized between devices or saved to an account. Submit completed matches before clearing browser site data or changing devices.
 
 ## Testing

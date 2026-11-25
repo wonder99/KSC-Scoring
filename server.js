@@ -2382,4 +2382,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { createServer, initializeDatabase, parseCsv, validateScoreCsv };
+module.exports = { createServer, initializeDatabase, parseCsv, startServer, validateScoreCsv };
