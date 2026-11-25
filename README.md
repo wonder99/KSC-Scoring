@@ -139,7 +139,7 @@ When scoring with the dart grid, enter up to three darts per turn; Miss records 
 
 Checkout suggestions follow the recommended outs and alternatives in [Rick Smith's Doubling Out Charts](https://ricksmith.ca/Darts/dartsouts.htm), including the chart's unavailable three-dart finishes. During a dart-grid turn, the strategy updates for the remaining darts. Turn history appears below the scoring controls as four player rows, with each player's successive scores shown as positive values and added horizontally; scores of 95 or more are highlighted. If the opponent doubles out first, select the opponent-win button and confirm to finish the game as a loss.
 
-After each game, use **Submit to League** on the winner screen. The first press reveals the league upload key field. Enter the key and submit the results. The server stores normalized turns, lineups, winner information, and checkout data in PostgreSQL.
+After each game, use **Submit to League** on the winner screen. After game 7, **Upload Results** is the primary action. The first press reveals the league upload key field. Enter the key and submit the results. The server stores normalized turns, lineups, winner information, and checkout data in PostgreSQL.
 
 The 2026-2027 season is baseline-protected through week 10 (November 18). The scorer rejects submissions for weeks through week 10 and allows new normalized submissions for scheduled matches after that cutoff.
 

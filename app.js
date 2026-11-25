@@ -939,22 +939,24 @@ function renderWinnerModal() {
         ? `Game ${gameNumber} of 7 complete: ${opponentName} doubled out.`
         : `Game ${gameNumber} of 7 complete: ${teamName} beat ${opponentName}.`;
     $('next-game-btn').textContent = gameNumber < 7 ? `Choose lineup for Game ${gameNumber + 1}` : 'Choose another match';
-    const allGamesComplete = state.matchResults.length === 7;
+    const finalGame = gameNumber === 7 || state.matchResults.length === 7;
     const winnerActions = $('winner-actions');
     const serverUpload = $('server-upload');
     const serverUploadButton = $('server-upload-btn');
     const nextGameButton = $('next-game-btn');
     const undoButton = $('winner-undo-btn');
-    winnerActions.classList.toggle('final-game', allGamesComplete);
-    serverUploadButton.classList.toggle('btn-primary', allGamesComplete);
-    serverUploadButton.classList.toggle('btn-small', !allGamesComplete);
-    if (allGamesComplete) {
+    winnerActions.classList.toggle('final-game', finalGame);
+    serverUploadButton.classList.toggle('btn-primary', finalGame);
+    serverUploadButton.classList.toggle('btn-small', !finalGame);
+    nextGameButton.classList.toggle('btn-primary', !finalGame);
+    nextGameButton.classList.toggle('btn-small', finalGame);
+    if (finalGame) {
         winnerActions.append(serverUpload, nextGameButton, undoButton);
     } else {
         winnerActions.append(nextGameButton, undoButton, serverUpload);
     }
     $('server-upload-key-prompt').hidden = true;
-    serverUploadButton.textContent = 'Submit to League';
+    serverUploadButton.textContent = finalGame ? 'Upload Results' : 'Submit to League';
     setServerUploadStatus('');
     serverUploadButton.disabled = !state.matchResults.length;
     $('winner-modal').classList.remove('hidden');

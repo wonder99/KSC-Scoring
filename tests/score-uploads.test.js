@@ -25,6 +25,72 @@ async function withServer(pool, run, adminApiKey = 'test-admin-key') {
     }
 }
 
+test('the game 7 winner dialog makes uploading the primary action', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const vm = require('node:vm');
+    const source = fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8');
+    const start = source.indexOf('function renderWinnerModal()');
+    const end = source.indexOf('\nfunction navigateToGame(', start);
+    assert.ok(start >= 0 && end > start);
+    const elements = new Map();
+    function element(id) {
+        if (!elements.has(id)) {
+            const classes = new Set(id === 'next-game-btn' ? ['btn-primary'] : []);
+            elements.set(id, {
+                id,
+                classList: {
+                    toggle(name, enabled) {
+                        if (enabled) classes.add(name);
+                        else classes.delete(name);
+                    },
+                    remove(name) { classes.delete(name); },
+                    contains(name) { return classes.has(name); }
+                },
+                append(...children) { this.children = children.map(child => child.id); }
+            });
+        }
+        return elements.get(id);
+    }
+    const state = {
+        activeGameIndex: 0,
+        teamName: 'Home',
+        opponent: 'Away',
+        matchResults: [{ game: 1, winner: 'Home' }]
+    };
+    const context = vm.createContext({
+        state,
+        $: element,
+        displayTeamName: name => name,
+        setServerUploadStatus() {}
+    });
+    vm.runInContext(source.slice(start, end), context);
+    vm.runInContext('renderWinnerModal()', context);
+    assert.equal(element('next-game-btn').classList.contains('btn-primary'), true);
+    assert.equal(element('server-upload-btn').classList.contains('btn-primary'), false);
+    assert.deepEqual(element('winner-actions').children, ['next-game-btn', 'winner-undo-btn', 'server-upload']);
+
+    state.activeGameIndex = 6;
+    state.matchResults.push({ game: 7, winner: 'Away' });
+    vm.runInContext('renderWinnerModal()', context);
+    assert.equal(element('server-upload-btn').textContent, 'Upload Results');
+    assert.equal(element('server-upload-btn').classList.contains('btn-primary'), true);
+    assert.equal(element('next-game-btn').classList.contains('btn-primary'), false);
+    assert.equal(element('server-upload-key-prompt').hidden, true);
+    assert.deepEqual(element('winner-actions').children, ['server-upload', 'next-game-btn', 'winner-undo-btn']);
+
+    state.matchResults = Array.from({ length: 7 }, (_, index) => ({ game: index + 1, winner: 'Home' }));
+    state.activeGameIndex = 0;
+    vm.runInContext('renderWinnerModal()', context);
+    assert.equal(element('server-upload-btn').classList.contains('btn-primary'), true);
+
+    state.matchResults = [{ game: 1, winner: 'Home' }];
+    state.activeGameIndex = 0;
+    vm.runInContext('renderWinnerModal()', context);
+    assert.equal(element('next-game-btn').classList.contains('btn-primary'), true);
+    assert.equal(element('server-upload-btn').classList.contains('btn-primary'), false);
+});
+
 test('parses quoted CSV values and validates fixture rows', () => {
     const rows = parseCsv(csv);
     assert.equal(rows[1][3], 'Keepers, North');
