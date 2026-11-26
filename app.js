@@ -26,7 +26,7 @@ const state = {
     turnDarts: [],
     turnTotal: 0,
     winner: false,
-    lastTurnSnapshot: null,
+    undoStack: [],
     games: Array(7).fill(null),
     activeGameIndex: 0,
     gameStarted: false,
@@ -51,7 +51,8 @@ function createEmptyGameSlot() {
         turnTotal: 0,
         playerPoints: {},
         winner: false,
-        lastTurnSnapshot: null,
+        showWinnerDialog: false,
+        undoStack: [],
         result: null
     };
 }
@@ -73,7 +74,7 @@ function initializeGameSlots() {
     state.playerPoints = {};
     state.winner = false;
     state.showWinnerDialog = false;
-    state.lastTurnSnapshot = null;
+    state.undoStack = [];
     state.currentScreen = 'roster';
     state.matchStartedAt = null;
 }
@@ -83,6 +84,38 @@ function setPersistenceStatus(message) {
         status.textContent = message;
         status.classList.toggle('error', Boolean(message));
     });
+}
+
+function cloneHistory(history) {
+    return (history || []).map(turn => ({
+        ...turn,
+        darts: (turn.darts || []).map(dart => ({ ...dart }))
+    }));
+}
+
+function cloneMatchResults(results) {
+    return (results || []).map(result => ({
+        ...result,
+        players: (result.players || []).map(player => ({
+            ...player,
+            roundScores: [...(player.roundScores || [])]
+        }))
+    }));
+}
+
+function cloneUndoSnapshot(snapshot) {
+    return {
+        score: snapshot.score,
+        currentPlayer: snapshot.currentPlayer,
+        history: cloneHistory(snapshot.history),
+        turnDarts: (snapshot.turnDarts || []).map(dart => ({ ...dart })),
+        turnTotal: snapshot.turnTotal,
+        playerPoints: { ...(snapshot.playerPoints || {}) },
+        winner: Boolean(snapshot.winner),
+        showWinnerDialog: Boolean(snapshot.showWinnerDialog),
+        gamesCompleted: snapshot.gamesCompleted,
+        matchResults: cloneMatchResults(snapshot.matchResults)
+    };
 }
 
 function saveActiveGame() {
@@ -99,7 +132,8 @@ function saveActiveGame() {
         turnTotal: state.turnTotal,
         playerPoints: { ...state.playerPoints },
         winner: state.winner,
-        lastTurnSnapshot: state.lastTurnSnapshot,
+        showWinnerDialog: state.showWinnerDialog,
+        undoStack: state.undoStack.map(snapshot => cloneUndoSnapshot(snapshot)),
         result: state.matchResults.find(result => result.game === state.activeGameIndex + 1) || null
     };
 }
@@ -143,7 +177,8 @@ function loadActiveGame() {
     state.turnTotal = game.turnTotal;
     state.playerPoints = { ...game.playerPoints };
     state.winner = game.winner;
-    state.lastTurnSnapshot = game.lastTurnSnapshot;
+    state.showWinnerDialog = Boolean(game.showWinnerDialog);
+    state.undoStack = game.undoStack.map(snapshot => cloneUndoSnapshot(snapshot));
 }
 
 function restorePersistedSession() {
@@ -191,10 +226,22 @@ function restorePersistedSession() {
                 !Number.isInteger(game.turnTotal) || game.turnTotal < 0 || game.turnTotal > 180 ||
                 !Number.isInteger(game.currentPlayer) || typeof game.winner !== 'boolean' ||
                 !game.playerPoints || typeof game.playerPoints !== 'object' ||
+                (game.undoStack !== undefined && !Array.isArray(game.undoStack)) ||
                 (game.started && (game.players.length !== 4 || game.currentPlayer > 3))) {
                 throw new Error(`Saved data for Game ${index + 1} is invalid.`);
             }
-            return { ...createEmptyGameSlot(), ...game };
+            const legacySnapshot = game.lastTurnSnapshot || null;
+            const undoStack = Array.isArray(game.undoStack)
+                ? game.undoStack.map(snapshot => cloneUndoSnapshot(snapshot))
+                : legacySnapshot
+                    ? [cloneUndoSnapshot(legacySnapshot)]
+                    : [];
+            return {
+                ...createEmptyGameSlot(),
+                ...game,
+                showWinnerDialog: Boolean(game.showWinnerDialog),
+                undoStack
+            };
         });
 
         populateDates(false);
@@ -630,7 +677,7 @@ function startSelectedGame() {
     state.playerPoints = Object.fromEntries(state.players.map(player => [player.name, 0]));
     state.winner = false;
     state.showWinnerDialog = false;
-    state.lastTurnSnapshot = null;
+    state.undoStack = [];
     state.gameStarted = true;
     $('winner-modal').classList.add('hidden');
     showGameScreen();
@@ -675,7 +722,7 @@ function renderDartInput() {
     if (state.winner) {
         target.innerHTML = `
             <div class="game-finished-actions">
-                <button class="undo-turn-btn" id="finished-game-undo-btn" type="button" disabled>Undo Last</button>
+                <button class="undo-turn-btn" id="finished-game-undo-btn" type="button" disabled>Undo</button>
             </div>`;
         $('finished-game-undo-btn').addEventListener('click', undoLastTurn);
         return;
@@ -695,7 +742,7 @@ function renderDartInput() {
             <div class="action-buttons">
                 <button class="submit-score-btn" id="submit-turn-btn" type="button" disabled>Submit Turn (0)</button>
                 <button class="skip-turn-btn" id="bust-turn-btn" type="button">Bust / Skip</button>
-                <button class="undo-turn-btn" id="undo-turn-btn" type="button" disabled>Undo Last</button>
+                <button class="undo-turn-btn" id="undo-turn-btn" type="button" disabled>Undo</button>
             </div>
             <div class="dart-grid-container" id="dart-grid-container">
                 <div class="dart-grid-wrapper">
@@ -819,7 +866,7 @@ function submitTurn() {
         rejectTurnTotal('A double-out requires an even score. Enter the score again.');
         return;
     }
-    saveTurnSnapshot();
+    pushUndoSnapshot();
     const lastDart = state.turnDarts[state.turnDarts.length - 1];
     const assumedDoubleCheckout = remaining === 0 && manualEntry && total % 2 === 0;
     const dartCheckout = lastDart && (/^D\d+$/.test(lastDart.label) || lastDart.label === 'Bull');
@@ -848,7 +895,7 @@ function submitTurn() {
 
 function bustTurn() {
     if (state.winner) return;
-    saveTurnSnapshot();
+    pushUndoSnapshot();
     state.history.push({ player: state.players[state.currentPlayer].name, total: state.turnTotal, darts: [...state.turnDarts], busted: true });
     state.turnDarts = [];
     state.turnTotal = 0;
@@ -856,46 +903,54 @@ function bustTurn() {
     renderGame();
 }
 
-function saveTurnSnapshot() {
-    state.lastTurnSnapshot = {
+function pushUndoSnapshot() {
+    state.undoStack.push({
         score: state.score,
         currentPlayer: state.currentPlayer,
-        history: state.history.slice(),
+        history: cloneHistory(state.history),
         turnDarts: state.turnDarts.map(dart => ({ ...dart })),
         turnTotal: state.turnTotal,
         playerPoints: { ...state.playerPoints },
         winner: state.winner,
+        showWinnerDialog: state.showWinnerDialog,
         gamesCompleted: state.gamesCompleted,
-        matchResults: state.matchResults.slice()
-    };
+        matchResults: cloneMatchResults(state.matchResults)
+    });
 }
 
 function undoLastTurn() {
-    const snapshot = state.lastTurnSnapshot;
+    const snapshot = state.undoStack.pop();
     if (!snapshot) return;
     state.score = snapshot.score;
     state.currentPlayer = snapshot.currentPlayer;
-    state.history = snapshot.history;
-    state.turnDarts = snapshot.turnDarts;
+    state.history = cloneHistory(snapshot.history);
+    state.turnDarts = snapshot.turnDarts.map(dart => ({ ...dart }));
     state.turnTotal = snapshot.turnTotal;
-    state.playerPoints = snapshot.playerPoints;
+    state.playerPoints = { ...snapshot.playerPoints };
     state.winner = snapshot.winner;
-    state.showWinnerDialog = false;
+    state.showWinnerDialog = Boolean(snapshot.showWinnerDialog);
     state.gamesCompleted = snapshot.gamesCompleted;
-    state.matchResults = snapshot.matchResults;
-    state.lastTurnSnapshot = null;
+    state.matchResults = cloneMatchResults(snapshot.matchResults);
     $('winner-modal').classList.add('hidden');
     renderGame();
-    $('score-total-input').focus();
+    if (!state.winner && $('score-total-input')) $('score-total-input').focus();
 }
 
 function updateUndoButtons() {
-    const disabled = !state.lastTurnSnapshot;
+    const disabled = state.undoStack.length === 0;
+    const label = disabled ? 'Undo' : `Undo (${state.undoStack.length})`;
     const turnUndoButton = $('undo-turn-btn');
-    if (turnUndoButton) turnUndoButton.disabled = disabled;
+    if (turnUndoButton) {
+        turnUndoButton.disabled = disabled;
+        turnUndoButton.textContent = label;
+    }
     const finishedGameUndoButton = $('finished-game-undo-btn');
-    if (finishedGameUndoButton) finishedGameUndoButton.disabled = disabled;
+    if (finishedGameUndoButton) {
+        finishedGameUndoButton.disabled = disabled;
+        finishedGameUndoButton.textContent = label;
+    }
     $('winner-undo-btn').disabled = disabled;
+    $('winner-undo-btn').textContent = label;
 }
 
 function finishGame(opponentWon = false) {
@@ -1193,6 +1248,7 @@ function handleOpponentDoubleOut() {
     if (state.winner) return;
     const confirmed = window.confirm(`Confirm that ${displayTeamName(state.opponent)} has doubled out and finish this game?`);
     if (!confirmed) return;
+    pushUndoSnapshot();
     state.turnDarts = [];
     state.turnTotal = 0;
     finishGame(true);
@@ -1352,6 +1408,70 @@ function resetToSetup() {
     persistSession();
 }
 
+function restartActiveGame() {
+    const gameNumber = state.activeGameIndex + 1;
+    if (state.lineupOrder.length !== 4) {
+        chooseLineupForActiveGame();
+        return;
+    }
+    const confirmed = window.confirm(`Restart Game ${gameNumber}? Its score and turns will be cleared, while results from the other games will remain.`);
+    if (!confirmed) return;
+
+    state.matchResults = state.matchResults.filter(result => result.game !== gameNumber);
+    state.gamesCompleted = state.matchResults.length;
+    state.players = state.lineupOrder.map((name, index) => ({ name, color: PLAYER_COLORS[index] }));
+    state.score = STARTING_SCORE;
+    state.currentPlayer = 0;
+    state.history = [];
+    state.turnDarts = [];
+    state.turnTotal = 0;
+    state.playerPoints = Object.fromEntries(state.players.map(player => [player.name, 0]));
+    state.winner = false;
+    state.showWinnerDialog = false;
+    state.undoStack = [];
+    state.gameStarted = true;
+    state.games[state.activeGameIndex] = {
+        ...createEmptyGameSlot(),
+        started: true,
+        lineupOrder: [...state.lineupOrder],
+        availablePlayers: [...state.availablePlayers],
+        players: state.players.map(player => ({ ...player })),
+        score: STARTING_SCORE,
+        playerPoints: { ...state.playerPoints },
+        result: null
+    };
+    $('winner-modal').classList.add('hidden');
+    showGameScreen();
+}
+
+function chooseLineupForActiveGame() {
+    const gameNumber = state.activeGameIndex + 1;
+    const confirmed = window.confirm(`Clear Game ${gameNumber} and choose a new lineup? Results from the other games will remain.`);
+    if (!confirmed) return;
+
+    state.matchResults = state.matchResults.filter(result => result.game !== gameNumber);
+    state.gamesCompleted = state.matchResults.length;
+    state.players = [];
+    state.score = STARTING_SCORE;
+    state.currentPlayer = 0;
+    state.history = [];
+    state.turnDarts = [];
+    state.turnTotal = 0;
+    state.playerPoints = {};
+    state.winner = false;
+    state.showWinnerDialog = false;
+    state.undoStack = [];
+    state.gameStarted = false;
+    state.games[state.activeGameIndex] = {
+        ...createEmptyGameSlot(),
+        lineupOrder: [...state.lineupOrder],
+        availablePlayers: [...state.availablePlayers],
+        result: null
+    };
+    $('winner-modal').classList.add('hidden');
+    showLineupScreen();
+}
+
 function restartEverything() {
     const confirmed = window.confirm('Restart everything? All game data, including scores, histories, results, and saved progress, will be cleared.');
     if (!confirmed) return;
@@ -1384,6 +1504,8 @@ $('start-selected-game-btn').addEventListener('click', startSelectedGame);
 });
 $('back-to-match').addEventListener('click', resetToSetup);
 $('back-to-roster').addEventListener('click', restartEverything);
+$('restart-current-game-btn').addEventListener('click', restartActiveGame);
+$('choose-current-game-lineup-btn').addEventListener('click', chooseLineupForActiveGame);
 $('opponent-out-btn').addEventListener('click', handleOpponentDoubleOut);
 $('winner-undo-btn').addEventListener('click', undoLastTurn);
 $('next-game-btn').addEventListener('click', startNextGame);

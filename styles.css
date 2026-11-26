@@ -982,6 +982,13 @@ body {
     margin-bottom: 0.75rem;
 }
 .game-header h1 { margin: 0; }
+.game-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
 .game-switcher {
     display: inline-flex;
     align-items: center;

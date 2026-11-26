@@ -29,7 +29,7 @@
             <p class="opponent-display">Opponent: <strong id="opponent-name">Select a match day and team</strong><span id="board-display" class="board-display"></span></p>
             <button id="start-game-btn" class="btn btn-primary" type="button" disabled>Start Game</button>
         </section>
-        <p class="app-version">Version 46</p>
+        <p class="app-version">Version 47</p>
     </main>
 
     <main id="lineup-screen" class="screen">
@@ -73,7 +73,11 @@
                 <span class="game-nav-label">Game 1 of 7</span>
                 <button class="game-nav-btn" data-game-delta="1" type="button" aria-label="Next game">›</button>
             </div>
-            <button id="back-to-roster" class="btn btn-small" type="button">Restart Everything</button>
+            <div class="game-header-actions">
+                <button id="restart-current-game-btn" class="btn btn-small" type="button">Restart Game</button>
+                <button id="choose-current-game-lineup-btn" class="btn btn-small" type="button">Choose Lineup</button>
+                <button id="back-to-roster" class="btn btn-small" type="button">Restart Everything</button>
+            </div>
         </header>
         <p class="persistence-status" role="status" aria-live="polite"></p>
         <section class="team-score-section">
@@ -96,7 +100,7 @@
             <p id="winner-summary">Congratulations on the double-out checkout!</p>
             <div id="winner-actions" class="winner-actions">
                 <button id="next-game-btn" class="btn btn-primary" type="button">Choose next lineup</button>
-                <button id="winner-undo-btn" class="btn btn-small undo-turn-btn" type="button" disabled>Undo Last</button>
+                <button id="winner-undo-btn" class="btn btn-small undo-turn-btn" type="button" disabled>Undo</button>
                 <div id="server-upload" class="server-upload">
                     <div id="server-upload-key-prompt" hidden>
                         <label for="server-upload-key">League upload key</label>

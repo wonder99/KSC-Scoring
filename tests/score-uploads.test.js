@@ -91,6 +91,144 @@ test('the game 7 winner dialog makes uploading the primary action', () => {
     assert.equal(element('server-upload-btn').classList.contains('btn-primary'), false);
 });
 
+test('unlimited undo restores multiple submitted turn snapshots', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const vm = require('node:vm');
+    const source = fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8');
+    const start = source.indexOf('function pushUndoSnapshot()');
+    const end = source.indexOf('\nfunction finishGame(opponentWon = false)', start);
+    assert.ok(start >= 0 && end > start);
+
+    const state = {
+        score: 701,
+        currentPlayer: 0,
+        history: [],
+        turnDarts: [],
+        turnTotal: 0,
+        playerPoints: { Paul: 0 },
+        winner: false,
+        showWinnerDialog: false,
+        gamesCompleted: 0,
+        matchResults: [],
+        undoStack: []
+    };
+    const winnerModal = { classList: { add() {} } };
+    const context = vm.createContext({
+        state,
+        $: id => id === 'winner-modal'
+            ? winnerModal
+            : { focus() {} },
+        cloneHistory: history => (history || []).map(turn => ({
+            ...turn,
+            darts: (turn.darts || []).map(dart => ({ ...dart }))
+        })),
+        cloneMatchResults: results => (results || []).map(result => ({
+            ...result,
+            players: (result.players || []).map(player => ({
+                ...player,
+                roundScores: [...(player.roundScores || [])]
+            }))
+        })),
+        renderGame() {}
+    });
+    vm.runInContext(source.slice(start, end), context);
+
+    vm.runInContext('pushUndoSnapshot()', context);
+    state.score = 620;
+    state.currentPlayer = 1;
+    state.history = [{ player: 'Paul', total: 81, darts: [{ score: 81, label: '81' }], busted: false }];
+    state.playerPoints.Paul = 81;
+
+    vm.runInContext('pushUndoSnapshot()', context);
+    state.score = 540;
+    state.currentPlayer = 2;
+    state.history.push({ player: 'John', total: 80, darts: [], busted: false });
+    state.playerPoints.Paul = 81;
+
+    vm.runInContext('undoLastTurn()', context);
+    assert.equal(state.score, 620);
+    assert.equal(state.currentPlayer, 1);
+    assert.equal(state.history.length, 1);
+
+    vm.runInContext('undoLastTurn()', context);
+    assert.equal(state.score, 701);
+    assert.equal(state.currentPlayer, 0);
+    assert.equal(state.history.length, 0);
+    assert.equal(state.undoStack.length, 0);
+});
+
+test('restart controls reset only the active game', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const vm = require('node:vm');
+    const source = fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8');
+    const start = source.indexOf('function restartActiveGame()');
+    const end = source.indexOf('\nfunction restartEverything()', start);
+    assert.ok(start >= 0 && end > start);
+
+    const state = {
+        activeGameIndex: 1,
+        lineupOrder: ['Paul', 'John', 'Steve', 'Mark'],
+        availablePlayers: ['Spare'],
+        matchResults: [
+            { game: 1, winner: 'Home' },
+            { game: 2, winner: 'Away' }
+        ],
+        gamesCompleted: 2,
+        players: [{ name: 'Old', color: '#000' }],
+        score: 0,
+        currentPlayer: 3,
+        history: [{ player: 'Old', total: 701, darts: [], busted: false }],
+        turnDarts: [{ score: 50, label: 'Bull' }],
+        turnTotal: 50,
+        playerPoints: { Old: 701 },
+        winner: true,
+        showWinnerDialog: true,
+        undoStack: [{ score: 701 }],
+        gameStarted: true,
+        games: Array.from({ length: 7 }, (_, index) => ({ index }))
+    };
+    const winnerModal = { classList: { add() {} } };
+    const context = vm.createContext({
+        state,
+        window: { confirm: () => true },
+        PLAYER_COLORS: ['#3498db', '#e67e22', '#1abc9c', '#9b59b6'],
+        STARTING_SCORE: 701,
+        $: id => id === 'winner-modal'
+            ? winnerModal
+            : {},
+        createEmptyGameSlot: () => ({
+            started: false,
+            lineupOrder: [],
+            availablePlayers: [],
+            players: [],
+            score: 701,
+            currentPlayer: 0,
+            history: [],
+            turnDarts: [],
+            turnTotal: 0,
+            playerPoints: {},
+            winner: false,
+            showWinnerDialog: false,
+            undoStack: [],
+            result: null
+        }),
+        showGameScreen() { state.gameStarted = true; },
+        showLineupScreen() {}
+    });
+    vm.runInContext(source.slice(start, end), context);
+    vm.runInContext('restartActiveGame()', context);
+
+    assert.equal(state.score, 701);
+    assert.equal(state.history.length, 0);
+    assert.equal(state.turnDarts.length, 0);
+    assert.equal(state.undoStack.length, 0);
+    assert.equal(state.gameStarted, true);
+    assert.deepEqual(state.matchResults, [{ game: 1, winner: 'Home' }]);
+    assert.equal(state.gamesCompleted, 1);
+});
+
 test('parses quoted CSV values and validates fixture rows', () => {
     const rows = parseCsv(csv);
     assert.equal(rows[1][3], 'Keepers, North');
