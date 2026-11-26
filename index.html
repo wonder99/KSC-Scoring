@@ -3,12 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KSC Darts Scorer</title>
+    <title>Darts Scoring</title>
+    <meta name="theme-color" content="#0b1219">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Darts Scoring">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/jpeg" href="/kanata-logo.jpg">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <main id="roster-screen" class="screen active">
-        <h1>🎯 KSC Darts Scorer</h1>
+        <h1 class="app-brand">
+            <img src="/kanata-logo.jpg" alt="Kanata Sports Club">
+            <span>Darts Scoring</span>
+        </h1>
         <p class="subtitle">Double-out · One team score · Four players</p>
         <nav class="landing-links" aria-label="League resources">
             <a class="player-guide-link" href="user-guide.html">Read the player guide</a>
@@ -29,7 +41,7 @@
             <p class="opponent-display">Opponent: <strong id="opponent-name">Select a match day and team</strong><span id="board-display" class="board-display"></span></p>
             <button id="start-game-btn" class="btn btn-primary" type="button" disabled>Start Game</button>
         </section>
-        <p class="app-version">Version 47</p>
+        <p class="app-version">Version 48</p>
     </main>
 
     <main id="lineup-screen" class="screen">
@@ -66,7 +78,10 @@
 
     <main id="game-screen" class="screen">
         <header class="game-header">
-            <h1>🎯 KSC Darts Scorer</h1>
+            <h1 class="app-brand">
+                <img src="/kanata-logo.jpg" alt="Kanata Sports Club">
+                <span>Darts Scoring</span>
+            </h1>
             <span id="game-match-display" class="team-name"></span>
             <div class="game-switcher" aria-label="Switch game">
                 <button class="game-nav-btn" data-game-delta="-1" type="button" aria-label="Previous game">‹</button>

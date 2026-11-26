@@ -16,6 +16,12 @@ const PUBLIC_FILES = new Set([
     'app.js',
     'dart_league_schedule.csv',
     'index.html',
+    'manifest.json',
+    'kanata-logo.jpg',
+    'favicon-32x32.png',
+    'apple-touch-icon.png',
+    'icon-192.png',
+    'icon-512.png',
     'admin/index.html',
     'admin/admin.js',
     'admin/styles.css',
@@ -32,7 +38,12 @@ const CONTENT_TYPES = {
     '.csv': 'text/csv; charset=utf-8',
     '.html': 'text/html; charset=utf-8',
     '.js': 'text/javascript; charset=utf-8',
-    '.css': 'text/css; charset=utf-8'
+    '.css': 'text/css; charset=utf-8',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.json': 'application/json; charset=utf-8',
+    '.webmanifest': 'application/manifest+json; charset=utf-8'
 };
 
 class RequestError extends Error {

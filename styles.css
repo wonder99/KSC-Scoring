@@ -47,10 +47,27 @@ body {
     justify-content: center;
 }
 #roster-screen h1 {
-    font-size: 2.5rem;
     color: var(--green-light);
     margin-bottom: 0.25rem;
 }
+.app-brand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    max-width: 100%;
+    font-size: 2.5rem;
+    color: var(--green-light);
+}
+.app-brand img {
+    width: 174px;
+    max-width: 46%;
+    height: auto;
+    flex: 0 1 174px;
+    border-radius: 8px;
+    background: white;
+}
+.app-brand span { white-space: nowrap; }
 .subtitle {
     color: var(--text-secondary);
     font-size: 1.1rem;
@@ -779,7 +796,9 @@ body {
 /* ===== RESPONSIVE ===== */
 @media (max-width: 600px) {
     #roster-screen, #lineup-screen, #game-screen { padding: 1rem 0.75rem; }
-    #roster-screen h1 { font-size: 2rem; }
+    #roster-screen .app-brand { font-size: 1.75rem; }
+    .app-brand { gap: 0.5rem; font-size: 1.75rem; }
+    .app-brand img { width: 145px; }
     .player-score { font-size: 2.8rem; }
     .player-turn-indicator strong,
     .player-turn-indicator .score-value { font-size: 2.2em; }
