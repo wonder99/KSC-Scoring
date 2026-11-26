@@ -2,20 +2,20 @@
   "name": "Darts Scoring",
   "short_name": "Darts Scoring",
   "description": "Kanata Sports Club darts match scoring",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "https://darts.silkwebsolutions.com/",
+  "scope": "https://darts.silkwebsolutions.com/",
   "display": "standalone",
   "background_color": "#0b1219",
   "theme_color": "#0b1219",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "https://cdn.jsdelivr.net/gh/wonder99/KSC-Scoring@cpanel/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "https://cdn.jsdelivr.net/gh/wonder99/KSC-Scoring@cpanel/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
